@@ -86,8 +86,8 @@ type Object struct {
 // into account all of the mesh's bounding boxes, transformed into world space.
 //
 // This method properly read-locks the object.
-func (o *Object) Bounds() math.Rect3 {
-	var b math.Rect3
+func (o *Object) Bounds() lmath.Rect3 {
+	var b lmath.Rect3
 	o.RLock()
 	for i, m := range o.Meshes {
 		if i == 0 {

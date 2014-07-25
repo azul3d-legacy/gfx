@@ -65,21 +65,21 @@ type Transform struct {
 
 	// The parent transform, or nil if there is none.
 	parent     Transformable
-	lastParent *math.Mat4
+	lastParent *lmath.Mat4
 
 	// A pointer to the built (i.e. cached) transformation matrix or nil if a
 	// rebuild is required.
-	built *math.Mat4
+	built *lmath.Mat4
 
 	// Pointers to the matrices describing local-to-world and world-to-local
 	// space conversions.
-	localToWorld, worldToLocal *math.Mat4
+	localToWorld, worldToLocal *lmath.Mat4
 
 	// A pointer to a quaternion rotation, or nil if euler rotation is in use.
-	quat *math.Quat
+	quat *lmath.Quat
 
 	// The position, rotation, scaling, and shearing components.
-	pos, rot, scale, shear math.Vec3
+	pos, rot, scale, shear lmath.Vec3
 }
 
 // Equals tells if the two transforms are equal.
@@ -142,20 +142,20 @@ func (t *Transform) build() {
 	}
 
 	// Apply rotation
-	var hpr math.Vec3
+	var hpr lmath.Vec3
 	if t.quat != nil {
 		// Use quaternion rotation.
-		hpr = (*t.quat).Hpr(math.CoordSysZUpRight)
+		hpr = (*t.quat).Hpr(lmath.CoordSysZUpRight)
 	} else {
 		// Use euler rotation.
 		hpr = t.rot.XyzToHpr().Radians()
 	}
 
 	// Compose upper 3x3 matrics using scale, shear, and HPR components.
-	scaleShearHpr := math.Mat3Compose(t.scale, t.shear, hpr, math.CoordSysZUpRight)
+	scaleShearHpr := lmath.Mat3Compose(t.scale, t.shear, hpr, lmath.CoordSysZUpRight)
 
 	// Build this space's transformation matrix.
-	built := math.Mat4Identity.SetUpperMat3(scaleShearHpr)
+	built := lmath.Mat4Identity.SetUpperMat3(scaleShearHpr)
 	built = built.SetTranslation(t.pos)
 	t.built = &built
 
@@ -182,14 +182,14 @@ func (t *Transform) Transform() *Transform {
 
 // Mat4 is short-hand for:
 //  return t.Convert(LocalToWorld)
-func (t *Transform) Mat4() math.Mat4 {
+func (t *Transform) Mat4() lmath.Mat4 {
 	return t.Convert(LocalToWorld)
 }
 
 // LocalMat4 returns a matrix describing the space that this transform defines.
 // It is the matrix that is built out of the components of this transform, it
 // does not include any parent transformation, etc.
-func (t *Transform) LocalMat4() math.Mat4 {
+func (t *Transform) LocalMat4() lmath.Mat4 {
 	t.access.Lock()
 	t.build()
 	l := *t.built
@@ -223,7 +223,7 @@ func (t *Transform) Parent() Transformable {
 //
 // The last call to either SetQuat or SetRot is what effictively determines
 // whether quaternion or euler rotation will be used by this transform.
-func (t *Transform) SetQuat(q math.Quat) {
+func (t *Transform) SetQuat(q lmath.Quat) {
 	t.access.Lock()
 	if (*t.quat) != q {
 		t.built = nil
@@ -238,14 +238,14 @@ func (t *Transform) SetQuat(q math.Quat) {
 //
 // The last call to either SetQuat or SetRot is what effictively determines
 // whether quaternion or euler rotation will be used by this transform.
-func (t *Transform) Quat() math.Quat {
-	var q math.Quat
+func (t *Transform) Quat() lmath.Quat {
+	var q lmath.Quat
 	t.access.RLock()
 	if t.quat != nil {
 		q = *t.quat
 	} else {
 		// Convert euler rotation to quaternion.
-		q = math.QuatFromHpr(t.rot.XyzToHpr().Radians(), math.CoordSysZUpRight)
+		q = lmath.QuatFromHpr(t.rot.XyzToHpr().Radians(), lmath.CoordSysZUpRight)
 	}
 	t.access.RUnlock()
 	return q
@@ -269,7 +269,7 @@ func (t *Transform) IsQuat() bool {
 //
 // The last call to either SetQuat or SetRot is what effictively determines
 // whether quaternion or euler rotation will be used by this transform.
-func (t *Transform) SetRot(r math.Vec3) {
+func (t *Transform) SetRot(r lmath.Vec3) {
 	t.access.Lock()
 	if t.rot != r {
 		t.built = nil
@@ -285,21 +285,21 @@ func (t *Transform) SetRot(r math.Vec3) {
 //
 // The last call to either SetQuat or SetRot is what effictively determines
 // whether quaternion or euler rotation will be used by this transform.
-func (t *Transform) Rot() math.Vec3 {
-	var r math.Vec3
+func (t *Transform) Rot() lmath.Vec3 {
+	var r lmath.Vec3
 	t.access.RLock()
 	if t.quat == nil {
 		r = t.rot
 	} else {
 		// Convert quaternion rotation to euler rotation.
-		r = (*t.quat).Hpr(math.CoordSysZUpRight).HprToXyz().Degrees()
+		r = (*t.quat).Hpr(lmath.CoordSysZUpRight).HprToXyz().Degrees()
 	}
 	t.access.RUnlock()
 	return r
 }
 
 // SetPos sets the local position of this transform.
-func (t *Transform) SetPos(p math.Vec3) {
+func (t *Transform) SetPos(p lmath.Vec3) {
 	t.access.Lock()
 	if t.pos != p {
 		t.built = nil
@@ -309,7 +309,7 @@ func (t *Transform) SetPos(p math.Vec3) {
 }
 
 // Pos returns the local position of this transform.
-func (t *Transform) Pos() math.Vec3 {
+func (t *Transform) Pos() lmath.Vec3 {
 	t.access.RLock()
 	p := t.pos
 	t.access.RUnlock()
@@ -317,10 +317,10 @@ func (t *Transform) Pos() math.Vec3 {
 }
 
 // SetScale sets the local scale of this transform (e.g. a scale of
-// math.Vec3{2, 1.5, 1} would make an object appear twice as large on the local
+// lmath.Vec3{2, 1.5, 1} would make an object appear twice as large on the local
 // X axis, one and a half times larger on the local Y axis, and would not scale
 // on the local Z axis at all).
-func (t *Transform) SetScale(s math.Vec3) {
+func (t *Transform) SetScale(s lmath.Vec3) {
 	t.access.Lock()
 	if t.scale != s {
 		t.built = nil
@@ -330,7 +330,7 @@ func (t *Transform) SetScale(s math.Vec3) {
 }
 
 // Scale returns the local scacle of this transform.
-func (t *Transform) Scale() math.Vec3 {
+func (t *Transform) Scale() lmath.Vec3 {
 	t.access.RLock()
 	s := t.scale
 	t.access.RUnlock()
@@ -338,7 +338,7 @@ func (t *Transform) Scale() math.Vec3 {
 }
 
 // SetShear sets the local shear of this transform.
-func (t *Transform) SetShear(s math.Vec3) {
+func (t *Transform) SetShear(s lmath.Vec3) {
 	t.access.Lock()
 	if t.shear != s {
 		t.built = nil
@@ -348,7 +348,7 @@ func (t *Transform) SetShear(s math.Vec3) {
 }
 
 // Shear returns the local shear of this transform.
-func (t *Transform) Shear() math.Vec3 {
+func (t *Transform) Shear() lmath.Vec3 {
 	t.access.RLock()
 	s := t.shear
 	t.access.RUnlock()
@@ -363,10 +363,10 @@ func (t *Transform) Reset() {
 	t.localToWorld = nil
 	t.worldToLocal = nil
 	t.quat = nil
-	t.pos = math.Vec3Zero
-	t.rot = math.Vec3Zero
-	t.scale = math.Vec3One
-	t.shear = math.Vec3Zero
+	t.pos = lmath.Vec3Zero
+	t.rot = lmath.Vec3Zero
+	t.scale = lmath.Vec3One
+	t.shear = lmath.Vec3Zero
 	t.access.Unlock()
 }
 
@@ -403,7 +403,7 @@ func (t *Transform) Copy() *Transform {
 
 // Convert returns a matrix which performs the given coordinate space
 // conversion.
-func (t *Transform) Convert(c CoordConv) math.Mat4 {
+func (t *Transform) Convert(c CoordConv) lmath.Mat4 {
 	switch c {
 	case LocalToWorld:
 		t.access.Lock()
@@ -444,7 +444,7 @@ func (t *Transform) Convert(c CoordConv) math.Mat4 {
 // ConvertPos converts the given point, p, using the given coordinate space
 // conversion. For instance to convert a point in local space into world space:
 //  t.ConvertPos(p, LocalToWorld)
-func (t *Transform) ConvertPos(p math.Vec3, c CoordConv) math.Vec3 {
+func (t *Transform) ConvertPos(p lmath.Vec3, c CoordConv) lmath.Vec3 {
 	return p.TransformMat4(t.Convert(c))
 }
 
@@ -452,12 +452,12 @@ func (t *Transform) ConvertPos(p math.Vec3, c CoordConv) math.Vec3 {
 // conversion. For instance to convert a rotation in local space into world
 // space:
 //  t.ConvertRot(p, LocalToWorld)
-func (t *Transform) ConvertRot(r math.Vec3, c CoordConv) math.Vec3 {
+func (t *Transform) ConvertRot(r lmath.Vec3, c CoordConv) lmath.Vec3 {
 	m := t.Convert(c)
-	q := math.QuatFromHpr(r.XyzToHpr().Radians(), math.CoordSysZUpRight)
+	q := lmath.QuatFromHpr(r.XyzToHpr().Radians(), lmath.CoordSysZUpRight)
 	m = q.ExtractToMat4().Mul(m)
-	q = math.QuatFromMat3(m.UpperMat3())
-	return q.Hpr(math.CoordSysZUpRight).HprToXyz().Degrees()
+	q = lmath.QuatFromMat3(m.UpperMat3())
+	return q.Hpr(lmath.CoordSysZUpRight).HprToXyz().Degrees()
 }
 
 // Destroy destroys this transform for use by other callees to NewTransform.
@@ -479,7 +479,7 @@ func (t *Transform) New() *Transform {
 var transformPool = sync.Pool{
 	New: func() interface{} {
 		return &Transform{
-			scale: math.Vec3One,
+			scale: lmath.Vec3One,
 		}
 	},
 }

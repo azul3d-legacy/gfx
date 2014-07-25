@@ -13,15 +13,15 @@ import (
 // box.
 type Boundable interface {
 	// Bounds returns the axis-aligned bounding box of this boundable object.
-	Bounds() math.Rect3
+	Bounds() lmath.Rect3
 }
 
 // Bounds is a simple datatype which implements the Boundable interface.
-type Bounds math.Rect3
+type Bounds lmath.Rect3
 
 // Bounds implements the Boundable interface.
-func (b Bounds) Bounds() math.Rect3 {
-	return math.Rect3(b)
+func (b Bounds) Bounds() lmath.Rect3 {
+	return lmath.Rect3(b)
 }
 
 // TexCoordSet represents a single texture coordinate set for a mesh.
@@ -72,7 +72,7 @@ type Mesh struct {
 	// AABB is the axis aligned bounding box of this mesh. There may not be one
 	// if AABB.Empty() == true, but one can be calculate using the
 	// CalculateBounds() method.
-	AABB math.Rect3
+	AABB lmath.Rect3
 
 	// A slice of indices, if non-nil then this slice contains indices into
 	// each other slice (such as Vertices) and this is a indexed mesh.
@@ -157,7 +157,7 @@ func (m *Mesh) Copy() *Mesh {
 // Bounds implements the Boundable interface. It is thread-safe and performs
 // locking automatically. If the AABB of this mesh is empty then the bounds are
 // calculated.
-func (m *Mesh) Bounds() math.Rect3 {
+func (m *Mesh) Bounds() lmath.Rect3 {
 	m.Lock()
 	if m.AABB.Empty() {
 		m.CalculateBounds()
@@ -194,7 +194,7 @@ func (m *Mesh) GenerateBary() {
 //
 // The mesh's write lock must be held for this method to operate safely.
 func (m *Mesh) CalculateBounds() {
-	var bb math.Rect3
+	var bb lmath.Rect3
 	if len(m.Vertices) > 0 {
 		for _, v32 := range m.Vertices {
 			v := v32.Vec3()
@@ -243,7 +243,7 @@ func (m *Mesh) Reset() {
 	m.Loaded = false
 	m.KeepDataOnLoad = false
 	m.Dynamic = false
-	m.AABB = math.Rect3Zero
+	m.AABB = lmath.Rect3Zero
 	m.Indices = m.Indices[:0]
 	m.IndicesChanged = false
 	m.Vertices = m.Vertices[:0]

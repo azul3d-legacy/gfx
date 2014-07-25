@@ -25,7 +25,7 @@ type ByDist struct {
 	// The target position to compare against. The list is sorted based off
 	// each object's distance away from this position (typically this is the
 	// camera's position).
-	Target math.Vec3
+	Target lmath.Vec3
 }
 
 // Implements sort.Interface.

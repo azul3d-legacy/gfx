@@ -12,7 +12,7 @@ import (
 
 var (
 	// Get an matrix which will translate our matrix from ZUpRight to YUpRight
-	zUpRightToYUpRight = math.CoordSysZUpRight.ConvertMat4(math.CoordSysYUpRight)
+	zUpRightToYUpRight = lmath.CoordSysZUpRight.ConvertMat4(lmath.CoordSysYUpRight)
 )
 
 // Camera represents a camera object, it may be moved in 3D space using the
@@ -45,7 +45,7 @@ func (c *Camera) SetOrtho(view image.Rectangle, near, far float64) {
 	w = float64(int((w / 2.0)) * 2)
 	h := float64(view.Dy())
 	h = float64(int((h / 2.0)) * 2)
-	m := math.Mat4Ortho(0, w, 0, h, near, far)
+	m := lmath.Mat4Ortho(0, w, 0, h, near, far)
 	c.Projection = ConvertMat4(m)
 }
 
@@ -67,7 +67,7 @@ func (c *Camera) SetOrtho(view image.Rectangle, near, far float64) {
 // The camera's write lock must be held for this method to operate safely.
 func (c *Camera) SetPersp(view image.Rectangle, fov, near, far float64) {
 	aspectRatio := float64(view.Dx()) / float64(view.Dy())
-	m := math.Mat4Perspective(fov, aspectRatio, near, far)
+	m := lmath.Mat4Perspective(fov, aspectRatio, near, far)
 	c.Projection = ConvertMat4(m)
 }
 
@@ -78,7 +78,7 @@ func (c *Camera) SetPersp(view image.Rectangle, fov, near, far float64) {
 // the returned point may not be meaningful.
 //
 // The camera's read lock must be held for this method to operate safely.
-func (c *Camera) Project(p3 math.Vec3) (p2 math.Vec2, ok bool) {
+func (c *Camera) Project(p3 lmath.Vec3) (p2 lmath.Vec2, ok bool) {
 	cameraInv, _ := c.Object.Transform.Mat4().Inverse()
 	cameraInv = cameraInv.Mul(zUpRightToYUpRight)
 
@@ -104,7 +104,7 @@ func (c *Camera) Copy() *Camera {
 // The camera's write lock must be held for this method to operate safely.
 func (c *Camera) Reset() {
 	c.Object.Reset()
-	c.Projection = ConvertMat4(math.Mat4Identity)
+	c.Projection = ConvertMat4(lmath.Mat4Identity)
 }
 
 // Destroy destroys this camera for use by other callees to NewCamera. You must
@@ -122,7 +122,7 @@ var camPool = sync.Pool{
 	New: func() interface{} {
 		return &Camera{
 			NewObject(),
-			ConvertMat4(math.Mat4Identity),
+			ConvertMat4(lmath.Mat4Identity),
 		}
 	},
 }
