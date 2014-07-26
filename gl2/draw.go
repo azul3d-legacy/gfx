@@ -14,7 +14,7 @@ import (
 
 var (
 	// Get an matrix which will translate our matrix from ZUpRight to YUpRight
-	zUpRightToYUpRight = math.CoordSysZUpRight.ConvertMat4(math.CoordSysYUpRight)
+	zUpRightToYUpRight = lmath.CoordSysZUpRight.ConvertMat4(lmath.CoordSysYUpRight)
 )
 
 var (
@@ -54,10 +54,10 @@ func texCoordName(i int) string {
 type nativeObject struct {
 	// The graphics object's last-known transform, if they are not equal then
 	// the matrices must be recalculated.
-	Transform math.Mat4
+	Transform lmath.Mat4
 
 	// The last-known camera transform and projection.
-	CameraTransform math.Mat4
+	CameraTransform lmath.Mat4
 	Projection      gfx.Mat4
 
 	// Cached pre-calculated matrices to feed into shaders, this way we don't
@@ -109,7 +109,7 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 	n.view = gfx.ConvertMat4(view)
 
 	// The "Projection" matrix is the camera's projection matrix.
-	projection := math.Mat4Identity
+	projection := lmath.Mat4Identity
 	if c != nil {
 		projection = c.Projection.Mat4()
 	}
