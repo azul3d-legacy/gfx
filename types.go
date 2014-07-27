@@ -49,10 +49,10 @@ type Vec3 struct {
 
 // Vec3 converts this 32-bit Vec3 to a 64-bit lmath.Vec3 vector.
 func (v Vec3) Vec3() lmath.Vec3 {
-	return lmath.Vec3{float64(v.X), float64(v.Y), float64(v.Z)}
+	return lmath.Vec3{X: float64(v.X), Y: float64(v.Y), Z: float64(v.Z)}
 }
 
 // ConvertVec3 converts the 64-bit lmath.Vec3 to a 32-bit Vec3 vector.
 func ConvertVec3(v lmath.Vec3) Vec3 {
-	return Vec3{float32(v.X), float32(v.Y), float32(v.Z)}
+	return Vec3{X: float32(v.X), Y: float32(v.Y), Z: float32(v.Z)}
 }
