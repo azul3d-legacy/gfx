@@ -240,7 +240,7 @@ var glDefaultStencil = gfx.StencilState{
 }
 
 var glDefaultBlend = gfx.BlendState{
-	Color:    gfx.Color{0, 0, 0, 0},
+	Color:    gfx.Color{R: 0, G: 0, B: 0, A: 0},
 	SrcRGB:   gfx.BOne,
 	DstRGB:   gfx.BZero,
 	SrcAlpha: gfx.BOne,
@@ -252,11 +252,11 @@ var glDefaultBlend = gfx.BlendState{
 // Please ensure these values match the default OpenGL state values listed in
 // the OpenGL documentation.
 var defaultGraphicsState = &graphicsState{
-	image.Rect(0, 0, 0, 0),        // scissor - Whole screen
-	gfx.Color{0.0, 0.0, 0.0, 0.0}, // clear color
-	glDefaultBlend.Color,          // blend color
-	1.0,                           // clear depth
-	0,                             // clear stencil
+	image.Rect(0, 0, 0, 0),                    // scissor - Whole screen
+	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
+	glDefaultBlend.Color,                      // blend color
+	1.0,                                       // clear depth
+	0,                                         // clear stencil
 	[4]bool{true, true, true, true}, // color write
 	gfx.Less,                        // depth func
 	glDefaultBlend,                  // blend func seperate
