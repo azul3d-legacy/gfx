@@ -13,17 +13,17 @@ import (
 
 func TestSortByDist(t *testing.T) {
 	a := NewObject()
-	a.Transform.SetPos(math.Vec3{10, 10, 10})
+	a.Transform.SetPos(lmath.Vec3{10, 10, 10})
 
 	b := NewObject()
-	b.Transform.SetPos(math.Vec3{-10, 2, 2})
+	b.Transform.SetPos(lmath.Vec3{-10, 2, 2})
 
 	c := NewObject()
-	c.Transform.SetPos(math.Vec3{0, 6, 5})
+	c.Transform.SetPos(lmath.Vec3{0, 6, 5})
 
 	byDist := ByDist{
 		Objects: []*Object{a, b, c, a, b, c, b, c, a},
-		Target:  math.Vec3{0, 0, 0},
+		Target:  lmath.Vec3{0, 0, 0},
 	}
 	sort.Sort(byDist)
 
@@ -53,7 +53,7 @@ func sortByDist(shifts, amount int, b *testing.B, standard bool) {
 	b.StopTimer()
 	byDist := ByDist{
 		Objects: make([]*Object, amount),
-		Target: math.Vec3{
+		Target: lmath.Vec3{
 			rand.Float64(),
 			rand.Float64(),
 			rand.Float64(),
@@ -64,7 +64,7 @@ func sortByDist(shifts, amount int, b *testing.B, standard bool) {
 	}
 
 	for _, o := range byDist.Objects {
-		o.Transform.SetPos(math.Vec3{
+		o.Transform.SetPos(lmath.Vec3{
 			rand.Float64(),
 			rand.Float64(),
 			rand.Float64(),
@@ -83,7 +83,7 @@ func sortByDist(shifts, amount int, b *testing.B, standard bool) {
 		// a eighth of the objects by a random small amount.
 		b.StopTimer()
 		for _, o := range byDist.Objects[:len(byDist.Objects)/8] {
-			offset := math.Vec3{
+			offset := lmath.Vec3{
 				rand.Float64() * 0.1,
 				rand.Float64() * 0.1,
 				rand.Float64() * 0.1,

@@ -11,8 +11,8 @@ import (
 
 func TestTransform(t *testing.T) {
 	tf := NewTransform()
-	tf.SetScale(math.Vec3{2, 4, 6})
-	pos := math.Vec3{1, 2, 3}
+	tf.SetScale(lmath.Vec3{2, 4, 6})
+	pos := lmath.Vec3{1, 2, 3}
 	tf.SetPos(pos)
 	m := tf.Mat4()
 	if m[0][0] != 2 || m[1][1] != 4 || m[2][2] != 6 {
@@ -29,18 +29,18 @@ func TestTransform(t *testing.T) {
 
 func TestTransformRel(t *testing.T) {
 	a := NewTransform()
-	a.SetPos(math.Vec3{10, 0, 2})
+	a.SetPos(lmath.Vec3{10, 0, 2})
 
 	b := NewTransform()
-	b.SetPos(math.Vec3{10, 5, 0})
+	b.SetPos(lmath.Vec3{10, 5, 0})
 	b.SetParent(a)
 
 	c := NewTransform()
-	c.SetPos(math.Vec3{10, 0, 5})
+	c.SetPos(lmath.Vec3{10, 0, 5})
 	c.SetParent(b)
 
 	ltw := c.Convert(LocalToWorld)
-	want := math.Vec3{30, 5, 7}
+	want := lmath.Vec3{30, 5, 7}
 	if !ltw.Translation().Equals(want) {
 		t.Log("local-to-world invalid")
 		t.Log("want (world)", want)
@@ -50,7 +50,7 @@ func TestTransformRel(t *testing.T) {
 	}
 
 	wtl := c.Convert(WorldToLocal)
-	want = math.Vec3{-30, -5, -7}
+	want = lmath.Vec3{-30, -5, -7}
 	if !wtl.Translation().Equals(want) {
 		t.Log("world-to-local invalid")
 		t.Log("want (world)", want)
@@ -60,7 +60,7 @@ func TestTransformRel(t *testing.T) {
 	}
 
 	wtp := c.Convert(WorldToParent)
-	want = math.Vec3{-20, -5, -2}
+	want = lmath.Vec3{-20, -5, -2}
 	if !wtp.Translation().Equals(want) {
 		t.Log("world-to-parent invalid")
 		t.Log("want (world)", want)
@@ -72,14 +72,14 @@ func TestTransformRel(t *testing.T) {
 
 func TestTransformPointToWorld(t *testing.T) {
 	a := NewTransform()
-	a.SetPos(math.Vec3{0, 0, -50})
+	a.SetPos(lmath.Vec3{0, 0, -50})
 
 	b := NewTransform()
-	b.SetPos(math.Vec3{-25, -35, -50})
+	b.SetPos(lmath.Vec3{-25, -35, -50})
 	b.SetParent(a)
 
-	p := b.ConvertPos(math.Vec3{50, 0, 0}, LocalToWorld)
-	want := math.Vec3{25, -35, -100}
+	p := b.ConvertPos(lmath.Vec3{50, 0, 0}, LocalToWorld)
+	want := lmath.Vec3{25, -35, -100}
 	if !p.Equals(want) {
 		t.Log("got (world)", p)
 		t.Log("want (world)", want)
@@ -89,15 +89,15 @@ func TestTransformPointToWorld(t *testing.T) {
 
 func TestTransformPointToLocal(t *testing.T) {
 	a := NewTransform()
-	a.SetPos(math.Vec3{0, 0, -50})
+	a.SetPos(lmath.Vec3{0, 0, -50})
 
 	b := NewTransform()
-	b.SetPos(math.Vec3{0, 0, -50})
+	b.SetPos(lmath.Vec3{0, 0, -50})
 	b.SetParent(a)
 
-	p := b.ConvertPos(math.Vec3{50, 0, 0}, LocalToWorld)
+	p := b.ConvertPos(lmath.Vec3{50, 0, 0}, LocalToWorld)
 	p = b.ConvertPos(p, WorldToLocal)
-	want := math.Vec3{50, 0, 0}
+	want := lmath.Vec3{50, 0, 0}
 	if !p.Equals(want) {
 		t.Log("got (local)", p)
 		t.Log("want (local)", want)
@@ -107,14 +107,14 @@ func TestTransformPointToLocal(t *testing.T) {
 
 func TestTransformRotToWorld(t *testing.T) {
 	a := NewTransform()
-	a.SetRot(math.Vec3{0, 0, 45})
+	a.SetRot(lmath.Vec3{0, 0, 45})
 
 	b := NewTransform()
-	b.SetRot(math.Vec3{45, 0, 45})
+	b.SetRot(lmath.Vec3{45, 0, 45})
 	b.SetParent(a)
 
-	p := b.ConvertRot(math.Vec3{-45, 0, 0}, LocalToWorld)
-	want := math.Vec3{0, 0, 90}
+	p := b.ConvertRot(lmath.Vec3{-45, 0, 0}, LocalToWorld)
+	want := lmath.Vec3{0, 0, 90}
 	if !p.Equals(want) {
 		t.Log("got (world)", p)
 		t.Log("want (world)", want)

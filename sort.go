@@ -39,25 +39,29 @@ func (b ByDist) Swap(i, j int) {
 }
 
 // Implements sort.Interface.
-func (b ByDist) Less(i, j int) bool {
-	k := b.Objects[i]
-	v := b.Objects[j]
+func (b ByDist) Less(ii, jj int) bool {
+	i := b.Objects[ii]
+	j := b.Objects[jj]
 
 	// Lock both objects for reading.
-	k.RLock()
-	v.RLock()
+	i.RLock()
+	j.RLock()
 
 	// Grab their transforms.
-	iTransform := b.Objects[i].Transform
-	jTransform := b.Objects[j].Transform
+	iTransform := i.Transform
+	jTransform := j.Transform
 
 	// Unlock the objects.
-	v.RUnlock()
-	k.RUnlock()
+	i.RUnlock()
+	j.RUnlock()
+
+	// Convert each position to world space.
+	iPos := iTransform.ConvertPos(iTransform.Pos(), ParentToWorld)
+	jPos := jTransform.ConvertPos(jTransform.Pos(), ParentToWorld)
 
 	// Calculate the distance from each object to the target position.
-	iDist := iTransform.Pos().Sub(b.Target).Length()
-	jDist := jTransform.Pos().Sub(b.Target).Length()
+	iDist := iPos.Sub(b.Target).LengthSq()
+	jDist := jPos.Sub(b.Target).LengthSq()
 
 	// If i is further away from j (greater value) then it should sort first.
 	return iDist > jDist
