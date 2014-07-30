@@ -6,8 +6,8 @@ package gl2
 
 import (
 	"azul3d.org/gfx.v1"
+	"azul3d.org/gfx/gl2.v1/internal/resize"
 	"azul3d.org/native/gl.v1"
-	"azul3d.org/thirdparty/resize.v1"
 	"fmt"
 	"image"
 	"image/draw"
