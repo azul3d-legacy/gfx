@@ -27,6 +27,10 @@ func (n *nativeTexture) Destroy() {
 	finalizeTexture(n)
 }
 
+func (n *nativeTexture) ChosenFormat() gfx.TexFormat {
+	return unconvertTexFormat(n.internalFormat)
+}
+
 func finalizeTexture(n *nativeTexture) {
 	n.r.texturesToFree.Lock()
 	n.r.texturesToFree.slice = append(n.r.texturesToFree.slice, n.id)
@@ -295,6 +299,24 @@ func convertTexFormat(f gfx.TexFormat) int32 {
 		return glCOMPRESSED_RGBA_S3TC_DXT3_EXT
 	case gfx.DXT5:
 		return glCOMPRESSED_RGBA_S3TC_DXT5_EXT
+	}
+	panic("unknown format")
+}
+
+func unconvertTexFormat(f int32) gfx.TexFormat {
+	switch f {
+	case gl.RGBA:
+		return gfx.RGBA
+	case gl.RGB:
+		return gfx.RGB
+	case glCOMPRESSED_RGB_S3TC_DXT1_EXT:
+		return gfx.DXT1
+	case glCOMPRESSED_RGBA_S3TC_DXT1_EXT:
+		return gfx.DXT1RGBA
+	case glCOMPRESSED_RGBA_S3TC_DXT3_EXT:
+		return gfx.DXT3
+	case glCOMPRESSED_RGBA_S3TC_DXT5_EXT:
+		return gfx.DXT5
 	}
 	panic("unknown format")
 }
