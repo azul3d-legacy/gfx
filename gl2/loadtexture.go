@@ -53,8 +53,8 @@ func fbErrorString(err int32) string {
 
 func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image) {
 	if !n.r.glArbFramebufferObject {
-		// We don't have GL_ARB_framebuffer_object extensions, we can't do
-		// this at all.
+		// We don't have GL_ARB_framebuffer_object extension, we can't do this
+		// at all.
 		n.r.logf("Download(): GL_ARB_framebuffer_object not supported; returning nil\n")
 		complete <- nil
 		return
@@ -128,6 +128,12 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 
 // Implements gfx.Renderer interface.
 func (r *Renderer) RenderToTexture(t *gfx.Texture, target gfx.Precision) gfx.Canvas {
+	if !r.glArbFramebufferObject {
+		// We don't have GL_ARB_framebuffer_object extension, we can't do this
+		// at all.
+		return nil
+	}
+
 	return r
 }
 
