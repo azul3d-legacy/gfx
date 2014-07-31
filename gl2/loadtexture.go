@@ -127,7 +127,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 }
 
 // Implements gfx.Renderer interface.
-func (r *Renderer) RenderToTexture(t *gfx.Texture) gfx.Canvas {
+func (r *Renderer) RenderToTexture(t *gfx.Texture, target gfx.Precision) gfx.Canvas {
 	return r
 }
 
