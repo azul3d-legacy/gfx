@@ -10,7 +10,7 @@ import (
 )
 
 // Precision represents the precision in bits of the color, depth, and stencil
-// buffers.
+// buffers as well as the number of samples per pixel.
 type Precision struct {
 	// The precision in bits of each pixel in the color buffer, per color (e.g.
 	// 8/8/8/8 would be 32bpp RGBA color, 8/8/8/0 would be 24bpp RGB color, and
