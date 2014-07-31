@@ -147,6 +147,9 @@ type GPUInfo struct {
 	// Where k is any precision in this slice. Of course, any precision can be
 	// passed into RenderToTexture, but only these are guaranteed to be
 	// precisely given.
+	//
+	// If the length of this slice is zero, render to texture is not available
+	// and as such calls to RenderToTexture() will return nil.
 	RTTFormats []Precision
 
 	// Whether or not the AlphaToCoverage alpha mode is supported (if false
@@ -273,5 +276,8 @@ type Renderer interface {
 	// bounds of this renderer's canvas. The texture's bounding rectangle is
 	// what effectively determines the resolution at which the returned canvas
 	// and texture render at.
+	//
+	// If render to texture is not supported by the graphics hardware (that is,
+	// if len(GPUInfo.RTTFormats) == 0) then nil is returned.
 	RenderToTexture(t *Texture, target Precision) Canvas
 }
