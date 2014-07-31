@@ -70,6 +70,11 @@ type Downloadable interface {
 type NativeTexture interface {
 	Destroyable
 	Downloadable
+
+	// ChosenFormat tells the texture format chosen by the renderer for storing
+	// this texture on the graphics device. It may differ from the Texture's
+	// Format field only if the graphics device does not support that format.
+	ChosenFormat() TexFormat
 }
 
 // Texture represents a single 2D texture that may be applied to a mesh for
@@ -106,7 +111,8 @@ type Texture struct {
 	// result in lossy conversions (e.g. RGB would lose the alpha channel, etc).
 	//
 	// If the format is not supported then the renderer may use an image format
-	// that is similar and is supported.
+	// that is similar and is supported (and the format chosen by the renderer
+	// can be determined via NativeTexture's ChosenFormat method).
 	Format TexFormat
 
 	// The U and V wrap modes of this texture.

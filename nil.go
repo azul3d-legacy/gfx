@@ -17,11 +17,16 @@ func (n nilNativeObject) SampleCount() int {
 	return 0
 }
 
-type nilNativeTexture struct{}
+type nilNativeTexture struct {
+	format TexFormat
+}
 
 func (n nilNativeTexture) Destroy() {}
 func (n nilNativeTexture) Download(r image.Rectangle, complete chan image.Image) {
 	complete <- nil
+}
+func (n nilNativeTexture) ChosenFormat() TexFormat {
+	return n.format
 }
 
 type nilNativeMesh struct{}
@@ -111,7 +116,9 @@ func (n *nilRenderer) LoadTexture(t *Texture, done chan *Texture) {
 	t.Lock()
 	t.Loaded = true
 	t.ClearData()
-	t.NativeTexture = nilNativeTexture{}
+	t.NativeTexture = nilNativeTexture{
+		t.Format,
+	}
 	t.Unlock()
 	select {
 	case done <- t:
@@ -131,6 +138,13 @@ func (n *nilRenderer) LoadShader(s *Shader, done chan *Shader) {
 }
 
 func (n *nilRenderer) RenderToTexture(t *Texture) Canvas {
+	t.Lock()
+	t.Loaded = true
+	t.ClearData()
+	t.NativeTexture = nilNativeTexture{
+		t.Format,
+	}
+	t.Unlock()
 	return new(nilRenderer)
 }
 
