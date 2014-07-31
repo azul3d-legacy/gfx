@@ -481,10 +481,10 @@ func New(keepState bool) (*Renderer, error) {
 	r.precision.DepthBits = uint8(depthBits)
 	r.precision.StencilBits = uint8(stencilBits)
 
-	// Query whether we have the GL_ARB_framebuffer_object.
+	// Query whether we have the GL_ARB_framebuffer_object extension.
 	r.glArbFramebufferObject = r.render.Extension("GL_ARB_framebuffer_object")
 
-	// Query whether we have the GL_ARB_occlusion_query.
+	// Query whether we have the GL_ARB_occlusion_query extension.
 	r.glArbOcclusionQuery = r.render.Extension("GL_ARB_occlusion_query")
 
 	// Query whether we have the GL_ARB_multisample extension.
