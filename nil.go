@@ -44,6 +44,8 @@ type nilRenderer struct {
 		enabled bool
 	}
 
+	precision Precision
+
 	// The graphics clock.
 	clock *clock.Clock
 }
@@ -57,14 +59,7 @@ func (n *nilRenderer) Bounds() image.Rectangle {
 }
 
 func (n *nilRenderer) Precision() Precision {
-	return Precision{
-		RedBits:     255,
-		GreenBits:   255,
-		BlueBits:    255,
-		AlphaBits:   255,
-		DepthBits:   255,
-		StencilBits: 255,
-	}
+	return n.precision
 }
 
 func (n *nilRenderer) GPUInfo() GPUInfo {
@@ -137,7 +132,7 @@ func (n *nilRenderer) LoadShader(s *Shader, done chan *Shader) {
 	}
 }
 
-func (n *nilRenderer) RenderToTexture(t *Texture) Canvas {
+func (n *nilRenderer) RenderToTexture(t *Texture, target Precision) Canvas {
 	t.Lock()
 	t.Loaded = true
 	t.ClearData()
@@ -145,12 +140,22 @@ func (n *nilRenderer) RenderToTexture(t *Texture) Canvas {
 		t.Format,
 	}
 	t.Unlock()
-	return new(nilRenderer)
+	canvas := new(nilRenderer)
+	canvas.precision = target
+	return canvas
 }
 
 // Nil returns a renderer that does not actually render anything.
 func Nil() Renderer {
 	r := new(nilRenderer)
+	r.precision = Precision{
+		RedBits:     255,
+		GreenBits:   255,
+		BlueBits:    255,
+		AlphaBits:   255,
+		DepthBits:   255,
+		StencilBits: 255,
+	}
 	r.msaa.enabled = true
 	r.clock = clock.New()
 	return r

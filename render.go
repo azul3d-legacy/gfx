@@ -141,6 +141,14 @@ type GPUInfo struct {
 	// images for use with the renderer, or -1 if not available.
 	MaxTextureSize int
 
+	// RTTFormats is a list of available precisions for render to texture. It
+	// is such that:
+	//  Renderer.RenderToTexture(tex, k).Precision() == k
+	// Where k is any precision in this slice. Of course, any precision can be
+	// passed into RenderToTexture, but only these are guaranteed to be
+	// precisely given.
+	RTTFormats []Precision
+
 	// Whether or not the AlphaToCoverage alpha mode is supported (if false
 	// then BinaryAlpha will automatically be used as a fallback).
 	AlphaToCoverage bool
@@ -257,9 +265,13 @@ type Renderer interface {
 	// are stored inside of the given texture that may then be used in other
 	// drawing operations.
 	//
+	// The renderer will attempt to return a canvas whose precision is exactly
+	// identical to the given one, if an identical one cannot be provided then
+	// the closest one possible will be.
+	//
 	// If the texture's bounding rectangle is empty then it will be set to the
 	// bounds of this renderer's canvas. The texture's bounding rectangle is
 	// what effectively determines the resolution at which the returned canvas
 	// and texture render at.
-	RenderToTexture(t *Texture) Canvas
+	RenderToTexture(t *Texture, target Precision) Canvas
 }
