@@ -5,6 +5,7 @@
 package gfx
 
 import (
+	"fmt"
 	"image"
 	"sync"
 )
@@ -12,9 +13,63 @@ import (
 // TexFormat specifies a single texture storage format.
 type TexFormat uint8
 
+// String returns a string name for this texture format. For example:
+//  RGBA -> "RGBA"
+func (t TexFormat) String() string {
+	switch t {
+	case ZeroTexFormat:
+		return "ZeroTexFormat"
+	case RGB:
+		return "RGB"
+	case RGBA:
+		return "RGBA"
+	case DXT1:
+		return "DXT1"
+	case DXT1RGBA:
+		return "DXT1RGBA"
+	case DXT3:
+		return "DXT3"
+	case DXT5:
+		return "DXT5"
+	}
+	return fmt.Sprintf("TexFormat(%d)", t)
+}
+
+// Bits returns the number of bits per color component in this texture format.
+// For example:
+//  r, g, b, a := RGB.Bits()
+//  r == 8 && g == 8 && b == 8 && a == 0
+// A panic will occur if the format is not one of the predefined ones in this
+// package.
+//
+// ZeroTexFormat, DXT1, DXT3, and DXT5 formats will return only zero.
+func (t TexFormat) Bits() (r, g, b, a uint8) {
+	switch t {
+	case RGB:
+		return 8, 8, 8, 0
+	case RGBA:
+		return 8, 8, 8, 8
+
+	case ZeroTexFormat:
+		return 0, 0, 0, 0
+	case DXT1:
+		return 0, 0, 0, 0
+	case DXT1RGBA:
+		return 0, 0, 0, 0
+	case DXT3:
+		return 0, 0, 0, 0
+	case DXT5:
+		return 0, 0, 0, 0
+	}
+	panic("invalid format")
+}
+
 const (
+	// Zero-value texture format. Used to represent nil/none/zero.
+	ZeroTexFormat TexFormat = iota
+
 	// RGBA is a standard 32-bit premultiplied alpha image format.
-	RGBA TexFormat = iota
+	RGBA
 
 	// RGB is a standard 24-bit RGB image format with no alpha component.
 	RGB
