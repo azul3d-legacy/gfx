@@ -7,4 +7,15 @@
 // The behavior of the renderer is defined fully in the gfx package (as such
 // this package only makes mention of strictly OpenGL related caveats like
 // initialization, etc).
+//
+// When performing render-to-texture (RTT), feedback loops are explicitly
+// prohibited. This means that the renderer will panic if you attempt to draw
+// an object to an RTT canvas when the object uses the literal RTT texture in
+// itself. Through OpenGL the result of this is at best a corrupt image -- and
+// at worst driver-level memory corruption (hence it is not allowed).
+//
+// A texture can turn on and off mipmapped by setting it's minification filter
+// to a mipmapped or non-mipmapped filter after the texture has been loaded,
+// but mipmapped can only be turned on with a loaded texture if when it loaded
+// it had a mipmapped minification filter set on it.
 package gl2

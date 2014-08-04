@@ -23,6 +23,25 @@ type nativeTexture struct {
 	width, height  int
 }
 
+// Generates texture ID, binds, and sets BASE/MAX mipmap levels to zero.
+//
+// Used by both LoadTexture and RenderToTexture methods.
+func newNativeTexture(ctx *gl.Context, r *Renderer, internalFormat int32, width, height int) *nativeTexture {
+	tex := &nativeTexture{
+		r:              r,
+		internalFormat: internalFormat,
+		width:          width,
+		height:         height,
+	}
+	ctx.GenTextures(1, &tex.id)
+	ctx.Execute()
+
+	ctx.BindTexture(gl.TEXTURE_2D, tex.id)
+	ctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
+	ctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 1000)
+	return tex
+}
+
 func (n *nativeTexture) Destroy() {
 	finalizeTexture(n)
 }
@@ -124,17 +143,6 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 
 		complete <- img
 	}
-}
-
-// Implements gfx.Renderer interface.
-func (r *Renderer) RenderToTexture(t *gfx.Texture, target gfx.Precision) gfx.Canvas {
-	if !r.glArbFramebufferObject {
-		// We don't have GL_ARB_framebuffer_object extension, we can't do this
-		// at all.
-		return nil
-	}
-
-	return r
 }
 
 func verticalFlip(img *image.RGBA) {
@@ -294,9 +302,9 @@ const (
 func convertTexFormat(f gfx.TexFormat) int32 {
 	switch f {
 	case gfx.RGBA:
-		return gl.RGBA
+		return gl.RGBA8
 	case gfx.RGB:
-		return gl.RGB
+		return gl.RGB8
 	case gfx.DXT1:
 		return glCOMPRESSED_RGB_S3TC_DXT1_EXT
 	case gfx.DXT1RGBA:
@@ -311,9 +319,9 @@ func convertTexFormat(f gfx.TexFormat) int32 {
 
 func unconvertTexFormat(f int32) gfx.TexFormat {
 	switch f {
-	case gl.RGBA:
+	case gl.RGBA8:
 		return gfx.RGBA
-	case gl.RGB:
+	case gl.RGB8:
 		return gfx.RGB
 	case glCOMPRESSED_RGB_S3TC_DXT1_EXT:
 		return gfx.DXT1
@@ -331,6 +339,9 @@ func unconvertTexFormat(f int32) gfx.TexFormat {
 func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	// Lock the texture until we are done loading it.
 	t.Lock()
+	if !t.Loaded && t.Source == nil {
+		panic("LoadTexture(): Texture has a nil source!")
+	}
 	if t.Loaded {
 		// Texture is already loaded, signal completion if needed and return
 		// after unlocking.
@@ -342,21 +353,10 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		return
 	}
 
+	// Prepare the image for uploading.
+	src := prepareImage(r.gpuInfo.NPOT, t.Source)
+
 	f := func() {
-		// Create texture ID.
-		native := &nativeTexture{
-			r: r,
-		}
-		r.loader.GenTextures(1, &native.id)
-		r.loader.Execute()
-
-		// Bind the texture.
-		r.loader.BindTexture(gl.TEXTURE_2D, native.id)
-
-		// Set wrap mode.
-		r.loader.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
-		r.loader.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0)
-
 		// Determine appropriate internal image format.
 		targetFormat := convertTexFormat(t.Format)
 		internalFormat := gl.RGBA
@@ -366,11 +366,22 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 				break
 			}
 		}
-		native.internalFormat = internalFormat
+
+		// Initialize native texture.
+		bounds := src.Bounds()
+		native := newNativeTexture(
+			r.loader,
+			r,
+			internalFormat,
+			bounds.Dx(),
+			bounds.Dy(),
+		)
+
+		if t.MinFilter.Mipmapped() {
+			r.loader.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, int32(gl.TRUE))
+		}
 
 		// Upload the image.
-		src := prepareImage(r.gpuInfo.NPOT, t.Source)
-		bounds := src.Bounds()
 		r.loader.TexImage2D(
 			gl.TEXTURE_2D,
 			0,
@@ -382,8 +393,6 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 			gl.UNSIGNED_BYTE,
 			unsafe.Pointer(&src.Pix[0]),
 		)
-		native.width = bounds.Dx()
-		native.height = bounds.Dy()
 
 		// Unbind texture to avoid carrying OpenGL state.
 		r.loader.BindTexture(gl.TEXTURE_2D, 0)

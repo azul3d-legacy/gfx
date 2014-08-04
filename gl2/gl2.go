@@ -36,6 +36,8 @@ type pendingQuery struct {
 // to use only a single OpenGL context for windowing libraries that do not
 // support multiple, but this will inheritly disable asynchronous loading).
 type Renderer struct {
+	*baseCanvas
+
 	// Render and loader execution channels.
 	RenderExec chan func() bool
 	LoaderExec chan func()
@@ -52,13 +54,6 @@ type Renderer struct {
 
 	// The graphics clock.
 	clock *clock.Clock
-
-	// The bounds of the gfx.Drawable, must be updated whenever the window size
-	// changes.
-	bounds struct {
-		sync.RWMutex
-		rect image.Rectangle
-	}
 
 	// GPU limitations.
 	gpuInfo gfx.GPUInfo
@@ -111,17 +106,16 @@ type Renderer struct {
 		queries []pendingQuery
 	}
 
+	// RTT format lookups (from gfx formats to GL ones).
+	rttTexFormats map[gfx.TexFormat]int32
+	rttDSFormats  map[gfx.DSFormat]int32
+
+	// If non-nil, then we are currently rendering to a texture. It is only
+	// touched inside RenderExec.
+	*rttCanvas
+
 	// Whether or not our global OpenGL state has been set for this frame.
 	stateSetForFrame bool
-
-	// The precision of this renderer.
-	precision gfx.Precision
-
-	// The MSAA state.
-	msaa struct {
-		sync.RWMutex
-		enabled bool
-	}
 
 	// Channel to wait for a Render() call to finish.
 	renderComplete chan struct{}
@@ -132,39 +126,161 @@ func (r *Renderer) Clock() *clock.Clock {
 	return r.clock
 }
 
-// Implements gfx.Renderer interface.
-func (r *Renderer) Bounds() image.Rectangle {
-	r.bounds.RLock()
-	b := r.bounds.rect
-	r.bounds.RUnlock()
-	return b
+// Short methods that just call the hooked methods (hooked methods are used in
+// rtt.go file for render to texture things).
+
+// Implements gfx.Canvas interface.
+func (r *Renderer) Clear(rect image.Rectangle, bg gfx.Color) {
+	r.hookedClear(rect, bg, nil, nil)
 }
 
-// Implements gfx.Renderer interface.
-func (r *Renderer) Clear(rect image.Rectangle, bg gfx.Color) {
+// Implements gfx.Canvas interface.
+func (r *Renderer) ClearDepth(rect image.Rectangle, depth float64) {
+	r.hookedClearDepth(rect, depth, nil, nil)
+}
+
+// Implements gfx.Canvas interface.
+func (r *Renderer) ClearStencil(rect image.Rectangle, stencil int) {
+	r.hookedClearStencil(rect, stencil, nil, nil)
+}
+
+// Implements gfx.Canvas interface.
+func (r *Renderer) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
+	r.hookedDraw(rect, o, c, nil, nil)
+}
+
+// Implements gfx.Canvas interface.
+func (r *Renderer) QueryWait() {
+	r.hookedQueryWait(nil, nil)
+}
+
+// Implements gfx.Canvas interface.
+func (r *Renderer) Render() {
+	r.hookedRender(nil, nil)
+}
+
+// Implements gfx.Canvas interface.
+func (r *Renderer) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post func()) {
 	r.RenderExec <- func() bool {
+		if pre != nil {
+			pre()
+		}
 		r.performClear(rect, bg)
 		r.queryYield()
+		if post != nil {
+			post()
+		}
 		return false
 	}
 }
 
-// Implements gfx.Renderer interface.
-func (r *Renderer) ClearDepth(rect image.Rectangle, depth float64) {
+// Implements gfx.Canvas interface.
+func (r *Renderer) hookedClearDepth(rect image.Rectangle, depth float64, pre, post func()) {
 	r.RenderExec <- func() bool {
+		if pre != nil {
+			pre()
+		}
 		r.performClearDepth(rect, depth)
 		r.queryYield()
+		if post != nil {
+			post()
+		}
 		return false
 	}
 }
 
-// Implements gfx.Renderer interface.
-func (r *Renderer) ClearStencil(rect image.Rectangle, stencil int) {
+// Implements gfx.Canvas interface.
+func (r *Renderer) hookedClearStencil(rect image.Rectangle, stencil int, pre, post func()) {
 	r.RenderExec <- func() bool {
+		if pre != nil {
+			pre()
+		}
 		r.performClearStencil(rect, stencil)
 		r.queryYield()
+		if post != nil {
+			post()
+		}
 		return false
 	}
+}
+
+func (r *Renderer) hookedQueryWait(pre, post func()) {
+	// Ask the render channel to wait for query results now.
+	r.RenderExec <- func() bool {
+		if pre != nil {
+			pre()
+		}
+
+		// Flush and execute any pending OpenGL commands.
+		r.render.Flush()
+		r.render.Execute()
+
+		// Wait for occlusion query results to come in.
+		r.queryWait()
+
+		if post != nil {
+			post()
+		}
+
+		// signal render completion.
+		r.renderComplete <- struct{}{}
+		return false
+	}
+	<-r.renderComplete
+}
+
+func (r *Renderer) hookedRender(pre, post func()) {
+	// If any finalizers have ran and actually want us to free something, then
+	// we will ask the loader to do so now.
+	r.LoaderExec <- func() {
+		r.freeMeshes()
+		r.freeShaders()
+		r.freeTextures()
+	}
+
+	// Ask the render channel to render things now.
+	r.RenderExec <- func() bool {
+		if pre != nil {
+			pre()
+		}
+
+		// Execute all pending operations.
+		for i := 0; i < len(r.RenderExec); i++ {
+			f := <-r.RenderExec
+			f()
+		}
+
+		// Flush and execute any pending OpenGL commands.
+		r.render.Flush()
+		r.render.Execute()
+
+		// Wait for occlusion query results to come in.
+		r.queryWait()
+
+		if post != nil {
+			post()
+		}
+
+		if r.rttCanvas != nil {
+			// We are rendering to a texture. We do not need to clear global
+			// state, tick the clock, or return true (frame rendered).
+
+			// We do still need to signal render completion.
+			r.renderComplete <- struct{}{}
+			return false
+		}
+
+		// Clear our OpenGL state now.
+		r.clearGlobalState()
+
+		// Tick the clock.
+		r.clock.Tick()
+
+		// signal render completion.
+		r.renderComplete <- struct{}{}
+		return true
+	}
+	<-r.renderComplete
 }
 
 // Tries to receive pending occlusion query results, returns immediately if
@@ -221,84 +337,18 @@ func (r *Renderer) queryWait() {
 }
 
 // Implements gfx.Renderer interface.
-func (r *Renderer) QueryWait() {
-	// Ask the render channel to wait for query results now.
-	r.RenderExec <- func() bool {
-		// Flush and execute any pending OpenGL commands.
-		r.render.Flush()
-		r.render.Execute()
-
-		// Wait for occlusion query results to come in.
-		r.queryWait()
-
-		// signal render completion.
-		r.renderComplete <- struct{}{}
-		return false
-	}
-	<-r.renderComplete
-}
-
-// Implements gfx.Renderer interface.
-func (r *Renderer) Render() {
-	// If any finalizers have ran and actually want us to free something, then
-	// we will ask the loader to do so now.
-	r.LoaderExec <- func() {
-		r.freeMeshes()
-		r.freeShaders()
-		r.freeTextures()
-	}
-
-	// Ask the render channel to render things now.
-	r.RenderExec <- func() bool {
-		// Execute all pending operations.
-		for i := 0; i < len(r.RenderExec); i++ {
-			f := <-r.RenderExec
-			f()
-		}
-
-		// Flush and execute any pending OpenGL commands.
-		r.render.Flush()
-		r.render.Execute()
-
-		// Clear our OpenGL state now.
-		r.clearGlobalState()
-
-		// Wait for occlusion query results to come in.
-		r.queryWait()
-
-		// Tick the clock.
-		r.clock.Tick()
-
-		// signal render completion.
-		r.renderComplete <- struct{}{}
-		return true
-	}
-	<-r.renderComplete
-}
-
-// Implements gfx.Renderer interface.
-func (r *Renderer) Precision() gfx.Precision {
-	return r.precision
-}
-
-// Implements gfx.Renderer interface.
 func (r *Renderer) GPUInfo() gfx.GPUInfo {
 	return r.gpuInfo
 }
 
-// Implements gfx.Canvas interface.
-func (r *Renderer) SetMSAA(msaa bool) {
-	r.msaa.Lock()
-	r.msaa.enabled = msaa
-	r.msaa.Unlock()
-}
-
-// Implements gfx.Canvas interface.
-func (r *Renderer) MSAA() (msaa bool) {
-	r.msaa.RLock()
-	msaa = r.msaa.enabled
-	r.msaa.RUnlock()
-	return
+// Effectively just calls stateScissor(), but passes in the proper bounds
+// according to whether or not we are rendering to an rttCanvas or not.
+func (r *Renderer) performScissor(ctx *gl.Context, rect image.Rectangle) {
+	if r.rttCanvas != nil {
+		r.stateScissor(ctx, r.rttCanvas.Bounds(), rect)
+	} else {
+		r.stateScissor(ctx, r.Bounds(), rect)
+	}
 }
 
 func (r *Renderer) performClear(rect image.Rectangle, bg gfx.Color) {
@@ -308,7 +358,7 @@ func (r *Renderer) performClear(rect image.Rectangle, bg gfx.Color) {
 	r.stateColorWrite(r.render, [4]bool{true, true, true, true})
 
 	// Perform clearing.
-	r.stateScissor(r.render, r.Bounds(), rect)
+	r.performScissor(r.render, rect)
 	r.stateClearColor(r.render, bg)
 	r.render.Clear(uint32(gl.COLOR_BUFFER_BIT))
 }
@@ -320,7 +370,7 @@ func (r *Renderer) performClearDepth(rect image.Rectangle, depth float64) {
 	r.stateDepthWrite(r.render, true)
 
 	// Perform clearing.
-	r.stateScissor(r.render, r.Bounds(), rect)
+	r.performScissor(r.render, rect)
 	r.stateClearDepth(r.render, depth)
 	r.render.Clear(uint32(gl.DEPTH_BUFFER_BIT))
 }
@@ -332,7 +382,7 @@ func (r *Renderer) performClearStencil(rect image.Rectangle, stencil int) {
 	r.stateStencilMask(r.render, 0xFFFF, 0xFFFF)
 
 	// Perform clearing.
-	r.stateScissor(r.render, r.Bounds(), rect)
+	r.performScissor(r.render, rect)
 	r.stateClearStencil(r.render, stencil)
 	r.render.Clear(uint32(gl.STENCIL_BUFFER_BIT))
 }
@@ -341,9 +391,7 @@ func (r *Renderer) performClearStencil(rect image.Rectangle, stencil int) {
 // must be called whenever the OpenGL canvas size should change (e.g. on window
 // resize).
 func (r *Renderer) UpdateBounds(bounds image.Rectangle) {
-	r.bounds.Lock()
-	r.bounds.rect = bounds
-	r.bounds.Unlock()
+	r.baseCanvas.setBounds(bounds)
 }
 
 func (r *Renderer) setGlobalState() {
@@ -363,19 +411,15 @@ func (r *Renderer) setGlobalState() {
 		}
 
 		// Update viewport bounds.
-		r.bounds.Lock()
-		r.render.Viewport(0, 0, uint32(r.bounds.rect.Dx()), uint32(r.bounds.rect.Dy()))
-		r.bounds.Unlock()
+		bounds := r.baseCanvas.Bounds()
+		r.render.Viewport(0, 0, uint32(bounds.Dx()), uint32(bounds.Dy()))
 
 		// Enable scissor testing.
 		r.render.Enable(gl.SCISSOR_TEST)
 
 		// Enable multisampling, if available and wanted.
 		if r.glArbMultisample {
-			r.msaa.RLock()
-			msaa := r.msaa.enabled
-			r.msaa.RUnlock()
-			if msaa {
+			if r.baseCanvas.MSAA() {
 				r.render.Enable(gl.MULTISAMPLE)
 			}
 		}
@@ -439,6 +483,9 @@ func (r *Renderer) SetDebugOutput(w io.Writer) {
 // does come with a performance cost.
 func New(keepState bool) (*Renderer, error) {
 	r := &Renderer{
+		baseCanvas: &baseCanvas{
+			msaa: true,
+		},
 		RenderExec:     make(chan func() bool, 1024),
 		LoaderExec:     make(chan func(), 1024),
 		keepState:      keepState,
@@ -446,9 +493,6 @@ func New(keepState bool) (*Renderer, error) {
 		wantFree:       make(chan struct{}, 1),
 		clock:          clock.New(),
 	}
-
-	// MSAA is enabled by default.
-	r.msaa.enabled = true
 
 	// Initialize r.render now.
 	r.render = gl.New()
@@ -508,6 +552,7 @@ func New(keepState bool) (*Renderer, error) {
 	}
 	r.render.Execute()
 
+	// Collect GPU information.
 	r.gpuInfo.MaxTextureSize = int(maxTextureSize)
 	r.gpuInfo.GLSLMaxVaryingFloats = int(maxVaryingFloats)
 	r.gpuInfo.GLSLMaxVertexInputs = int(maxVertexInputs)
@@ -521,22 +566,79 @@ func New(keepState bool) (*Renderer, error) {
 	r.gpuInfo.OcclusionQuery = r.glArbOcclusionQuery && occlusionQueryBits > 0
 	r.gpuInfo.OcclusionQueryBits = int(occlusionQueryBits)
 	r.gpuInfo.NPOT = r.render.Extension("GL_ARB_texture_non_power_of_two")
+	if r.glArbFramebufferObject {
+		// See http://www.opengl.org/wiki/Image_Format for more information.
+		//
+		// TODO:
+		//  GL_DEPTH32F_STENCIL8 and GL_DEPTH_COMPONENT32F via Texture.Format
+		//      option. (does it require an extension check with GL 2.0?)
+		//  GL_STENCIL_INDEX8 (looks like 4.3+ GL hardware)
+		//  GL_RGBA16F, GL_RGBA32F via Texture.Format
+		//  Compressed formats (DXT ?)
+		//  sRGB formats
+		//
+		//  GL_RGB16, GL_RGBA16
+
+		r.rttTexFormats = make(map[gfx.TexFormat]int32, 16)
+		r.rttDSFormats = make(map[gfx.DSFormat]int32, 16)
+
+		// Formats below are guaranteed to be supported in OpenGL 2.x hardware:
+		fmts := r.gpuInfo.RTTFormats
+
+		// Color formats.
+		fmts.ColorFormats = append(fmts.ColorFormats, []gfx.TexFormat{
+			gfx.RGB,
+			gfx.RGBA,
+		}...)
+		for _, cf := range fmts.ColorFormats {
+			r.rttTexFormats[cf] = convertTexFormat(cf)
+		}
+
+		// Depth formats.
+		fmts.DepthFormats = append(fmts.DepthFormats, []gfx.DSFormat{
+			gfx.Depth16,
+			gfx.Depth24,
+			gfx.Depth32,
+			gfx.Depth24AndStencil8,
+		}...)
+		r.rttDSFormats[gfx.Depth16] = gl.DEPTH_COMPONENT16
+		r.rttDSFormats[gfx.Depth24] = gl.DEPTH_COMPONENT24
+		r.rttDSFormats[gfx.Depth32] = gl.DEPTH_COMPONENT32
+
+		// Stencil formats.
+		fmts.StencilFormats = append(fmts.StencilFormats, []gfx.DSFormat{
+			gfx.Depth24AndStencil8,
+		}...)
+		r.rttDSFormats[gfx.Depth24AndStencil8] = gl.DEPTH24_STENCIL8
+
+		// Sample counts.
+		// TODO: Beware integer texture formats -- MSAA can at max be
+		//       GL_MAX_INTEGER_SAMPLES with those.
+		var maxSamples int32
+		r.render.GetIntegerv(gl.MAX_SAMPLES, &maxSamples)
+		r.render.Execute()
+		for i := 0; i < int(maxSamples); i++ {
+			fmts.Samples = append(fmts.Samples, i)
+		}
+
+		r.gpuInfo.RTTFormats = fmts
+	}
 
 	// Grab the current renderer bounds (opengl viewport).
 	var viewport [4]int32
 	r.render.GetIntegerv(gl.VIEWPORT, &viewport[0])
 	r.render.Execute()
-	r.bounds.rect = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
+	r.baseCanvas.bounds = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
 
 	if keepState {
 		// Load the existing graphics state.
-		r.graphicsState = queryExistingState(r.render, &r.gpuInfo, r.bounds.rect)
+		r.graphicsState = queryExistingState(r.render, &r.gpuInfo, r.baseCanvas.bounds)
 	} else {
 		r.graphicsState = defaultGraphicsState
 	}
 
 	// Update scissor rectangle.
-	r.stateScissor(r.render, r.bounds.rect, r.bounds.rect)
+	r.stateScissor(r.render, r.baseCanvas.bounds, r.baseCanvas.bounds)
 
 	// Grab the number of texture compression formats.
 	var numFormats int32

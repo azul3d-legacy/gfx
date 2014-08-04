@@ -123,8 +123,7 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 	return n
 }
 
-// Implements gfx.Renderer interface.
-func (r *Renderer) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
+func (r *Renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
 	lock := func() {
 		o.Lock()
 		if c != nil {
@@ -230,11 +229,15 @@ func (r *Renderer) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
 
 	// Ask the render loop to perform drawing.
 	r.RenderExec <- func() bool {
+		if pre != nil {
+			pre()
+		}
+
 		// Set global GL state.
 		r.setGlobalState()
 
 		// Update the scissor region (effects drawing).
-		r.stateScissor(r.render, r.Bounds(), rect)
+		r.performScissor(r.render, rect)
 
 		var ns *nativeShader
 		if o.NativeShader != nil {
@@ -258,6 +261,9 @@ func (r *Renderer) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
 		// Yield for occlusion query results, if any are available.
 		r.queryYield()
 
+		if post != nil {
+			post()
+		}
 		return false
 	}
 }
@@ -425,6 +431,18 @@ func (r *Renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 
 	// Bind each texture.
 	for i, t := range obj.Textures {
+		// Ensure there are no feedback loops if we are rendering to a texture.
+		if r.rttCanvas != nil {
+			cfg := r.rttCanvas.cfg
+			color := cfg.Color.NativeTexture
+			depth := cfg.Color.NativeTexture
+			stencil := cfg.Color.NativeTexture
+			native := t.NativeTexture
+			if native != nil && (native == color || native == depth || native == stencil) {
+				panic("Feedback Loop - Object cannot use the texture that is being drawn to.")
+			}
+		}
+
 		nt := t.NativeTexture.(*nativeTexture)
 
 		r.render.ActiveTexture(gl.TEXTURE0 + int32(i))
@@ -445,9 +463,14 @@ func (r *Renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 		r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, convertFilter(t.MinFilter))
 		r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, convertFilter(t.MagFilter))
 
-		// Enable mipmap generation if either filter is mipmapped.
-		if t.MinFilter.Mipmapped() || t.MagFilter.Mipmapped() {
-			r.render.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, int32(gl.TRUE))
+		// If we do not want mipmapping, turn it off. Note that only the
+		// minification filter can be mipmapped (mag filter can never be).
+		if t.MinFilter.Mipmapped() {
+			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
+			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 1000)
+		} else {
+			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
+			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0)
 		}
 
 		// Add uniform input.

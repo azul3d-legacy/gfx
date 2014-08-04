@@ -1,0 +1,325 @@
+// Copyright 2014 The Azul3D Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package gl2
+
+import (
+	"azul3d.org/gfx.v1"
+	"azul3d.org/native/gl.v1"
+	"errors"
+	"fmt"
+	"image"
+)
+
+// rttCanvas is the gfx.Canvas returned by RenderToTexture.
+type rttCanvas struct {
+	*baseCanvas
+	r   *Renderer
+	cfg gfx.RTTConfig
+
+	// Frame buffer ID.
+	fbo uint32
+
+	// Render buffer ID's (rbColor is only a valid render buffer if e.g. the
+	// cfg.Color field is nil).
+	//
+	// rbDepthAndStencil is only set if cfg.DepthFormat.IsCombined()
+	rbColor, rbDepth, rbStencil, rbDepthAndStencil uint32
+}
+
+// Short methods that just call the hooked methods. We insert calls to rttBegin
+// and rttEnd (they are executed via r.r.RenderExec, i.e. legal for GL
+// rendering commands to be invoked).
+
+// Implements gfx.Canvas interface.
+func (r *rttCanvas) Clear(rect image.Rectangle, bg gfx.Color) {
+	r.r.hookedClear(rect, bg, r.rttBegin, r.rttEnd)
+}
+
+// Implements gfx.Canvas interface.
+func (r *rttCanvas) ClearDepth(rect image.Rectangle, depth float64) {
+	r.r.hookedClearDepth(rect, depth, r.rttBegin, r.rttEnd)
+}
+
+// Implements gfx.Canvas interface.
+func (r *rttCanvas) ClearStencil(rect image.Rectangle, stencil int) {
+	r.r.hookedClearStencil(rect, stencil, r.rttBegin, r.rttEnd)
+}
+
+// Implements gfx.Canvas interface.
+func (r *rttCanvas) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
+	r.r.hookedDraw(rect, o, c, r.rttBegin, r.rttEnd)
+}
+
+// Implements gfx.Canvas interface.
+func (r *rttCanvas) QueryWait() {
+	r.r.hookedQueryWait(r.rttBegin, r.rttEnd)
+}
+
+// Implements gfx.Canvas interface.
+func (r *rttCanvas) Render() {
+	r.r.hookedRender(r.rttBegin, func() {
+		// Generate mipmaps for any texture with a mipmapped format. This must
+		// be done here because the texture has just been rendered to.
+		do := func(t *gfx.Texture) {
+			if t == nil || !t.MinFilter.Mipmapped() {
+				return
+			}
+			n := t.NativeTexture.(*nativeTexture)
+			r.r.render.BindTexture(gl.TEXTURE_2D, n.id)
+			r.r.render.GenerateMipmap(gl.TEXTURE_2D)
+		}
+		do(r.cfg.Color)
+		do(r.cfg.Depth)
+		do(r.cfg.Stencil)
+		r.r.render.BindTexture(gl.TEXTURE_2D, 0)
+
+		// Finally, invoke rttEnd() as usual.
+		r.rttEnd()
+	})
+}
+
+func (r *rttCanvas) rttBegin() {
+	r.r.rttCanvas = r
+
+	// Bind the framebuffer object.
+	r.r.render.BindFramebuffer(gl.FRAMEBUFFER, r.fbo)
+}
+
+func (r *rttCanvas) rttEnd() {
+	r.r.rttCanvas = nil
+
+	// Unbind the framebuffer object.
+	r.r.render.BindFramebuffer(gl.FRAMEBUFFER, 0)
+}
+
+// Implements gfx.Downloadable interface.
+func (r *rttCanvas) Download(rect image.Rectangle, complete chan image.Image) {
+	// FIXME: implement.
+	return
+}
+
+var (
+	errFramebufferUndefined                   = errors.New("GL_FRAMEBUFFER_UNDEFINED")
+	errFramebufferIncompleteAttachment        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT")
+	errFramebufferIncompleteMissingAttachment = errors.New("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT")
+	errFramebufferIncompleteDrawBuffer        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER")
+	errFramebufferIncompleteReadBuffer        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER")
+	errFramebufferUnsupported                 = errors.New("GL_FRAMEBUFFER_UNSUPPORTED")
+	errFramebufferIncompleteMultisample       = errors.New("GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE")
+	errFramebufferIncompleteLayerTargets      = errors.New("GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS")
+)
+
+func checkFramebufferError(ctx *gl.Context, target int32) error {
+	err := ctx.CheckFramebufferStatus(target)
+	switch err {
+	case gl.FRAMEBUFFER_COMPLETE:
+		return nil
+	case gl.FRAMEBUFFER_UNDEFINED:
+		return errFramebufferUndefined
+	case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+		return errFramebufferIncompleteAttachment
+	case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+		return errFramebufferIncompleteMissingAttachment
+	case gl.FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+		return errFramebufferIncompleteDrawBuffer
+	case gl.FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+		return errFramebufferIncompleteReadBuffer
+	case gl.FRAMEBUFFER_UNSUPPORTED:
+		return errFramebufferUnsupported
+	case gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+		return errFramebufferIncompleteMultisample
+	case gl.FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+		return errFramebufferIncompleteLayerTargets
+	}
+	return fmt.Errorf("unkown framebuffer error (%d)", err)
+}
+
+// Implements gfx.Renderer interface.
+func (r *Renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
+	if !cfg.Valid() {
+		panic("RenderToTexture(): Configuration is invalid!")
+	}
+
+	if !r.glArbFramebufferObject {
+		// We don't have GL_ARB_framebuffer_object extension, we can't do this
+		// at all.
+		return nil
+	}
+
+	// Find OpenGL versions of formats.
+	colorFormat, ok := r.rttTexFormats[cfg.ColorFormat]
+	if cfg.ColorFormat != gfx.ZeroTexFormat && !ok {
+		return nil
+	}
+	depthFormat, ok := r.rttDSFormats[cfg.DepthFormat]
+	if cfg.DepthFormat != gfx.ZeroDSFormat && !ok {
+		return nil
+	}
+	stencilFormat, ok := r.rttDSFormats[cfg.StencilFormat]
+	if cfg.StencilFormat != gfx.ZeroDSFormat && !ok {
+		return nil
+	}
+
+	// Lock textures.
+	if cfg.Color != nil {
+		cfg.Color.Lock()
+	}
+	if cfg.Depth != nil {
+		cfg.Depth.Lock()
+	}
+	if cfg.Stencil != nil {
+		cfg.Stencil.Lock()
+	}
+
+	// Choose correct bounds.
+	bounds := cfg.Bounds
+	if bounds.Empty() {
+		bounds = r.baseCanvas.Bounds()
+	}
+
+	// Create the RTT canvas.
+	cr, cg, cb, ca := cfg.ColorFormat.Bits()
+	canvas := &rttCanvas{
+		baseCanvas: &baseCanvas{
+			msaa: true,
+			precision: gfx.Precision{
+				RedBits: cr, GreenBits: cg, BlueBits: cb, AlphaBits: ca,
+				DepthBits:   cfg.DepthFormat.DepthBits(),
+				StencilBits: cfg.StencilFormat.StencilBits(),
+			},
+			bounds: bounds,
+		},
+		r:   r,
+		cfg: cfg,
+	}
+
+	var (
+		nTexColor, nTexDepth, nTexStencil *nativeTexture
+		fbError                           error
+	)
+	r.RenderExec <- func() bool {
+		width := uint32(bounds.Dx())
+		height := uint32(bounds.Dy())
+
+		// Create the FBO.
+		r.render.GenFramebuffers(1, &canvas.fbo)
+		r.render.Execute()
+		r.render.BindFramebuffer(gl.FRAMEBUFFER, canvas.fbo)
+
+		// Create an OpenGL render buffer for each nil cfg texture. This allows
+		// the driver a chance to optimize storage for e.g. a depth buffer when
+		// you don't intend to use it as a texture.
+		samples := uint32(cfg.Samples)
+		if cfg.Color == nil && cfg.ColorFormat != gfx.ZeroTexFormat {
+			// We do not want a color texture, but we do want a color buffer.
+			r.render.GenRenderbuffers(1, &canvas.rbColor)
+			r.render.BindRenderbuffer(gl.RENDERBUFFER, canvas.rbColor)
+			r.render.RenderbufferStorageMultisample(gl.RENDERBUFFER, samples, colorFormat, width, height)
+			r.render.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, canvas.rbColor)
+		}
+		dsCombined := cfg.DepthFormat == cfg.StencilFormat && cfg.DepthFormat.IsCombined()
+		if cfg.Depth == nil && cfg.Stencil == nil && dsCombined {
+			// We do not want a depth or stencil texture, but we do want a
+			// combined depth/stencil buffer.
+			r.render.GenRenderbuffers(1, &canvas.rbDepthAndStencil)
+			r.render.BindRenderbuffer(gl.RENDERBUFFER, canvas.rbDepthAndStencil)
+			r.render.RenderbufferStorageMultisample(gl.RENDERBUFFER, samples, depthFormat, width, height)
+			r.render.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, canvas.rbDepthAndStencil)
+			r.render.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.STENCIL_ATTACHMENT, gl.RENDERBUFFER, canvas.rbDepthAndStencil)
+		} else {
+			if cfg.Depth == nil && cfg.DepthFormat != gfx.ZeroDSFormat {
+				// We do not want a depth texture, but we do want a depth buffer.
+				r.render.GenRenderbuffers(1, &canvas.rbDepth)
+				r.render.BindRenderbuffer(gl.RENDERBUFFER, canvas.rbDepth)
+				r.render.RenderbufferStorageMultisample(gl.RENDERBUFFER, samples, depthFormat, width, height)
+				r.render.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, canvas.rbDepth)
+			}
+			if cfg.Stencil == nil && cfg.StencilFormat != gfx.ZeroDSFormat {
+				// We do not want a stencil texture, but we do want a stencil buffer.
+				r.render.GenRenderbuffers(1, &canvas.rbStencil)
+				r.render.BindRenderbuffer(gl.RENDERBUFFER, canvas.rbStencil)
+				r.render.RenderbufferStorageMultisample(gl.RENDERBUFFER, samples, stencilFormat, width, height)
+				r.render.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.STENCIL_ATTACHMENT, gl.RENDERBUFFER, canvas.rbStencil)
+			}
+		}
+
+		// Create an OpenGL texture for every non-nil cfg texture.
+		if cfg.Color != nil && cfg.ColorFormat != gfx.ZeroTexFormat {
+			// We want a color texture, not a color buffer.
+			nTexColor = newNativeTexture(r.render, r, colorFormat, bounds.Dx(), bounds.Dy())
+			r.render.TexImage2D(gl.TEXTURE_2D, 0, colorFormat, width, height, 0, gl.BGRA, gl.UNSIGNED_BYTE, nil)
+			r.render.GenerateMipmap(gl.TEXTURE_2D)
+			r.render.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, nTexColor.id, 0)
+		}
+		// Only non-combined depth/stencil formats can render into a texture.
+		if !dsCombined {
+			if cfg.Depth != nil && cfg.DepthFormat != gfx.ZeroDSFormat {
+				// We want a depth texture, not a depth buffer.
+				nTexDepth = newNativeTexture(r.render, r, depthFormat, bounds.Dx(), bounds.Dy())
+				r.render.TexImage2D(gl.TEXTURE_2D, 0, depthFormat, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_BYTE, nil)
+				r.render.GenerateMipmap(gl.TEXTURE_2D)
+				r.render.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, nTexDepth.id, 0)
+			}
+		}
+
+		// FIXME: use glDeleteRenderBuffers
+		// FIXME: use glDeleteTextures
+
+		// Check for errors.
+		fbError = checkFramebufferError(r.render, gl.FRAMEBUFFER)
+
+		// Unbind texture to avoid carrying OpenGL state.
+		r.render.BindTexture(gl.TEXTURE_2D, 0)
+
+		// Unbind render buffer, FBO.
+		r.render.BindRenderbuffer(gl.RENDERBUFFER, 0)
+		r.render.BindFramebuffer(gl.FRAMEBUFFER, 0)
+
+		// Signal render completion.
+		r.renderComplete <- struct{}{}
+		return false // No frame was rendered.
+	}
+	<-r.renderComplete
+
+	if fbError != nil {
+		if fbError == errFramebufferUnsupported {
+			// Ideally this shouldn't happen, but it could under e.g. strange
+			// drivers not supporting a combination of 'supported' formats.
+			cfg.Color.Unlock()
+			cfg.Depth.Unlock()
+			cfg.Stencil.Unlock()
+			return nil
+		}
+		panic(fbError)
+	}
+
+	// Finish textures (mark as loaded, clear data slices, unlock).
+	finishTexture := func(t *gfx.Texture, dsFmt *gfx.DSFormat, native gfx.NativeTexture) {
+		if t == nil {
+			return
+		}
+		if dsFmt != nil && dsFmt.IsCombined() {
+			// Combined formats do not load into textures.
+			t.Unlock()
+			return
+		}
+		t.NativeTexture = native
+		t.Bounds = bounds
+		t.Loaded = true
+		t.ClearData()
+		t.Unlock()
+	}
+	finishTexture(cfg.Color, nil, nTexColor)
+	finishTexture(cfg.Depth, &cfg.DepthFormat, nTexDepth)
+	finishTexture(cfg.Stencil, &cfg.StencilFormat, nTexStencil)
+
+	// OpenGL makes no guarantee about the data existing in the texture until
+	// we actually draw something, so clear everything now.
+	canvas.Clear(image.Rect(0, 0, 0, 0), gfx.Color{0, 0, 0, 1})
+	canvas.ClearDepth(image.Rect(0, 0, 0, 0), 1.0)
+	canvas.ClearStencil(image.Rect(0, 0, 0, 0), 0)
+
+	return canvas
+}
