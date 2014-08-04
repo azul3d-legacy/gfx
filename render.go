@@ -141,17 +141,6 @@ type GPUInfo struct {
 	// images for use with the renderer, or -1 if not available.
 	MaxTextureSize int
 
-	// RTTFormats is a list of available precisions for render to texture. It
-	// is such that:
-	//  Renderer.RenderToTexture(tex, k).Precision() == k
-	// Where k is any precision in this slice. Of course, any precision can be
-	// passed into RenderToTexture, but only these are guaranteed to be
-	// precisely given.
-	//
-	// If the length of this slice is zero, render to texture is not available
-	// and as such calls to RenderToTexture() will return nil.
-	RTTFormats []Precision
-
 	// Whether or not the AlphaToCoverage alpha mode is supported (if false
 	// then BinaryAlpha will automatically be used as a fallback).
 	AlphaToCoverage bool
@@ -185,6 +174,9 @@ type GPUInfo struct {
 	// 512x512, etc) or else the texture will be resized by the renderer to the
 	// nearest power-of-two.
 	NPOT bool
+
+	// The formats available for render-to-texture (RTT).
+	RTTFormats
 
 	// Major and minor versions of the OpenGL version in use, or -1 if not
 	// available. For example:
@@ -264,20 +256,19 @@ type Renderer interface {
 	// channel is not nil and sending would not block.
 	LoadShader(s *Shader, done chan *Shader)
 
-	// RenderToTexture should return a canvas that when drawn to the results
-	// are stored inside of the given texture that may then be used in other
-	// drawing operations.
+	// RenderToTexture creates and returns a canvas that when rendered to,
+	// stores the results into one or multiple of the tree textures (Color,
+	// Depth, Stencil) of the given configuration.
 	//
-	// The renderer will attempt to return a canvas whose precision is exactly
-	// identical to the given one, if an identical one cannot be provided then
-	// the closest one possible will be.
+	// If the any of the configuration's formats are not supported by the
+	// graphics hardware (i.e. not in GPUInfo.RTTFormats), then nil is
+	// returned.
 	//
-	// If the texture's bounding rectangle is empty then it will be set to the
-	// bounds of this renderer's canvas. The texture's bounding rectangle is
-	// what effectively determines the resolution at which the returned canvas
-	// and texture render at.
+	// If the given configuration is not valid (see the cfg.Valid method) then
+	// a panic will occur.
 	//
-	// If render to texture is not supported by the graphics hardware (that is,
-	// if len(GPUInfo.RTTFormats) == 0) then nil is returned.
-	RenderToTexture(t *Texture, target Precision) Canvas
+	// Any non-nil texture in the configuration will be set to loaded, will
+	// have ClearData() called on it, and will have it's bounds set to
+	// cfg.Bounds.
+	RenderToTexture(cfg RTTConfig) Canvas
 }
