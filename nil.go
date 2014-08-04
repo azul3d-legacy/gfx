@@ -132,17 +132,8 @@ func (n *nilRenderer) LoadShader(s *Shader, done chan *Shader) {
 	}
 }
 
-func (n *nilRenderer) RenderToTexture(t *Texture, target Precision) Canvas {
-	t.Lock()
-	t.Loaded = true
-	t.ClearData()
-	t.NativeTexture = nilNativeTexture{
-		t.Format,
-	}
-	t.Unlock()
-	canvas := new(nilRenderer)
-	canvas.precision = target
-	return canvas
+func (n *nilRenderer) RenderToTexture(cfg RTTConfig) Canvas {
+	return nil
 }
 
 // Nil returns a renderer that does not actually render anything.
