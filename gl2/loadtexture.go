@@ -21,6 +21,8 @@ type nativeTexture struct {
 	id             uint32
 	internalFormat int32
 	width, height  int
+	*rttCanvas
+	destroyHandler func(n *nativeTexture)
 }
 
 // Generates texture ID, binds, and sets BASE/MAX mipmap levels to zero.
@@ -32,6 +34,7 @@ func newNativeTexture(ctx *gl.Context, r *Renderer, internalFormat int32, width,
 		internalFormat: internalFormat,
 		width:          width,
 		height:         height,
+		destroyHandler: finalizeTexture,
 	}
 	ctx.GenTextures(1, &tex.id)
 	ctx.Execute()
@@ -43,7 +46,7 @@ func newNativeTexture(ctx *gl.Context, r *Renderer, internalFormat int32, width,
 }
 
 func (n *nativeTexture) Destroy() {
-	finalizeTexture(n)
+	n.destroyHandler(n)
 }
 
 func (n *nativeTexture) ChosenFormat() gfx.TexFormat {

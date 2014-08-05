@@ -90,6 +90,18 @@ type Renderer struct {
 		slice []uint32
 	}
 
+	// List of native FBO id's to free at next frame.
+	fbosToFree struct {
+		sync.RWMutex
+		slice []uint32
+	}
+
+	// List of native render buffer id's to free at next frame.
+	renderbuffersToFree struct {
+		sync.RWMutex
+		slice []uint32
+	}
+
 	*graphicsState
 	prevGraphicsState *graphicsState
 	lastShader        *gfx.Shader
@@ -236,6 +248,8 @@ func (r *Renderer) hookedRender(pre, post func()) {
 		r.freeMeshes()
 		r.freeShaders()
 		r.freeTextures()
+		r.freeFBOs()
+		r.freeRenderbuffers()
 	}
 
 	// Ask the render channel to render things now.
@@ -244,7 +258,7 @@ func (r *Renderer) hookedRender(pre, post func()) {
 			pre()
 		}
 
-		// Execute all pending operations.
+		// Execute all pending operations. 
 		for i := 0; i < len(r.RenderExec); i++ {
 			f := <-r.RenderExec
 			f()

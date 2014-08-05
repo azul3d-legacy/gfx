@@ -10,7 +10,45 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"sync"
+	"runtime"
 )
+
+func (r *Renderer) freeFBOs() {
+	// Lock the list.
+	r.fbosToFree.Lock()
+
+	if len(r.fbosToFree.slice) > 0 {
+		// Free the FBOs.
+		r.loader.DeleteFramebuffers(uint32(len(r.fbosToFree.slice)), &r.fbosToFree.slice[0])
+
+		// Flush and execute OpenGL commands.
+		r.loader.Flush()
+		r.loader.Execute()
+	}
+
+	// Slice to zero, and unlock.
+	r.fbosToFree.slice = r.fbosToFree.slice[:0]
+	r.fbosToFree.Unlock()
+}
+
+func (r *Renderer) freeRenderbuffers() {
+	// Lock the list.
+	r.renderbuffersToFree.Lock()
+
+	if len(r.renderbuffersToFree.slice) > 0 {
+		// Free the FBOs.
+		r.loader.DeleteRenderbuffers(uint32(len(r.renderbuffersToFree.slice)), &r.renderbuffersToFree.slice[0])
+
+		// Flush and execute OpenGL commands.
+		r.loader.Flush()
+		r.loader.Execute()
+	}
+
+	// Slice to zero, and unlock.
+	r.renderbuffersToFree.slice = r.renderbuffersToFree.slice[:0]
+	r.renderbuffersToFree.Unlock()
+}
 
 // rttCanvas is the gfx.Canvas returned by RenderToTexture.
 type rttCanvas struct {
@@ -26,6 +64,71 @@ type rttCanvas struct {
 	//
 	// rbDepthAndStencil is only set if cfg.DepthFormat.IsCombined()
 	rbColor, rbDepth, rbStencil, rbDepthAndStencil uint32
+
+	// Decremented until zero, then all textures are free'd and all of the
+	// canvas methods are no-op.
+	textureCount struct {
+		sync.RWMutex
+		count int
+	}
+}
+
+func (r *rttCanvas) freeTexture(n *nativeTexture) {
+	r.textureCount.Lock()
+	if r.textureCount.count == 0 {
+		r.textureCount.Unlock()
+		return
+	}
+	r.textureCount.count--
+	if r.textureCount.count == 0 {
+		// Everything is free now.
+		if r.cfg.Color != nil {
+			finalizeTexture(r.cfg.Color.NativeTexture.(*nativeTexture))
+		}
+		if r.cfg.Depth != nil {
+			finalizeTexture(r.cfg.Depth.NativeTexture.(*nativeTexture))
+		}
+		if r.cfg.Stencil != nil {
+			finalizeTexture(r.cfg.Stencil.NativeTexture.(*nativeTexture))
+		}
+
+		// Add the FBO to the free list.
+		if r.fbo != 0 {
+			r.r.fbosToFree.Lock()
+			r.r.fbosToFree.slice = append(r.r.fbosToFree.slice, r.fbo)
+			r.r.fbosToFree.Unlock()
+		}
+
+		// Add the render buffers to the free list.
+		freeRb := func(id uint32) {
+			if id == 0 {
+				return
+			}
+			r.r.renderbuffersToFree.Lock()
+			r.r.renderbuffersToFree.slice = append(r.r.renderbuffersToFree.slice, id)
+			r.r.renderbuffersToFree.Unlock()
+		}
+		freeRb(r.rbColor)
+		freeRb(r.rbDepth)
+		freeRb(r.rbStencil)
+		freeRb(r.rbDepthAndStencil)
+	}
+	r.textureCount.Unlock()
+}
+
+func finalizeRTTTexture(n *nativeTexture) {
+	n.rttCanvas.freeTexture(n)
+}
+
+// Tells if all textures have been free'd and canvas methods are considered
+// no-op.
+func (r *rttCanvas) noop() bool {
+	r.textureCount.RLock()
+	if r.textureCount.count == 0 {
+		return true
+	}
+	r.textureCount.RUnlock()
+	return false
 }
 
 // Short methods that just call the hooked methods. We insert calls to rttBegin
@@ -34,6 +137,9 @@ type rttCanvas struct {
 
 // Implements gfx.Canvas interface.
 func (r *rttCanvas) Clear(rect image.Rectangle, bg gfx.Color) {
+	if r.noop() {
+		return
+	}
 	r.r.hookedClear(rect, bg, r.rttBegin, r.rttEnd)
 }
 
@@ -59,7 +165,7 @@ func (r *rttCanvas) QueryWait() {
 
 // Implements gfx.Canvas interface.
 func (r *rttCanvas) Render() {
-	r.r.hookedRender(r.rttBegin, func() {
+	r.r.hookedRender(nil, func() {
 		// Generate mipmaps for any texture with a mipmapped format. This must
 		// be done here because the texture has just been rendered to.
 		do := func(t *gfx.Texture) {
@@ -74,9 +180,6 @@ func (r *rttCanvas) Render() {
 		do(r.cfg.Depth)
 		do(r.cfg.Stencil)
 		r.r.render.BindTexture(gl.TEXTURE_2D, 0)
-
-		// Finally, invoke rttEnd() as usual.
-		r.rttEnd()
 	})
 }
 
@@ -264,16 +367,11 @@ func (r *Renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 			}
 		}
 
-		// FIXME: use glDeleteRenderBuffers
-		// FIXME: use glDeleteTextures
-
 		// Check for errors.
 		fbError = checkFramebufferError(r.render, gl.FRAMEBUFFER)
 
-		// Unbind texture to avoid carrying OpenGL state.
+		// Unbind textures, render buffers, and the FBO.
 		r.render.BindTexture(gl.TEXTURE_2D, 0)
-
-		// Unbind render buffer, FBO.
 		r.render.BindRenderbuffer(gl.RENDERBUFFER, 0)
 		r.render.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
@@ -296,15 +394,19 @@ func (r *Renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 	}
 
 	// Finish textures (mark as loaded, clear data slices, unlock).
-	finishTexture := func(t *gfx.Texture, dsFmt *gfx.DSFormat, native gfx.NativeTexture) {
+	finishTexture := func(t *gfx.Texture, dsFmt *gfx.DSFormat, native *nativeTexture) {
 		if t == nil {
 			return
 		}
-		if dsFmt != nil && dsFmt.IsCombined() {
-			// Combined formats do not load into textures.
+		if native == nil {
 			t.Unlock()
 			return
 		}
+		canvas.textureCount.count++
+		// Attach a finalizer to the texture that will later free it.
+		runtime.SetFinalizer(native, finalizeRTTTexture)
+		native.rttCanvas = canvas
+		native.destroyHandler = finalizeRTTTexture
 		t.NativeTexture = native
 		t.Bounds = bounds
 		t.Loaded = true
