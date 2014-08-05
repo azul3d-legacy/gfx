@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"sync"
 	"runtime"
+	"sync"
 )
 
 func (r *Renderer) freeFBOs() {

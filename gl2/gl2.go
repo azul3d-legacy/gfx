@@ -258,7 +258,7 @@ func (r *Renderer) hookedRender(pre, post func()) {
 			pre()
 		}
 
-		// Execute all pending operations. 
+		// Execute all pending operations.
 		for i := 0; i < len(r.RenderExec); i++ {
 			f := <-r.RenderExec
 			f()
