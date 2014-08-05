@@ -183,6 +183,11 @@ func (r *rttCanvas) Render() {
 	})
 }
 
+// Implements gfx.Downloadable interface.
+func (r *rttCanvas) Download(rect image.Rectangle, complete chan image.Image) {
+	r.r.hookedDownload(rect, complete, r.rttBegin, r.rttEnd)
+}
+
 func (r *rttCanvas) rttBegin() {
 	r.r.rttCanvas = r
 
@@ -195,12 +200,6 @@ func (r *rttCanvas) rttEnd() {
 
 	// Unbind the framebuffer object.
 	r.r.render.BindFramebuffer(gl.FRAMEBUFFER, 0)
-}
-
-// Implements gfx.Downloadable interface.
-func (r *rttCanvas) Download(rect image.Rectangle, complete chan image.Image) {
-	// FIXME: implement.
-	return
 }
 
 var (

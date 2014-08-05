@@ -208,7 +208,16 @@ func prepareImage(npot bool, img image.Image) *image.RGBA {
 
 // Implements gfx.Downloadable interface.
 func (r *Renderer) Download(rect image.Rectangle, complete chan image.Image) {
+	r.hookedDownload(rect, complete, nil, nil)
+}
+
+// Implements gfx.Downloadable interface.
+func (r *Renderer) hookedDownload(rect image.Rectangle, complete chan image.Image, pre, post func()) {
 	r.RenderExec <- func() bool {
+		if pre != nil {
+			pre()
+		}
+
 		bounds := r.Bounds()
 
 		// If the rectangle is empty use the entire area.
@@ -227,6 +236,10 @@ func (r *Renderer) Download(rect image.Rectangle, complete chan image.Image) {
 			gl.UNSIGNED_BYTE,
 			unsafe.Pointer(&img.Pix[0]),
 		)
+
+		if post != nil {
+			post()
+		}
 
 		// Flush and execute.
 		r.render.Flush()
