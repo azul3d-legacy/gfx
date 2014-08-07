@@ -366,7 +366,7 @@ func (m *Mesh) Reset() {
 		tcs.Changed = false
 	}
 	m.TexCoords = m.TexCoords[:0]
-	m.Attribs = nil
+	m.Attribs = make(map[string]VertexAttrib)
 }
 
 // Destroy destroys this mesh for use by other callees to NewMesh. You must not
@@ -384,7 +384,9 @@ func (m *Mesh) Destroy() {
 
 var meshPool = sync.Pool{
 	New: func() interface{} {
-		return &Mesh{}
+		return &Mesh{
+			Attribs: make(map[string]VertexAttrib),
+		}
 	},
 }
 
