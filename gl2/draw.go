@@ -335,6 +335,14 @@ func (r *Renderer) updateUniform(native *nativeShader, name string, value interf
 			r.render.Uniform3fv(location, uint32(len(v)), &v[0].X)
 		}
 
+	case gfx.Vec4:
+		r.render.Uniform4fv(location, 1, &v.X)
+
+	case []gfx.Vec4:
+		if len(v) > 0 {
+			r.render.Uniform4fv(location, uint32(len(v)), &v[0].X)
+		}
+
 	case gfx.Mat4:
 		r.render.UniformMatrix4fv(location, 1, gl.GLBool(false), &v[0][0])
 
