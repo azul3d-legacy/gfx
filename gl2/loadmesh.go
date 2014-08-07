@@ -364,6 +364,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 					unsafe.Pointer(&set.Slice[0]),
 					native.texCoords[index],
 				)
+				set.Changed = false
 			}
 		}
 
