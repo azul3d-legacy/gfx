@@ -223,7 +223,7 @@ func (t *Texture) Reset() {
 	t.KeepDataOnLoad = false
 	t.Bounds = image.Rectangle{}
 	t.Source = nil
-	t.Format = 0
+	t.Format = RGBA
 	t.WrapU = 0
 	t.WrapV = 0
 	t.BorderColor = Color{}
@@ -246,7 +246,9 @@ func (t *Texture) Destroy() {
 
 var texturePool = sync.Pool{
 	New: func() interface{} {
-		return &Texture{}
+		return &Texture{
+			Format: RGBA,
+		}
 	},
 }
 
