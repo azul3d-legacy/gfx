@@ -7,9 +7,16 @@ package gl2
 import (
 	"azul3d.org/gfx.v1"
 	"azul3d.org/native/gl.v1"
+	"reflect"
 	"runtime"
 	"unsafe"
 )
+
+type nativeAttrib struct {
+	size int32    // 1, 2, 3, 4 - parameter to VertexAttribPointer
+	rows uint32   // e.g. 1 for vec[2,3,4], 3 for mat3, 4 for mat4.
+	vbos []uint32 // length 1 for []gfx.Vec3, literal len() for [][]gfx.Vec3
+}
 
 // nativeMesh is stored inside the *Mesh.Native interface and stores vertex
 // buffer object ID's.
@@ -19,6 +26,7 @@ type nativeMesh struct {
 	colors                      uint32
 	bary                        uint32
 	texCoords                   []uint32
+	attribs                     map[string]*nativeAttrib
 	verticesCount, indicesCount uint32
 	r                           *Renderer
 }
@@ -65,6 +73,99 @@ func (r *Renderer) deleteVBO(vboId *uint32) {
 	*vboId = 0 // Just for safety.
 }
 
+// attribSize returns the number of rows, and the size of each row measured in
+// 32-bit elements:
+//  rows == 1 == float32, gfx.Vec3, gfx.Vec4
+//  rows == 4 == gfx.Mat4
+//
+//  size == 1 == float32
+//  size == 3 == gfx.Vec3
+//  size == 4 == gfx.Vec4, gfx.Mat4
+// ok == false is returned if x is not one of the above types.
+func attribSize(x interface{}) (rows uint32, size int32, ok bool) {
+	switch x.(type) {
+	case float32:
+		return 1, 1, true
+	case gfx.Vec3:
+		return 1, 3, true
+	case gfx.Vec4:
+		return 1, 4, true
+	case gfx.Mat4:
+		return 4, 4, true
+	}
+	return 0, 0, false
+}
+
+func (r *Renderer) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.VertexAttrib, n *nativeAttrib) {
+	v := reflect.ValueOf(attrib.Data)
+
+	// If it's not a slice, or it's length is zero, then it is invalid.
+	if v.Kind() != reflect.Slice || v.Len() == 0 {
+		r.logf("VertexAttrib (%q) not of type slice or length is zero\n", name)
+		return
+	}
+
+	// Are we sending an array of per-vertex attributes or not?
+	vIndexZero := v.Index(0)
+	isArray := vIndexZero.Kind() == reflect.Slice
+
+	// Do we even have a valid data type? attribSize() will tell us if we do.
+	var ok bool
+	if isArray {
+		n.rows, n.size, ok = attribSize(vIndexZero.Index(0).Interface())
+	} else {
+		n.rows, n.size, ok = attribSize(vIndexZero.Interface())
+	}
+	if !ok {
+		// Invalid data type.
+		r.logf("VertexAttrib (%q) has invalid underlying data type\n", name)
+		return
+	}
+
+	// Generate vertex buffer objects, if we need to.
+	if len(n.vbos) == 0 {
+		// Determine the number of VBO's we need to create. For example if we
+		// have:
+		//  var x [][]float32
+		//  numVBO := len(x[0])
+		// otherwise if we have:
+		//  var x []float32
+		//  numVBO := 1
+		numVBO := 1
+		if isArray {
+			numVBO = vIndexZero.Len()
+		}
+
+		// Generate them.
+		n.vbos = make([]uint32, numVBO)
+		r.loader.GenBuffers(uint32(numVBO), &n.vbos[0])
+		r.loader.Execute()
+	}
+
+	// Update VBO's now.
+	if isArray {
+		for i := 0; i < v.Len(); i++ {
+			data := unsafe.Pointer(v.Index(i).Index(0).UnsafeAddr())
+			r.updateVBO(
+				usageHint,
+				uintptr(n.size*4),
+				vIndexZero.Len(),
+				data,
+				n.vbos[i],
+			)
+		}
+	} else {
+		data := unsafe.Pointer(vIndexZero.UnsafeAddr())
+		r.updateVBO(
+			usageHint,
+			uintptr(n.size*4),
+			v.Len(),
+			data,
+			n.vbos[0],
+		)
+	}
+}
+
 func (r *Renderer) freeMeshes() {
 	// Lock the list.
 	r.meshesToFree.Lock()
@@ -80,6 +181,11 @@ func (r *Renderer) freeMeshes() {
 		// Delete texture coords buffers.
 		if len(native.texCoords) > 0 {
 			r.loader.DeleteBuffers(uint32(len(native.texCoords)), &native.texCoords[0])
+		}
+
+		// Delete custom attribute buffers.
+		for _, attrib := range native.attribs {
+			r.loader.DeleteBuffers(uint32(len(attrib.vbos)), &attrib.vbos[0])
 		}
 
 		// Flush and execute OpenGL commands.
@@ -111,8 +217,10 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		// Find the native mesh, creating a new one if none exists.
 		var native *nativeMesh
 		if !m.Loaded {
-			native = new(nativeMesh)
-			native.r = r
+			native = &nativeMesh{
+				r:       r,
+				attribs: make(map[string]*nativeAttrib),
+			}
 		} else {
 			native = m.NativeMesh.(*nativeMesh)
 		}
@@ -256,6 +364,55 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 					unsafe.Pointer(&set.Slice[0]),
 					native.texCoords[index],
 				)
+			}
+		}
+
+		// Any custom attributes that were removed should have their VBO's
+		// deleted.
+		for name, attrib := range native.attribs {
+			_, exists := m.Attribs[name]
+			if exists {
+				// It still exists.
+				continue
+			}
+			for _, vbo := range attrib.vbos {
+				r.deleteVBO(&vbo)
+			}
+			delete(native.attribs, name)
+		}
+
+		// Any custom attributes that were added should have VBO's created.
+		for name, attrib := range m.Attribs {
+			_, exists := native.attribs[name]
+			if exists {
+				// It already has a VBO.
+				continue
+			}
+
+			// Update the custom attribute's VBO.
+			nAttrib := new(nativeAttrib)
+			native.attribs[name] = nAttrib
+			r.updateCustomAttribVBO(
+				usageHint,
+				name,
+				attrib,
+				nAttrib,
+			)
+		}
+
+		// And finally, any custom attributes that were changed need to have
+		// their VBO's updated.
+		for name, attrib := range m.Attribs {
+			if attrib.Changed {
+				// Update the custom attribute's VBO.
+				nAttrib := native.attribs[name]
+				r.updateCustomAttribVBO(
+					usageHint,
+					name,
+					attrib,
+					nAttrib,
+				)
+				attrib.Changed = false
 			}
 		}
 

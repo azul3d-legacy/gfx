@@ -537,6 +537,32 @@ func (r *Renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 		}
 	}
 
+	// Use each custom vertex data set.
+	for name, attrib := range native.attribs {
+		for i, vbo := range attrib.vbos {
+			// Determine name.
+			indexName := name
+			if len(attrib.vbos) > 1 {
+				indexName = fmt.Sprintf("%s%d", name, i)
+			}
+
+			// Find input location.
+			location, ok = r.findAttribLocation(ns, indexName)
+			if !ok {
+				continue
+			}
+
+			// Bind the buffer, send each row.
+			r.render.BindBuffer(gl.ARRAY_BUFFER, vbo)
+			for row := uint32(0); row < attrib.rows; row++ {
+				l := location + row
+				r.render.EnableVertexAttribArray(l)
+				defer r.render.DisableVertexAttribArray(l)
+				r.render.VertexAttribPointer(l, attrib.size, gl.FLOAT, gl.GLBool(false), 0, nil)
+			}
+		}
+	}
+
 	if native.indicesCount > 0 {
 		// Draw indexed mesh.
 		r.render.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, native.indices)
