@@ -35,6 +35,74 @@ type TexCoordSet struct {
 	Changed bool
 }
 
+// VertexAttrib represents a per-vertex attribute.
+type VertexAttrib struct {
+	// The literal per-vertex data slice. It must be a slice whose length is
+	// exactly the same as the mesh's Vertices slice (because it is literally
+	// per-vertex data). The underlying type must be one of the following or
+	// else the attribute may be ignored completely:
+	//  []float32
+	//  [][]float32
+	//  []gfx.Vec3
+	//  [][]gfx.Vec3
+	//  []gfx.Mat4
+	//  [][]gfx.Mat4
+	Data interface{}
+
+	// Weather or not the per-vertex data (see the Data field) has changed
+	// since the last time the mesh was loaded. If set to true the renderer
+	// should take note and re-upload the data slice to the graphics hardware.
+	Changed bool
+}
+
+// Copy returns a new copy of this vertex attribute data set. It makes a deep
+// copy of the underlying Data slice. Explicitly not copied is the Changed
+// boolean.
+func (a VertexAttrib) Copy() VertexAttrib {
+	var cpy interface{}
+	switch t := a.Data.(type) {
+	case []float32:
+		c := make([]float32, len(t))
+		copy(c, t)
+		cpy = c
+
+	case []Vec3:
+		c := make([]Vec3, len(t))
+		copy(c, t)
+		cpy = c
+
+	case []Mat4:
+		c := make([]Mat4, len(t))
+		copy(c, t)
+		cpy = c
+
+	case [][]float32:
+		c := make([][]float32, len(t))
+		for i, s := range t {
+			c[i] = make([]float32, len(s))
+			copy(c[i], t[i])
+		}
+
+	case [][]Vec3:
+		c := make([][]Vec3, len(t))
+		for i, s := range t {
+			c[i] = make([]Vec3, len(s))
+			copy(c[i], t[i])
+		}
+
+	case [][]Mat4:
+		c := make([][]Mat4, len(t))
+		for i, s := range t {
+			c[i] = make([]Mat4, len(s))
+			copy(c[i], t[i])
+		}
+
+	default:
+		return VertexAttrib{}
+	}
+	return VertexAttrib{Data: cpy}
+}
+
 // NativeMesh represents the native object of a mesh, typically only renderers
 // create these.
 type NativeMesh Destroyable
@@ -113,6 +181,37 @@ type Mesh struct {
 	// multiple sets which directly relate to multiple textures on a
 	// object.
 	TexCoords []TexCoordSet
+
+	// A map of custom per-vertex attributes for the mesh. It is analogous to
+	// the Colors, Bary, and TexCoords fields. It allows you to submit a set of
+	// named custom per-vertex data to shaders.
+	//
+	// For instance you could submit a set of per-vertex vec3's with:
+	//  myData := make([]gfx.Vec3, len(mesh.Vertices))
+	//  mesh.Attribs["MyName"] = gfx.VertexAttrib{
+	//      Data: myData,
+	//  }
+	//
+	// If changes to the data are made, the data set will have to be uploaded
+	// to the graphics hardware again, so you must inform the renderer when you
+	// change the data:
+	//  ... modify myData ...
+	//  mesh.Attribs["MyName"].Changed = true
+	//
+	// In GLSL you could access that per-vertex data by writing:
+	//  attribute vec3 MyName;
+	//
+	// Arrays of data are available in GLSL by slice indice suffixes:
+	//  // Data declared in Go:
+	//  myData := make([][]gfx.Mat4, 2)
+	//
+	//  // And in GLSL:
+	//  attribute mat4 MyName0; // Per-vertex data from myData[0].
+	//  attribute mat4 MyName1; // Per-vertex data from myData[1].
+	//
+	// See the documentation on the VertexAttrib type for more information
+	// regarding what data types may be used.
+	Attribs map[string]VertexAttrib
 }
 
 // Copy returns a new copy of this Mesh. Depending on how large the mesh is
@@ -138,6 +237,7 @@ func (m *Mesh) Copy() *Mesh {
 		make([]Vec3, len(m.Bary)),
 		false, // BaryChanged -- not copied.
 		make([]TexCoordSet, len(m.TexCoords)),
+		make(map[string]VertexAttrib, len(m.Attribs)),
 	}
 
 	copy(cpy.Indices, m.Indices)
@@ -150,6 +250,9 @@ func (m *Mesh) Copy() *Mesh {
 		}
 		copy(setCpy.Slice, set.Slice)
 		cpy.TexCoords[index] = setCpy
+	}
+	for name, attrib := range m.Attribs {
+		cpy.Attribs[name] = attrib.Copy()
 	}
 	return cpy
 }
@@ -218,6 +321,11 @@ func (m *Mesh) HasChanged() bool {
 			return true
 		}
 	}
+	for _, attrib := range m.Attribs {
+		if attrib.Changed {
+			return true
+		}
+	}
 	return false
 }
 
@@ -232,6 +340,7 @@ func (m *Mesh) ClearData() {
 		m.Colors = nil
 		m.Bary = nil
 		m.TexCoords = nil
+		m.Attribs = nil
 	}
 }
 
@@ -257,6 +366,7 @@ func (m *Mesh) Reset() {
 		tcs.Changed = false
 	}
 	m.TexCoords = m.TexCoords[:0]
+	m.Attribs = nil
 }
 
 // Destroy destroys this mesh for use by other callees to NewMesh. You must not
