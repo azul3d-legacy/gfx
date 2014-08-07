@@ -48,6 +48,8 @@ type Shader struct {
 	//  []float32
 	//  gfx.Vec3
 	//  []gfx.Vec3
+	//  gfx.Vec4
+	//  []gfx.Vec4
 	//  gfx.Mat4
 	//  []gfx.Mat4
 	Inputs map[string]interface{}

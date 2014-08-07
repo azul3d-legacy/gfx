@@ -47,6 +47,8 @@ type VertexAttrib struct {
 	//  [][]gfx.Vec3
 	//  []gfx.Mat4
 	//  [][]gfx.Mat4
+	//  []gfx.Vec4
+	//  [][]gfx.Vec4
 	Data interface{}
 
 	// Weather or not the per-vertex data (see the Data field) has changed
@@ -71,6 +73,11 @@ func (a VertexAttrib) Copy() VertexAttrib {
 		copy(c, t)
 		cpy = c
 
+	case []Vec4:
+		c := make([]Vec4, len(t))
+		copy(c, t)
+		cpy = c
+
 	case []Mat4:
 		c := make([]Mat4, len(t))
 		copy(c, t)
@@ -87,6 +94,13 @@ func (a VertexAttrib) Copy() VertexAttrib {
 		c := make([][]Vec3, len(t))
 		for i, s := range t {
 			c[i] = make([]Vec3, len(s))
+			copy(c[i], t[i])
+		}
+
+	case [][]Vec4:
+		c := make([][]Vec4, len(t))
+		for i, s := range t {
+			c[i] = make([]Vec4, len(s))
 			copy(c[i], t[i])
 		}
 

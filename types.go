@@ -56,3 +56,21 @@ func (v Vec3) Vec3() lmath.Vec3 {
 func ConvertVec3(v lmath.Vec3) Vec3 {
 	return Vec3{X: float32(v.X), Y: float32(v.Y), Z: float32(v.Z)}
 }
+
+// Vec4 represents a 32-bit floating point four-component vector for
+// compatability with graphics hardware.
+// lmath.Vec4 should be used anywhere that an explicit 32-bit type is not
+// needed.
+type Vec4 struct {
+	X, Y, Z, W float32
+}
+
+// Vec4 converts this 32-bit Vec4 to a 64-bit lmath.Vec4 vector.
+func (v Vec4) Vec4() lmath.Vec4 {
+	return lmath.Vec4{X: float64(v.X), Y: float64(v.Y), Z: float64(v.Z)}
+}
+
+// ConvertVec4 converts the 64-bit lmath.Vec4 to a 32-bit Vec4 vector.
+func ConvertVec4(v lmath.Vec4) Vec4 {
+	return Vec4{X: float32(v.X), Y: float32(v.Y), Z: float32(v.Z), W: float32(v.W)}
+}
