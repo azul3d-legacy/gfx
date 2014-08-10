@@ -5,9 +5,10 @@
 package gfx
 
 import (
-	"azul3d.org/clock.v1"
 	"image"
 	"sync"
+
+	"azul3d.org/clock.v1"
 )
 
 type nilNativeObject struct{}

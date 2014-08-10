@@ -5,9 +5,10 @@
 package gfx
 
 import (
-	"azul3d.org/lmath.v1"
 	"image"
 	"sync"
+
+	"azul3d.org/lmath.v1"
 )
 
 var (

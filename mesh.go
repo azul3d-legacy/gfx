@@ -5,8 +5,9 @@
 package gfx
 
 import (
-	"azul3d.org/lmath.v1"
 	"sync"
+
+	"azul3d.org/lmath.v1"
 )
 
 // Boundable represents any object that can return it's axis-aligned bounding

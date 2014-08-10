@@ -5,8 +5,9 @@
 package gfx
 
 import (
-	"azul3d.org/lmath.v1"
 	"sync"
+
+	"azul3d.org/lmath.v1"
 )
 
 // Transformable represents a generic interface to any object that can return

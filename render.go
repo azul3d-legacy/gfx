@@ -5,8 +5,9 @@
 package gfx
 
 import (
-	"azul3d.org/clock.v1"
 	"image"
+
+	"azul3d.org/clock.v1"
 )
 
 // Precision represents the precision in bits of the color, depth, and stencil

@@ -5,10 +5,11 @@
 package gfx
 
 import (
-	"azul3d.org/lmath.v1"
 	"math/rand"
 	"sort"
 	"testing"
+
+	"azul3d.org/lmath.v1"
 )
 
 func TestSortByDist(t *testing.T) {

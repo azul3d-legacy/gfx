@@ -5,8 +5,9 @@
 package gfx
 
 import (
-	"azul3d.org/lmath.v1"
 	"testing"
+
+	"azul3d.org/lmath.v1"
 )
 
 func TestTransform(t *testing.T) {
