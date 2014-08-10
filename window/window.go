@@ -6,15 +6,16 @@
 package window
 
 import (
-	"azul3d.org/chippy.v1"
-	"azul3d.org/gfx.v1"
-	"azul3d.org/gfx/gl2.v1"
 	"fmt"
 	"image"
 	"log"
 	"os"
 	"runtime"
 	"time"
+
+	"azul3d.org/chippy.v1"
+	"azul3d.org/gfx.v1"
+	"azul3d.org/gfx/gl2.v1"
 )
 
 func program(gfxLoop func(w *chippy.Window, r gfx.Renderer)) {
