@@ -5,10 +5,11 @@
 package gl2
 
 import (
-	"azul3d.org/gfx.v1"
 	"image"
 	"math/rand"
 	"testing"
+
+	"azul3d.org/gfx.v1"
 )
 
 func TestRendererInterface(t *testing.T) {

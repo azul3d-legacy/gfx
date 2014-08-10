@@ -5,11 +5,12 @@
 package gl2
 
 import (
+	"fmt"
+	"image"
+
 	"azul3d.org/gfx.v1"
 	"azul3d.org/lmath.v1"
 	"azul3d.org/native/gl.v1"
-	"fmt"
-	"image"
 )
 
 var (

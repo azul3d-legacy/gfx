@@ -5,9 +5,10 @@
 package gl2
 
 import (
+	"image"
+
 	"azul3d.org/gfx.v1"
 	"azul3d.org/native/gl.v1"
-	"image"
 )
 
 // Set this to true to disable state guarding (i.e. avoiding useless OpenGL

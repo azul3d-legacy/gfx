@@ -5,13 +5,14 @@
 package gl2
 
 import (
-	"azul3d.org/gfx.v1"
-	"azul3d.org/native/gl.v1"
 	"errors"
 	"fmt"
 	"image"
 	"runtime"
 	"sync"
+
+	"azul3d.org/gfx.v1"
+	"azul3d.org/native/gl.v1"
 )
 
 func (r *Renderer) freeFBOs() {

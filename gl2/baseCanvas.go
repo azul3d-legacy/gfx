@@ -5,9 +5,10 @@
 package gl2
 
 import (
-	"azul3d.org/gfx.v1"
 	"image"
 	"sync"
+
+	"azul3d.org/gfx.v1"
 )
 
 // baseCanvas implements portions of a gfx.Canvas shared between Renderer and

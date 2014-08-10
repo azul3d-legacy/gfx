@@ -5,11 +5,12 @@
 package gl2
 
 import (
-	"azul3d.org/gfx.v1"
-	"azul3d.org/native/gl.v1"
 	"reflect"
 	"runtime"
 	"unsafe"
+
+	"azul3d.org/gfx.v1"
+	"azul3d.org/native/gl.v1"
 )
 
 type nativeAttrib struct {

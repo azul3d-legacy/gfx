@@ -5,15 +5,16 @@
 package gl2
 
 import (
-	"azul3d.org/clock.v1"
-	"azul3d.org/gfx.v1"
-	"azul3d.org/native/gl.v1"
 	"errors"
 	"fmt"
 	"image"
 	"io"
 	"runtime"
 	"sync"
+
+	"azul3d.org/clock.v1"
+	"azul3d.org/gfx.v1"
+	"azul3d.org/native/gl.v1"
 )
 
 // Used when attempting to create an OpenGL 2.0 renderer in a lesser OpenGL context.
