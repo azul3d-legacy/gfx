@@ -129,8 +129,12 @@ func (o *Object) Bounds() lmath.Rect3 {
 			}
 		}
 
-		// Cache it for later.
-		o.CachedBounds = &b
+		// Make a copy of the untransformed bounding box and cache it for
+		// later. We don't cache the transformed bounding box because otherwise
+		// we would need to recalculate the bounding box every time the object
+		// is moved, scaled, etc.
+		cpy := b
+		o.CachedBounds = &cpy
 	}
 	if o.Transform != nil {
 		b.Min = o.Transform.ConvertPos(b.Min, LocalToWorld)
