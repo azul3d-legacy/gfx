@@ -112,7 +112,7 @@ type Object struct {
 // You do not need to clear the cached bounds if the transform of the object
 // has changed (as it is applied after calculation of the bounding box).
 //
-// This method properly read-locks the object.
+// This method properly write-locks the object.
 func (o *Object) Bounds() lmath.Rect3 {
 	var b lmath.Rect3
 	o.Lock()
