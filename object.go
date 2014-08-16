@@ -81,28 +81,63 @@ type Object struct {
 	// The order in which the textures appear in this slice is also the order
 	// in which they are sent to the graphics card.
 	Textures []*Texture
+
+	// CachedBounds represents the pre-calculated cached bounding box of this
+	// object. Note that the bounds are only calculated once Object.Bounds() is
+	// invoked.
+	//
+	// If you make changes to the vertices of any mesh associated with this
+	// object, or if you add / remove meshes from this object, the bounds will
+	// not reflect this automatically. Instead, you must clear the cached
+	// bounds explicitly:
+	//  o.Lock()
+	//  o.CachedBounds = nil
+	//  o.Unlock()
+	//
+	// And then simply invoke o.Bounds() again to calculate the bounds again.
+	CachedBounds *lmath.Rect3
 }
 
 // Bounds implements the Boundable interface. The returned bounding box takes
 // into account all of the mesh's bounding boxes, transformed into world space.
 //
+// The bounding box is cached (see o.CachedBounds) so that multiple calls to
+// this method are fast. If you make changes to the vertices, or add/remove
+// meshes from this object you need to explicitly clear the cached bounds so
+// that the next call to Bounds() will calculate the bounding box again:
+//  o.Lock()
+//  o.CachedBounds = nil
+//  o.Unlock()
+//
+// You do not need to clear the cached bounds if the transform of the object
+// has changed (as it is applied after calculation of the bounding box).
+//
 // This method properly read-locks the object.
 func (o *Object) Bounds() lmath.Rect3 {
 	var b lmath.Rect3
-	o.RLock()
-	for i, m := range o.Meshes {
-		if i == 0 {
-			b = m.Bounds()
-		} else {
-			b = b.Union(m.Bounds())
+	o.Lock()
+	// Do we have a cached bounding box? If so, use it.
+	if o.CachedBounds != nil {
+		b = *o.CachedBounds
+	} else {
+		// Calculate the bounding box then.
+		for i, m := range o.Meshes {
+			if i == 0 {
+				b = m.Bounds()
+			} else {
+				b = b.Union(m.Bounds())
+			}
 		}
+
+		// Cache it for later.
+		o.CachedBounds = &b
 	}
 	if o.Transform != nil {
 		b.Min = o.Transform.ConvertPos(b.Min, LocalToWorld)
 		b.Max = o.Transform.ConvertPos(b.Max, LocalToWorld)
 		b = b.Union(b)
 	}
-	o.RUnlock()
+	o.Unlock()
 	return b
 }
 
@@ -138,6 +173,7 @@ func (o *Object) Compare(other *Object) bool {
 //
 // The object's read lock must be held for this method to operate safely.
 func (o *Object) Copy() *Object {
+	cpyCachedBounds := *o.CachedBounds
 	cpy := &Object{
 		OcclusionTest: o.OcclusionTest,
 		State:         o.State,
@@ -145,6 +181,7 @@ func (o *Object) Copy() *Object {
 		Shader:        o.Shader,
 		Meshes:        make([]*Mesh, len(o.Meshes)),
 		Textures:      make([]*Texture, len(o.Textures)),
+		CachedBounds:  &cpyCachedBounds,
 	}
 	copy(cpy.Meshes, o.Meshes)
 	copy(cpy.Textures, o.Textures)
@@ -160,6 +197,7 @@ func (o *Object) Reset() {
 	o.State = DefaultState
 	o.Transform = NewTransform()
 	o.Shader = nil
+	o.CachedBounds = nil
 
 	// Nil out each mesh pointer.
 	for i := 0; i < len(o.Meshes); i++ {
