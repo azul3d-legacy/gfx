@@ -125,6 +125,11 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 }
 
 func (r *Renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
+	// Make the implicit o.Bounds() call required by gfx.Canvas so that the
+	// object has a chance to calculate a bounding box before it's data slices
+	// are set to nil.
+	o.Bounds()
+
 	lock := func() {
 		o.Lock()
 		if c != nil {
