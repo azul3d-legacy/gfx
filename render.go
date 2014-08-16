@@ -98,6 +98,10 @@ type Canvas interface {
 	// SampleCount() is called it will return the number of samples last drawn
 	// by the object.
 	//
+	// The canvas must invoke o.Bounds() some time before clearing data slices
+	// of loaded meshes, such that the object has a chance to determine it's
+	// bounding box.
+	//
 	// The object will not be drawn if any of the following cases are true:
 	//  o.Shader == nil
 	//  len(o.Shader.Error) > 0

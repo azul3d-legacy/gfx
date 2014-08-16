@@ -88,6 +88,7 @@ func (n *nilRenderer) Clear(r image.Rectangle, bg Color)           {}
 func (n *nilRenderer) ClearDepth(r image.Rectangle, depth float64) {}
 func (n *nilRenderer) ClearStencil(r image.Rectangle, stencil int) {}
 func (n *nilRenderer) Draw(r image.Rectangle, o *Object, c *Camera) {
+	o.Bounds()
 	o.Lock()
 	o.NativeObject = nilNativeObject{}
 	o.Unlock()
