@@ -157,6 +157,7 @@ func (r *Renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera
 	if o.Shader == nil {
 		// Can't draw.
 		unlock()
+		r.logf("Draw(): object has a nil shader\n")
 		return
 	}
 	o.Shader.RLock()
@@ -177,6 +178,7 @@ func (r *Renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera
 	if len(o.Meshes) == 0 {
 		// Can't draw.
 		unlock()
+		r.logf("Draw(): object has no meshes\n")
 		return
 	}
 
@@ -188,6 +190,7 @@ func (r *Renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera
 		if meshEmpty {
 			// Can't draw.
 			unlock()
+			r.logf("Draw(): mesh is not loaded and has no vertices\n")
 			return
 		}
 		if meshNeedLoad {
