@@ -10,7 +10,7 @@ import (
 	"unsafe"
 
 	"azul3d.org/gfx.v1"
-	"azul3d.org/native/gl.v1"
+	"azul3d.org/gfx/gl2.v2/internal/gl"
 )
 
 type nativeAttrib struct {
@@ -28,7 +28,7 @@ type nativeMesh struct {
 	bary                        uint32
 	texCoords                   []uint32
 	attribs                     map[string]*nativeAttrib
-	verticesCount, indicesCount uint32
+	verticesCount, indicesCount int32
 	r                           *Renderer
 }
 
@@ -45,23 +45,23 @@ func (n *nativeMesh) Destroy() {
 
 func (r *Renderer) createVBO() (vboId uint32) {
 	// Generate new VBO.
-	r.loader.GenBuffers(1, &vboId)
-	r.loader.Execute()
+	gl.GenBuffers(1, &vboId)
+	//gl.Execute()
 	return
 }
 
 func (r *Renderer) updateVBO(usageHint int32, dataSize uintptr, dataLength int, data unsafe.Pointer, vboId uint32) {
 	// Bind the VBO now.
-	r.loader.BindBuffer(gl.ARRAY_BUFFER, vboId)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vboId)
 
 	// Fill the VBO with the data.
-	r.loader.BufferData(
+	gl.BufferData(
 		gl.ARRAY_BUFFER,
-		dataSize*uintptr(dataLength),
+		int(dataSize*uintptr(dataLength)),
 		data,
-		usageHint,
+		uint32(usageHint),
 	)
-	r.loader.Execute()
+	//gl.Execute()
 }
 
 func (r *Renderer) deleteVBO(vboId *uint32) {
@@ -69,8 +69,8 @@ func (r *Renderer) deleteVBO(vboId *uint32) {
 	if *vboId == 0 {
 		return
 	}
-	r.loader.DeleteBuffers(1, vboId)
-	r.loader.Execute()
+	gl.DeleteBuffers(1, vboId)
+	//gl.Execute()
 	*vboId = 0 // Just for safety.
 }
 
@@ -139,8 +139,8 @@ func (r *Renderer) updateCustomAttribVBO(usageHint int32, name string, attrib gf
 
 		// Generate them.
 		n.vbos = make([]uint32, numVBO)
-		r.loader.GenBuffers(uint32(numVBO), &n.vbos[0])
-		r.loader.Execute()
+		gl.GenBuffers(int32(numVBO), &n.vbos[0])
+		//gl.Execute()
 	}
 
 	// Update VBO's now.
@@ -174,24 +174,24 @@ func (r *Renderer) freeMeshes() {
 	// Free the meshes.
 	for _, native := range r.meshesToFree.slice {
 		// Delete single VBO's.
-		r.loader.DeleteBuffers(1, &native.indices)
-		r.loader.DeleteBuffers(1, &native.vertices)
-		r.loader.DeleteBuffers(1, &native.colors)
-		r.loader.DeleteBuffers(1, &native.bary)
+		gl.DeleteBuffers(1, &native.indices)
+		gl.DeleteBuffers(1, &native.vertices)
+		gl.DeleteBuffers(1, &native.colors)
+		gl.DeleteBuffers(1, &native.bary)
 
 		// Delete texture coords buffers.
 		if len(native.texCoords) > 0 {
-			r.loader.DeleteBuffers(uint32(len(native.texCoords)), &native.texCoords[0])
+			gl.DeleteBuffers(int32(len(native.texCoords)), &native.texCoords[0])
 		}
 
 		// Delete custom attribute buffers.
 		for _, attrib := range native.attribs {
-			r.loader.DeleteBuffers(uint32(len(attrib.vbos)), &attrib.vbos[0])
+			gl.DeleteBuffers(int32(len(attrib.vbos)), &attrib.vbos[0])
 		}
 
 		// Flush and execute OpenGL commands.
-		r.loader.Flush()
-		r.loader.Execute()
+		gl.Flush()
+		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -227,7 +227,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		}
 
 		// Determine usage hint.
-		usageHint := gl.STATIC_DRAW
+		usageHint := int32(gl.STATIC_DRAW)
 		if m.Dynamic {
 			usageHint = gl.DYNAMIC_DRAW
 		}
@@ -250,7 +250,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 					unsafe.Pointer(&m.Indices[0]),
 					native.indices,
 				)
-				native.indicesCount = uint32(len(m.Indices))
+				native.indicesCount = int32(len(m.Indices))
 			}
 			m.IndicesChanged = false
 		}
@@ -274,7 +274,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 					unsafe.Pointer(&m.Vertices[0]),
 					native.vertices,
 				)
-				native.verticesCount = uint32(len(m.Vertices))
+				native.verticesCount = int32(len(m.Vertices))
 			}
 			m.VerticesChanged = false
 		}
@@ -419,11 +419,11 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		}
 
 		// Ensure no buffer is active when we leave (so that OpenGL state is untouched).
-		r.loader.BindBuffer(gl.ARRAY_BUFFER, 0)
+		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 		// Flush and execute OpenGL commands.
-		r.loader.Flush()
-		r.loader.Execute()
+		gl.Flush()
+		//gl.Execute()
 
 		// If the mesh is not loaded, then we need to assign the native mesh
 		// and create a finalizer to free the native mesh later.

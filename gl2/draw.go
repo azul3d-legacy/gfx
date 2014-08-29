@@ -9,8 +9,8 @@ import (
 	"image"
 
 	"azul3d.org/gfx.v1"
+	"azul3d.org/gfx/gl2.v2/internal/gl"
 	"azul3d.org/lmath.v1"
-	"azul3d.org/native/gl.v1"
 )
 
 var (
@@ -243,7 +243,7 @@ func (r *Renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera
 		r.setGlobalState()
 
 		// Update the scissor region (effects drawing).
-		r.performScissor(r.render, rect)
+		r.performScissor(rect)
 
 		var ns *nativeShader
 		if o.NativeShader != nil {
@@ -279,9 +279,7 @@ func (r *Renderer) findAttribLocation(native *nativeShader, name string) (uint32
 	if ok {
 		return uint32(location), true
 	}
-	bts := []byte(name)
-	bts = append(bts, 0)
-	location = r.render.GetAttribLocation(native.program, &bts[0])
+	location = gl.GetAttribLocation(native.program, glStr(name))
 	if location < 0 {
 		return 0, false
 	}
@@ -293,9 +291,7 @@ func (r *Renderer) findUniformLocation(native *nativeShader, name string) int32 
 	if ok {
 		return location
 	}
-	bts := []byte(name)
-	bts = append(bts, 0)
-	location = r.render.GetUniformLocation(native.program, &bts[0])
+	location = gl.GetUniformLocation(native.program, glStr(name))
 	if location < 0 {
 		// Just for sanity.
 		return -1
@@ -316,45 +312,45 @@ func (r *Renderer) updateUniform(native *nativeShader, name string, value interf
 	switch v := value.(type) {
 	case texSlot:
 		// Special case: Texture input uniform.
-		r.render.Uniform1i(location, int32(v))
+		gl.Uniform1i(location, int32(v))
 
 	case bool:
 		var intBool int32
 		if v {
 			intBool = 1
 		}
-		r.render.Uniform1iv(location, 1, &intBool)
+		gl.Uniform1iv(location, 1, &intBool)
 
 	case float32:
-		r.render.Uniform1fv(location, 1, &v)
+		gl.Uniform1fv(location, 1, &v)
 
 	case []float32:
 		if len(v) > 0 {
-			r.render.Uniform1fv(location, uint32(len(v)), &v[0])
+			gl.Uniform1fv(location, int32(len(v)), &v[0])
 		}
 
 	case gfx.Vec3:
-		r.render.Uniform3fv(location, 1, &v.X)
+		gl.Uniform3fv(location, 1, &v.X)
 
 	case []gfx.Vec3:
 		if len(v) > 0 {
-			r.render.Uniform3fv(location, uint32(len(v)), &v[0].X)
+			gl.Uniform3fv(location, int32(len(v)), &v[0].X)
 		}
 
 	case gfx.Vec4:
-		r.render.Uniform4fv(location, 1, &v.X)
+		gl.Uniform4fv(location, 1, &v.X)
 
 	case []gfx.Vec4:
 		if len(v) > 0 {
-			r.render.Uniform4fv(location, uint32(len(v)), &v[0].X)
+			gl.Uniform4fv(location, int32(len(v)), &v[0].X)
 		}
 
 	case gfx.Mat4:
-		r.render.UniformMatrix4fv(location, 1, gl.GLBool(false), &v[0][0])
+		gl.UniformMatrix4fv(location, 1, false, &v[0][0])
 
 	case []gfx.Mat4:
 		if len(v) > 0 {
-			r.render.UniformMatrix4fv(location, uint32(len(v)), gl.GLBool(false), &v[0][0][0])
+			gl.UniformMatrix4fv(location, int32(len(v)), false, &v[0][0][0])
 		}
 
 	default:
@@ -364,10 +360,10 @@ func (r *Renderer) updateUniform(native *nativeShader, name string, value interf
 
 func (r *Renderer) beginQuery(o *gfx.Object, n nativeObject) nativeObject {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
-		r.render.GenQueries(1, &n.pendingQuery)
-		r.render.Execute()
-		r.render.BeginQuery(gl.SAMPLES_PASSED, n.pendingQuery)
-		r.render.Execute()
+		gl.GenQueries(1, &n.pendingQuery)
+		//gl.Execute()
+		gl.BeginQuery(gl.SAMPLES_PASSED, n.pendingQuery)
+		//gl.Execute()
 
 		// Add the pending query.
 		r.pending.Lock()
@@ -379,31 +375,31 @@ func (r *Renderer) beginQuery(o *gfx.Object, n nativeObject) nativeObject {
 
 func (r *Renderer) endQuery(o *gfx.Object, n nativeObject) nativeObject {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
-		r.render.EndQuery(gl.SAMPLES_PASSED)
-		r.render.Execute()
+		gl.EndQuery(gl.SAMPLES_PASSED)
+		//gl.Execute()
 	}
 	return n
 }
 
 func (r *Renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	// Use object state.
-	r.stateColorWrite(r.render, [4]bool{obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha})
-	r.stateDithering(r.render, obj.Dithering)
-	r.stateStencilTest(r.render, obj.StencilTest)
-	r.stateStencilOp(r.render, obj.StencilFront, obj.StencilBack)
-	r.stateStencilFunc(r.render, obj.StencilFront, obj.StencilBack)
-	r.stateStencilMask(r.render, obj.StencilFront.WriteMask, obj.StencilBack.WriteMask)
-	r.stateDepthFunc(r.render, obj.DepthCmp)
-	r.stateDepthTest(r.render, obj.DepthTest)
-	r.stateDepthWrite(r.render, obj.DepthWrite)
-	r.stateFaceCulling(r.render, obj.FaceCulling)
+	r.stateColorWrite([4]bool{obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha})
+	r.stateDithering(obj.Dithering)
+	r.stateStencilTest(obj.StencilTest)
+	r.stateStencilOp(obj.StencilFront, obj.StencilBack)
+	r.stateStencilFunc(obj.StencilFront, obj.StencilBack)
+	r.stateStencilMask(obj.StencilFront.WriteMask, obj.StencilBack.WriteMask)
+	r.stateDepthFunc(obj.DepthCmp)
+	r.stateDepthTest(obj.DepthTest)
+	r.stateDepthWrite(obj.DepthWrite)
+	r.stateFaceCulling(obj.FaceCulling)
 
 	// Begin using the shader.
 	shader := obj.Shader
 	if r.lastShader != shader {
 		r.lastShader = shader
 
-		r.stateProgram(r.render, ns.program)
+		r.stateProgram(ns.program)
 
 		// Update shader inputs.
 		for name := range shader.Inputs {
@@ -427,12 +423,12 @@ func (r *Renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	r.updateUniform(ns, "MVP", nativeObj.mvp)
 
 	// Set alpha mode.
-	r.stateAlphaToCoverage(r.render, &r.gpuInfo, obj.AlphaMode == gfx.AlphaToCoverage)
-	r.stateBlend(r.render, obj.AlphaMode == gfx.AlphaBlend)
+	r.stateAlphaToCoverage(&r.gpuInfo, obj.AlphaMode == gfx.AlphaToCoverage)
+	r.stateBlend(obj.AlphaMode == gfx.AlphaBlend)
 	if obj.AlphaMode == gfx.AlphaBlend {
-		r.stateBlendColor(r.render, obj.Blend.Color)
-		r.stateBlendFuncSeparate(r.render, obj.Blend)
-		r.stateBlendEquationSeparate(r.render, obj.Blend)
+		r.stateBlendColor(obj.Blend.Color)
+		r.stateBlendFuncSeparate(obj.Blend)
+		r.stateBlendEquationSeparate(obj.Blend)
 	}
 
 	switch obj.AlphaMode {
@@ -459,32 +455,32 @@ func (r *Renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 
 		nt := t.NativeTexture.(*nativeTexture)
 
-		r.render.ActiveTexture(gl.TEXTURE0 + int32(i))
-		r.render.BindTexture(gl.TEXTURE_2D, nt.id)
+		gl.ActiveTexture(gl.TEXTURE0 + uint32(i))
+		gl.BindTexture(gl.TEXTURE_2D, nt.id)
 
 		// Load wrap mode.
 		uWrap := convertWrap(t.WrapU)
 		vWrap := convertWrap(t.WrapV)
 		if t.WrapU == gfx.BorderColor || t.WrapV == gfx.BorderColor {
 			// We must specify the actual border color then.
-			r.render.TexParameterfv(gl.TEXTURE_2D, gl.TEXTURE_BORDER_COLOR, &t.BorderColor.R)
-			r.render.Execute()
+			gl.TexParameterfv(gl.TEXTURE_2D, gl.TEXTURE_BORDER_COLOR, &t.BorderColor.R)
+			//gl.Execute()
 		}
-		r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, uWrap)
-		r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, vWrap)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, uWrap)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, vWrap)
 
 		// Load filter.
-		r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, convertFilter(t.MinFilter))
-		r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, convertFilter(t.MagFilter))
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, convertFilter(t.MinFilter))
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, convertFilter(t.MagFilter))
 
 		// If we do not want mipmapping, turn it off. Note that only the
 		// minification filter can be mipmapped (mag filter can never be).
 		if t.MinFilter.Mipmapped() {
-			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
-			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 1000)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 1000)
 		} else {
-			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
-			r.render.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
+			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0)
 		}
 
 		// Add uniform input.
@@ -500,8 +496,8 @@ func (r *Renderer) clearState(ns *nativeShader, obj *gfx.Object) {
 	obj.NativeObject = r.endQuery(obj, obj.NativeObject.(nativeObject))
 
 	// Use no texture.
-	r.render.BindTexture(gl.TEXTURE_2D, 0)
-	r.render.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, 0)
+	gl.ActiveTexture(gl.TEXTURE0)
 }
 
 func (r *Renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
@@ -511,20 +507,20 @@ func (r *Renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 	// Use vertices data.
 	location, ok := r.findAttribLocation(ns, "Vertex")
 	if ok {
-		r.render.BindBuffer(gl.ARRAY_BUFFER, native.vertices)
-		r.render.EnableVertexAttribArray(location)
-		defer r.render.DisableVertexAttribArray(location)
-		r.render.VertexAttribPointer(location, 3, gl.FLOAT, gl.GLBool(false), 0, nil)
+		gl.BindBuffer(gl.ARRAY_BUFFER, native.vertices)
+		gl.EnableVertexAttribArray(location)
+		defer gl.DisableVertexAttribArray(location)
+		gl.VertexAttribPointer(location, 3, gl.FLOAT, false, 0, nil)
 	}
 
 	if native.colors != 0 {
 		// Use colors data.
 		location, ok = r.findAttribLocation(ns, "Color")
 		if ok {
-			r.render.BindBuffer(gl.ARRAY_BUFFER, native.colors)
-			r.render.EnableVertexAttribArray(location)
-			defer r.render.DisableVertexAttribArray(location)
-			r.render.VertexAttribPointer(location, 4, gl.FLOAT, gl.GLBool(false), 0, nil)
+			gl.BindBuffer(gl.ARRAY_BUFFER, native.colors)
+			gl.EnableVertexAttribArray(location)
+			defer gl.DisableVertexAttribArray(location)
+			gl.VertexAttribPointer(location, 4, gl.FLOAT, false, 0, nil)
 		}
 	}
 
@@ -532,10 +528,10 @@ func (r *Renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 		// Use bary data.
 		location, ok = r.findAttribLocation(ns, "Bary")
 		if ok {
-			r.render.BindBuffer(gl.ARRAY_BUFFER, native.bary)
-			r.render.EnableVertexAttribArray(location)
-			defer r.render.DisableVertexAttribArray(location)
-			r.render.VertexAttribPointer(location, 3, gl.FLOAT, gl.GLBool(false), 0, nil)
+			gl.BindBuffer(gl.ARRAY_BUFFER, native.bary)
+			gl.EnableVertexAttribArray(location)
+			defer gl.DisableVertexAttribArray(location)
+			gl.VertexAttribPointer(location, 3, gl.FLOAT, false, 0, nil)
 		}
 	}
 
@@ -544,10 +540,10 @@ func (r *Renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 		name := texCoordName(index)
 		location, ok = r.findAttribLocation(ns, name)
 		if ok {
-			r.render.BindBuffer(gl.ARRAY_BUFFER, texCoords)
-			r.render.EnableVertexAttribArray(location)
-			defer r.render.DisableVertexAttribArray(location)
-			r.render.VertexAttribPointer(location, 2, gl.FLOAT, gl.GLBool(false), 0, nil)
+			gl.BindBuffer(gl.ARRAY_BUFFER, texCoords)
+			gl.EnableVertexAttribArray(location)
+			defer gl.DisableVertexAttribArray(location)
+			gl.VertexAttribPointer(location, 2, gl.FLOAT, false, 0, nil)
 		}
 	}
 
@@ -567,25 +563,25 @@ func (r *Renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 			}
 
 			// Bind the buffer, send each row.
-			r.render.BindBuffer(gl.ARRAY_BUFFER, vbo)
+			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 			for row := uint32(0); row < attrib.rows; row++ {
 				l := location + row
-				r.render.EnableVertexAttribArray(l)
-				defer r.render.DisableVertexAttribArray(l)
-				r.render.VertexAttribPointer(l, attrib.size, gl.FLOAT, gl.GLBool(false), 0, nil)
+				gl.EnableVertexAttribArray(l)
+				defer gl.DisableVertexAttribArray(l)
+				gl.VertexAttribPointer(l, attrib.size, gl.FLOAT, false, 0, nil)
 			}
 		}
 	}
 
 	if native.indicesCount > 0 {
 		// Draw indexed mesh.
-		r.render.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, native.indices)
-		r.render.DrawElements(gl.TRIANGLES, native.indicesCount, gl.UNSIGNED_INT, nil)
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, native.indices)
+		gl.DrawElements(gl.TRIANGLES, native.indicesCount, gl.UNSIGNED_INT, nil)
 	} else {
 		// Draw regular mesh.
-		r.render.DrawArrays(gl.TRIANGLES, 0, native.verticesCount)
+		gl.DrawArrays(gl.TRIANGLES, 0, native.verticesCount)
 	}
 
 	// Unbind buffer to avoid carrying OpenGL state.
-	r.render.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }

@@ -13,8 +13,8 @@ import (
 	"unsafe"
 
 	"azul3d.org/gfx.v1"
-	"azul3d.org/gfx/gl2.v1/internal/resize"
-	"azul3d.org/native/gl.v1"
+	"azul3d.org/gfx/gl2.v2/internal/gl"
+	"azul3d.org/gfx/gl2.v2/internal/resize"
 )
 
 type nativeTexture struct {
@@ -29,7 +29,7 @@ type nativeTexture struct {
 // Generates texture ID, binds, and sets BASE/MAX mipmap levels to zero.
 //
 // Used by both LoadTexture and RenderToTexture methods.
-func newNativeTexture(ctx *gl.Context, r *Renderer, internalFormat int32, width, height int) *nativeTexture {
+func newNativeTexture(r *Renderer, internalFormat int32, width, height int) *nativeTexture {
 	tex := &nativeTexture{
 		r:              r,
 		internalFormat: internalFormat,
@@ -37,12 +37,12 @@ func newNativeTexture(ctx *gl.Context, r *Renderer, internalFormat int32, width,
 		height:         height,
 		destroyHandler: finalizeTexture,
 	}
-	ctx.GenTextures(1, &tex.id)
-	ctx.Execute()
+	gl.GenTextures(1, &tex.id)
+	//gl.Execute()
 
-	ctx.BindTexture(gl.TEXTURE_2D, tex.id)
-	ctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
-	ctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 1000)
+	gl.BindTexture(gl.TEXTURE_2D, tex.id)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 1000)
 	return tex
 }
 
@@ -60,7 +60,7 @@ func finalizeTexture(n *nativeTexture) {
 	n.r.texturesToFree.Unlock()
 }
 
-func fbErrorString(err int32) string {
+func fbErrorString(err uint32) string {
 	switch err {
 	case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
 		return "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"
@@ -92,17 +92,17 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 	n.r.LoaderExec <- func() {
 		// Create a FBO, bind it now.
 		var fbo uint32
-		n.r.loader.GenFramebuffers(1, &fbo)
-		n.r.loader.Execute()
-		n.r.loader.BindFramebuffer(gl.FRAMEBUFFER, fbo)
+		gl.GenFramebuffers(1, &fbo)
+		//gl.Execute()
+		gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-		n.r.loader.BindTexture(gl.TEXTURE_2D, n.id)
-		n.r.loader.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		n.r.loader.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-		n.r.loader.BindTexture(gl.TEXTURE_2D, 0)
+		gl.BindTexture(gl.TEXTURE_2D, n.id)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+		gl.BindTexture(gl.TEXTURE_2D, 0)
 
 		// Attach the texture to the FBO.
-		n.r.loader.FramebufferTexture2D(
+		gl.FramebufferTexture2D(
 			gl.FRAMEBUFFER,
 			gl.COLOR_ATTACHMENT0,
 			gl.TEXTURE_2D,
@@ -119,7 +119,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 			rect = bounds.Intersect(rect)
 		}
 
-		status := n.r.loader.CheckFramebufferStatus(gl.FRAMEBUFFER)
+		status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
 		if status != gl.FRAMEBUFFER_COMPLETE {
 			// Log the error.
 			n.r.logf("Download(): glCheckFramebufferStatus() failed! Status == %s.\n", fbErrorString(status))
@@ -130,7 +130,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		// Read texture pixels.
 		img := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
 		x, y, w, h := convertRect(rect, bounds)
-		n.r.loader.ReadPixels(
+		gl.ReadPixels(
 			x, y, w, h,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
@@ -138,12 +138,12 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		)
 
 		// Delete the FBO.
-		n.r.loader.BindFramebuffer(gl.FRAMEBUFFER, 0)
-		n.r.loader.DeleteFramebuffers(1, &fbo)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+		gl.DeleteFramebuffers(1, &fbo)
 
 		// Flush and execute.
-		n.r.loader.Flush()
-		n.r.loader.Execute()
+		gl.Flush()
+		//gl.Execute()
 
 		complete <- img
 	}
@@ -231,7 +231,7 @@ func (r *Renderer) hookedDownload(rect image.Rectangle, complete chan image.Imag
 
 		img := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
 		x, y, w, h := convertRect(rect, bounds)
-		r.render.ReadPixels(
+		gl.ReadPixels(
 			x, y, w, h,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
@@ -243,8 +243,8 @@ func (r *Renderer) hookedDownload(rect image.Rectangle, complete chan image.Imag
 		}
 
 		// Flush and execute.
-		r.render.Flush()
-		r.render.Execute()
+		gl.Flush()
+		//gl.Execute()
 
 		// We must vertically flip the image.
 		verticalFlip(img)
@@ -295,11 +295,11 @@ func (r *Renderer) freeTextures() {
 
 	if len(r.texturesToFree.slice) > 0 {
 		// Free the textures.
-		r.loader.DeleteTextures(uint32(len(r.texturesToFree.slice)), &r.texturesToFree.slice[0])
+		gl.DeleteTextures(int32(len(r.texturesToFree.slice)), &r.texturesToFree.slice[0])
 
 		// Flush and execute OpenGL commands.
-		r.loader.Flush()
-		r.loader.Execute()
+		gl.Flush()
+		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -376,7 +376,7 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	f := func() {
 		// Determine appropriate internal image format.
 		targetFormat := convertTexFormat(t.Format)
-		internalFormat := gl.RGBA
+		internalFormat := int32(gl.RGBA)
 		for _, format := range r.compressedTextureFormats {
 			if format == targetFormat {
 				internalFormat = format
@@ -387,7 +387,6 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		// Initialize native texture.
 		bounds := src.Bounds()
 		native := newNativeTexture(
-			r.loader,
 			r,
 			internalFormat,
 			bounds.Dx(),
@@ -395,16 +394,16 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		)
 
 		if t.MinFilter.Mipmapped() {
-			r.loader.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, int32(gl.TRUE))
+			gl.TexParameteri(gl.TEXTURE_2D, gl.GENERATE_MIPMAP, int32(gl.TRUE))
 		}
 
 		// Upload the image.
-		r.loader.TexImage2D(
+		gl.TexImage2D(
 			gl.TEXTURE_2D,
 			0,
 			internalFormat,
-			uint32(bounds.Dx()),
-			uint32(bounds.Dy()),
+			int32(bounds.Dx()),
+			int32(bounds.Dy()),
 			0,
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
@@ -412,14 +411,14 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		)
 
 		// Unbind texture to avoid carrying OpenGL state.
-		r.loader.BindTexture(gl.TEXTURE_2D, 0)
+		gl.BindTexture(gl.TEXTURE_2D, 0)
 
 		// Flush, Finish and execute OpenGL commands.
-		r.loader.Flush()
+		gl.Flush()
 		// Use Finish() to avoid accessing the texture before upload has completed, see:
 		//  http://higherorderfun.com/blog/2011/05/26/multi-thread-opengl-texture-loading/
-		r.loader.Finish()
-		r.loader.Execute()
+		gl.Finish()
+		//gl.Execute()
 
 		// Mark the texture as loaded.
 		t.Loaded = true

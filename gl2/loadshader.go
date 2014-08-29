@@ -7,9 +7,10 @@ package gl2
 import (
 	"runtime"
 	"strings"
+	"unsafe"
 
 	"azul3d.org/gfx.v1"
-	"azul3d.org/native/gl.v1"
+	"azul3d.org/gfx/gl2.v2/internal/gl"
 )
 
 // nativeShader is stored inside the *Shader.Native interface and stores GLSL
@@ -40,15 +41,15 @@ func (r *Renderer) freeShaders() {
 		// Delete shader objects (in practice we should be able to do this
 		// directly after linking, but it would just leave the driver to
 		// reference count anyway).
-		r.loader.DeleteShader(native.vertex)
-		r.loader.DeleteShader(native.fragment)
+		gl.DeleteShader(native.vertex)
+		gl.DeleteShader(native.fragment)
 
 		// Delete program.
-		r.loader.DeleteProgram(native.program)
+		gl.DeleteProgram(native.program)
 
 		// Flush and execute OpenGL commands.
-		r.loader.Flush()
-		r.loader.Execute()
+		gl.Flush()
+		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -76,17 +77,17 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			var (
 				ok, logSize int32
 			)
-			r.loader.GetShaderiv(s, gl.COMPILE_STATUS, &ok)
-			r.loader.Execute()
+			gl.GetShaderiv(s, gl.COMPILE_STATUS, &ok)
+			//gl.Execute()
 
 			// Shader compiler error
-			r.loader.GetShaderiv(s, gl.INFO_LOG_LENGTH, &logSize)
-			r.loader.Execute()
+			gl.GetShaderiv(s, gl.INFO_LOG_LENGTH, &logSize)
+			//gl.Execute()
 
 			if logSize > 0 {
 				log = make([]byte, logSize)
-				r.loader.GetShaderInfoLog(s, uint32(logSize), nil, &log[0])
-				r.loader.Execute()
+				gl.GetShaderInfoLog(s, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
+				//gl.Execute()
 
 				// Strip null-termination byte.
 				if log[len(log)-1] == 0 {
@@ -112,12 +113,12 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			r.logf("%s | Vertex shader with no source code.\n", s.Name)
 		} else {
 			// Compile vertex shader.
-			native.vertex = r.loader.CreateShader(gl.VERTEX_SHADER)
+			native.vertex = gl.CreateShader(gl.VERTEX_SHADER)
 			lengths := int32(len(s.GLSLVert))
 			sources := &s.GLSLVert[0]
-			r.loader.ShaderSource(native.vertex, 1, &sources, &lengths)
-			r.loader.CompileShader(native.vertex)
-			r.loader.Execute()
+			gl.ShaderSource(native.vertex, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
+			gl.CompileShader(native.vertex)
+			//gl.Execute()
 
 			// Check if the shader compiled or not.
 			log, compiled := shaderCompilerLog(native.vertex)
@@ -146,12 +147,12 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			r.logf("%s | Fragment shader with no source code.\n", s.Name)
 		} else {
 			// Compile fragment shader.
-			native.fragment = r.loader.CreateShader(gl.FRAGMENT_SHADER)
+			native.fragment = gl.CreateShader(gl.FRAGMENT_SHADER)
 			lengths := int32(len(s.GLSLFrag))
 			sources := &s.GLSLFrag[0]
-			r.loader.ShaderSource(native.fragment, 1, &sources, &lengths)
-			r.loader.CompileShader(native.fragment)
-			r.loader.Execute()
+			gl.ShaderSource(native.fragment, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
+			gl.CompileShader(native.fragment)
+			//gl.Execute()
 
 			// Check if the shader compiled or not.
 			log, compiled := shaderCompilerLog(native.fragment)
@@ -173,23 +174,23 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		// Create the shader program if all went well with the vertex and
 		// fragment shaders.
 		if native.vertex != 0 && native.fragment != 0 {
-			native.program = r.loader.CreateProgram()
-			r.loader.AttachShader(native.program, native.vertex)
-			r.loader.AttachShader(native.program, native.fragment)
-			r.loader.LinkProgram(native.program)
+			native.program = gl.CreateProgram()
+			gl.AttachShader(native.program, native.vertex)
+			gl.AttachShader(native.program, native.fragment)
+			gl.LinkProgram(native.program)
 
 			// Grab the linker's log.
 			var (
 				logSize int32
 				log     []byte
 			)
-			r.loader.GetProgramiv(native.program, gl.INFO_LOG_LENGTH, &logSize)
-			r.loader.Execute()
+			gl.GetProgramiv(native.program, gl.INFO_LOG_LENGTH, &logSize)
+			//gl.Execute()
 
 			if logSize > 0 {
 				log = make([]byte, logSize)
-				r.loader.GetProgramInfoLog(native.program, uint32(logSize), nil, &log[0])
-				r.loader.Execute()
+				gl.GetProgramInfoLog(native.program, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
+				//gl.Execute()
 
 				// Strip null-termination byte.
 				if log[len(log)-1] == 0 {
@@ -199,8 +200,8 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 
 			// Check for linker errors.
 			var ok int32
-			r.loader.GetProgramiv(native.program, gl.LINK_STATUS, &ok)
-			r.loader.Execute()
+			gl.GetProgramiv(native.program, gl.LINK_STATUS, &ok)
+			//gl.Execute()
 			if ok == 0 {
 				// Just for sanity.
 				native.program = 0
@@ -227,8 +228,8 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		}
 
 		// Flush and execute OpenGL commands.
-		r.loader.Flush()
-		r.loader.Execute()
+		gl.Flush()
+		//gl.Execute()
 
 		// Unlock, signal completion, and return.
 		s.Unlock()

@@ -10,11 +10,13 @@ import (
 	"image"
 	"io"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 
 	"azul3d.org/clock.v1"
 	"azul3d.org/gfx.v1"
-	"azul3d.org/native/gl.v1"
+	"azul3d.org/gfx/gl2.v2/internal/gl"
 )
 
 // Used when attempting to create an OpenGL 2.0 renderer in a lesser OpenGL context.
@@ -49,9 +51,6 @@ type Renderer struct {
 	// OpenGL state restored. This is particularly useful when the renderer
 	// must interoperate with other renderers (e.g. QT5).
 	keepState bool
-
-	// render/loader context API.
-	render, loader *gl.Context
 
 	// The graphics clock.
 	clock *clock.Clock
@@ -225,8 +224,8 @@ func (r *Renderer) hookedQueryWait(pre, post func()) {
 		}
 
 		// Flush and execute any pending OpenGL commands.
-		r.render.Flush()
-		r.render.Execute()
+		gl.Flush()
+		//gl.Execute()
 
 		// Wait for occlusion query results to come in.
 		r.queryWait()
@@ -266,8 +265,8 @@ func (r *Renderer) hookedRender(pre, post func()) {
 		}
 
 		// Flush and execute any pending OpenGL commands.
-		r.render.Flush()
-		r.render.Execute()
+		gl.Flush()
+		//gl.Execute()
 
 		// Wait for occlusion query results to come in.
 		r.queryWait()
@@ -309,15 +308,15 @@ func (r *Renderer) queryYield() int {
 		available, result int32
 	)
 	for queryIndex, query := range r.pending.queries {
-		r.render.GetQueryObjectiv(query.id, gl.QUERY_RESULT_AVAILABLE, &available)
-		r.render.Execute()
+		gl.GetQueryObjectiv(query.id, gl.QUERY_RESULT_AVAILABLE, &available)
+		//gl.Execute()
 		if available == gl.TRUE {
 			// Get the result then.
-			r.render.GetQueryObjectiv(query.id, gl.QUERY_RESULT, &result)
+			gl.GetQueryObjectiv(query.id, gl.QUERY_RESULT, &result)
 
 			// Delete the query.
-			r.render.DeleteQueries(1, &query.id)
-			r.render.Execute()
+			gl.DeleteQueries(1, &query.id)
+			//gl.Execute()
 
 			// Update object's sample count.
 			nativeObj := query.o.NativeObject.(nativeObject)
@@ -358,11 +357,11 @@ func (r *Renderer) GPUInfo() gfx.GPUInfo {
 
 // Effectively just calls stateScissor(), but passes in the proper bounds
 // according to whether or not we are rendering to an rttCanvas or not.
-func (r *Renderer) performScissor(ctx *gl.Context, rect image.Rectangle) {
+func (r *Renderer) performScissor(rect image.Rectangle) {
 	if r.rttCanvas != nil {
-		r.stateScissor(ctx, r.rttCanvas.Bounds(), rect)
+		r.stateScissor(r.rttCanvas.Bounds(), rect)
 	} else {
-		r.stateScissor(ctx, r.Bounds(), rect)
+		r.stateScissor(r.Bounds(), rect)
 	}
 }
 
@@ -370,36 +369,36 @@ func (r *Renderer) performClear(rect image.Rectangle, bg gfx.Color) {
 	r.setGlobalState()
 
 	// Color write mask effects the glClear call below.
-	r.stateColorWrite(r.render, [4]bool{true, true, true, true})
+	r.stateColorWrite([4]bool{true, true, true, true})
 
 	// Perform clearing.
-	r.performScissor(r.render, rect)
-	r.stateClearColor(r.render, bg)
-	r.render.Clear(uint32(gl.COLOR_BUFFER_BIT))
+	r.performScissor(rect)
+	r.stateClearColor(bg)
+	gl.Clear(uint32(gl.COLOR_BUFFER_BIT))
 }
 
 func (r *Renderer) performClearDepth(rect image.Rectangle, depth float64) {
 	r.setGlobalState()
 
 	// Depth write mask effects the glClear call below.
-	r.stateDepthWrite(r.render, true)
+	r.stateDepthWrite(true)
 
 	// Perform clearing.
-	r.performScissor(r.render, rect)
-	r.stateClearDepth(r.render, depth)
-	r.render.Clear(uint32(gl.DEPTH_BUFFER_BIT))
+	r.performScissor(rect)
+	r.stateClearDepth(depth)
+	gl.Clear(uint32(gl.DEPTH_BUFFER_BIT))
 }
 
 func (r *Renderer) performClearStencil(rect image.Rectangle, stencil int) {
 	r.setGlobalState()
 
 	// Stencil mask effects the glClear call below.
-	r.stateStencilMask(r.render, 0xFFFF, 0xFFFF)
+	r.stateStencilMask(0xFFFF, 0xFFFF)
 
 	// Perform clearing.
-	r.performScissor(r.render, rect)
-	r.stateClearStencil(r.render, stencil)
-	r.render.Clear(uint32(gl.STENCIL_BUFFER_BIT))
+	r.performScissor(rect)
+	r.stateClearStencil(stencil)
+	gl.Clear(uint32(gl.STENCIL_BUFFER_BIT))
 }
 
 // UpdateBounds updates the effective bounding rectangle of this renderer. It
@@ -417,7 +416,7 @@ func (r *Renderer) setGlobalState() {
 			// We want to maintain state between frames for cooperation with
 			// another renderer. Store the existing graphics state now so that
 			// we can restore it after the frame is rendered.
-			r.prevGraphicsState = queryExistingState(r.render, &r.gpuInfo, r.Bounds())
+			r.prevGraphicsState = queryExistingState(&r.gpuInfo, r.Bounds())
 
 			// Since the existing state is also not what we think it is, we
 			// must update our state now.
@@ -427,15 +426,15 @@ func (r *Renderer) setGlobalState() {
 
 		// Update viewport bounds.
 		bounds := r.baseCanvas.Bounds()
-		r.render.Viewport(0, 0, uint32(bounds.Dx()), uint32(bounds.Dy()))
+		gl.Viewport(0, 0, int32(bounds.Dx()), int32(bounds.Dy()))
 
 		// Enable scissor testing.
-		r.render.Enable(gl.SCISSOR_TEST)
+		gl.Enable(gl.SCISSOR_TEST)
 
 		// Enable multisampling, if available and wanted.
 		if r.glArbMultisample {
 			if r.baseCanvas.MSAA() {
-				r.render.Enable(gl.MULTISAMPLE)
+				gl.Enable(gl.MULTISAMPLE)
 			}
 		}
 	}
@@ -453,17 +452,17 @@ func (r *Renderer) clearGlobalState() {
 			// the frame started then.
 			oldState = r.prevGraphicsState
 		}
-		r.graphicsState.load(r.render, &r.gpuInfo, r.Bounds(), oldState)
+		r.graphicsState.load(&r.gpuInfo, r.Bounds(), oldState)
 
 		// Reset last shader so that uniforms are loaded again next frame.
 		r.lastShader = nil
 
 		// Disable scissor testing.
-		r.render.Disable(gl.SCISSOR_TEST)
+		gl.Disable(gl.SCISSOR_TEST)
 
 		// Disable multisampling, if available.
 		if r.glArbMultisample {
-			r.render.Disable(gl.MULTISAMPLE)
+			gl.Disable(gl.MULTISAMPLE)
 		}
 	}
 }
@@ -484,6 +483,122 @@ func (r *Renderer) SetDebugOutput(w io.Writer) {
 	r.debug.RLock()
 	r.debug.W = w
 	r.debug.RUnlock()
+}
+
+func parseVersionString(ver string) (major, minor, release int, vendor string) {
+	if len(ver) == 0 {
+		// Version string must not be empty
+		return
+	}
+
+	// According to http://www.opengl.org/sdk/docs/man/xhtml/glGetString.xml
+	//
+	// the string returned may be 'major.minor' or 'major.minor.release'
+	// and may be following by a space and any vendor specific information.
+
+	// First locate a proper version string without vendor specific
+	// information.
+	var (
+		versionString string
+		err           error
+	)
+	if strings.Contains(ver, " ") {
+		// It must have vendor information
+		split := strings.Split(ver, " ")
+		if len(split) > 0 || len(split[0]) > 0 {
+			// Everything looks good.
+			versionString = split[0]
+		} else {
+			// Something must be wrong with their vendor string.
+			return
+		}
+
+		// Store the vendor version information.
+		vendor = ver[len(versionString):]
+	} else {
+		// No vendor information.
+		versionString = ver
+	}
+
+	// We have a proper version string now without vendor information.
+	dots := strings.Count(versionString, ".")
+	if dots == 1 {
+		// It's a 'major.minor' style string
+		versions := strings.Split(versionString, ".")
+		if len(versions) == 2 {
+			major, err = strconv.Atoi(versions[0])
+			if err != nil {
+				return
+			}
+
+			minor, err = strconv.Atoi(versions[1])
+			if err != nil {
+				return
+			}
+
+		} else {
+			return
+		}
+
+	} else if dots == 2 {
+		// It's a 'major.minor.release' style string
+		versions := strings.Split(versionString, ".")
+		if len(versions) == 3 {
+			major, err = strconv.Atoi(versions[0])
+			if err != nil {
+				return
+			}
+
+			minor, err = strconv.Atoi(versions[1])
+			if err != nil {
+				return
+			}
+
+			release, err = strconv.Atoi(versions[2])
+			if err != nil {
+				return
+			}
+		} else {
+			return
+		}
+	}
+	return
+}
+
+func queryVersion() (major, minor, release int, vendorVersion string) {
+	versionString := gl.GoStr(gl.GetString(gl.VERSION))
+	return parseVersionString(versionString)
+}
+
+func queryShaderVersion() (major, minor, release int, vendorVersion string) {
+	versionString := gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
+	return parseVersionString(versionString)
+}
+
+func queryExtensions() map[string]bool {
+	// Initialize extensions map
+	var (
+		extensions = make(map[string]bool)
+		extString  = gl.GoStr(gl.GetString(gl.EXTENSIONS))
+	)
+	if len(extString) > 0 {
+		split := strings.Split(extString, " ")
+		for _, ext := range split {
+			if len(ext) > 0 {
+				extensions[ext] = true
+			}
+		}
+	}
+	return extensions
+}
+
+func extension(name string, extensions map[string]bool) bool {
+	_, ok := extensions[name]
+	return ok
+}
+
+func glStr(s string) *int8 {
+	return gl.Str(s + "\x00")
 }
 
 // New returns a new OpenGL 2 based graphics renderer. If any error is returned
@@ -509,29 +624,24 @@ func New(keepState bool) (*Renderer, error) {
 		clock:          clock.New(),
 	}
 
-	// Initialize r.render now.
-	r.render = gl.New()
-	r.render.SetBatching(false)
-	if !r.render.AtLeastVersion(2, 0) {
-		return nil, ErrInvalidVersion
+	// Initialize OpenGL.
+	err := gl.Init()
+	if err != nil {
+		return nil, fmt.Errorf("OpenGL Error: %v", err)
 	}
 
-	// Initialize r.loader now.
-	r.loader = gl.New()
-	r.loader.SetBatching(false)
-
-	// Note: we don't need r.ctx.Lock() here because no other goroutines
+	// Note: we don't need r.gl.Lock() here because no other goroutines
 	// can be using r.ctx yet since we haven't returned from New().
 
 	// Find the renderer's precision.
 	var redBits, greenBits, blueBits, alphaBits, depthBits, stencilBits int32
-	r.render.GetIntegerv(gl.RED_BITS, &redBits)
-	r.render.GetIntegerv(gl.GREEN_BITS, &greenBits)
-	r.render.GetIntegerv(gl.BLUE_BITS, &blueBits)
-	r.render.GetIntegerv(gl.ALPHA_BITS, &alphaBits)
-	r.render.GetIntegerv(gl.DEPTH_BITS, &depthBits)
-	r.render.GetIntegerv(gl.STENCIL_BITS, &stencilBits)
-	r.render.Execute()
+	gl.GetIntegerv(gl.RED_BITS, &redBits)
+	gl.GetIntegerv(gl.GREEN_BITS, &greenBits)
+	gl.GetIntegerv(gl.BLUE_BITS, &blueBits)
+	gl.GetIntegerv(gl.ALPHA_BITS, &alphaBits)
+	gl.GetIntegerv(gl.DEPTH_BITS, &depthBits)
+	gl.GetIntegerv(gl.STENCIL_BITS, &stencilBits)
+	//gl.Execute()
 
 	r.precision.RedBits = uint8(redBits)
 	r.precision.GreenBits = uint8(greenBits)
@@ -540,47 +650,54 @@ func New(keepState bool) (*Renderer, error) {
 	r.precision.DepthBits = uint8(depthBits)
 	r.precision.StencilBits = uint8(stencilBits)
 
+	exts := queryExtensions()
+	extsStr := make([]string, len(exts))
+	ei := 0
+	for s := range exts {
+		extsStr[ei] = s
+	}
+
 	// Query whether we have the GL_ARB_framebuffer_object extension.
-	r.glArbFramebufferObject = r.render.Extension("GL_ARB_framebuffer_object")
+	r.glArbFramebufferObject = extension("GL_ARB_framebuffer_object", exts)
 
 	// Query whether we have the GL_ARB_occlusion_query extension.
-	r.glArbOcclusionQuery = r.render.Extension("GL_ARB_occlusion_query")
+	r.glArbOcclusionQuery = extension("GL_ARB_occlusion_query", exts)
 
 	// Query whether we have the GL_ARB_multisample extension.
-	r.glArbMultisample = r.render.Extension("GL_ARB_multisample")
+	r.glArbMultisample = extension("GL_ARB_multisample", exts)
 	if r.glArbMultisample {
 		// Query the number of samples and sample buffers we have, if any.
-		r.render.GetIntegerv(gl.SAMPLES, &r.samples)
-		r.render.GetIntegerv(gl.SAMPLE_BUFFERS, &r.sampleBuffers)
-		r.render.Execute() // Needed because glGetIntegerv must execute now.
+		gl.GetIntegerv(gl.SAMPLES, &r.samples)
+		gl.GetIntegerv(gl.SAMPLE_BUFFERS, &r.sampleBuffers)
+		//gl.Execute() // Needed because glGetIntegerv must execute now.
 		r.precision.Samples = int(r.samples)
 	}
 
 	// Store GPU info.
 	var maxTextureSize, maxVaryingFloats, maxVertexInputs, maxFragmentInputs, occlusionQueryBits int32
-	r.render.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
-	r.render.GetIntegerv(gl.MAX_VARYING_FLOATS, &maxVaryingFloats)
-	r.render.GetIntegerv(gl.MAX_VERTEX_UNIFORM_COMPONENTS, &maxVertexInputs)
-	r.render.GetIntegerv(gl.MAX_FRAGMENT_UNIFORM_COMPONENTS, &maxFragmentInputs)
+	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &maxTextureSize)
+	gl.GetIntegerv(gl.MAX_VARYING_FLOATS, &maxVaryingFloats)
+	gl.GetIntegerv(gl.MAX_VERTEX_UNIFORM_COMPONENTS, &maxVertexInputs)
+	gl.GetIntegerv(gl.MAX_FRAGMENT_UNIFORM_COMPONENTS, &maxFragmentInputs)
 	if r.glArbOcclusionQuery {
-		r.render.GetQueryiv(gl.SAMPLES_PASSED, gl.QUERY_COUNTER_BITS, &occlusionQueryBits)
+		gl.GetQueryiv(gl.SAMPLES_PASSED, gl.QUERY_COUNTER_BITS, &occlusionQueryBits)
 	}
-	r.render.Execute()
+	//gl.Execute()
 
 	// Collect GPU information.
 	r.gpuInfo.MaxTextureSize = int(maxTextureSize)
 	r.gpuInfo.GLSLMaxVaryingFloats = int(maxVaryingFloats)
 	r.gpuInfo.GLSLMaxVertexInputs = int(maxVertexInputs)
 	r.gpuInfo.GLSLMaxFragmentInputs = int(maxFragmentInputs)
-	r.gpuInfo.GLExtensions = r.render.Extensions()
+	r.gpuInfo.GLExtensions = extsStr
 	r.gpuInfo.AlphaToCoverage = r.glArbMultisample && r.samples > 0 && r.sampleBuffers > 0
-	r.gpuInfo.Name = gl.String(r.render.GetString(gl.RENDERER))
-	r.gpuInfo.Vendor = gl.String(r.render.GetString(gl.VENDOR))
-	r.gpuInfo.GLMajor, r.gpuInfo.GLMinor, _ = r.render.Version()
-	r.gpuInfo.GLSLMajor, r.gpuInfo.GLSLMinor, _ = r.render.ShaderVersion()
+	r.gpuInfo.Name = gl.GoStr(gl.GetString(gl.RENDERER))
+	r.gpuInfo.Vendor = gl.GoStr(gl.GetString(gl.VENDOR))
+	r.gpuInfo.GLMajor, r.gpuInfo.GLMinor, _, _ = queryVersion()
+	r.gpuInfo.GLSLMajor, r.gpuInfo.GLSLMinor, _, _ = queryShaderVersion()
 	r.gpuInfo.OcclusionQuery = r.glArbOcclusionQuery && occlusionQueryBits > 0
 	r.gpuInfo.OcclusionQueryBits = int(occlusionQueryBits)
-	r.gpuInfo.NPOT = r.render.Extension("GL_ARB_texture_non_power_of_two")
+	r.gpuInfo.NPOT = extension("GL_ARB_texture_non_power_of_two", exts)
 	if r.glArbFramebufferObject {
 		// See http://www.opengl.org/wiki/Image_Format for more information.
 		//
@@ -630,8 +747,8 @@ func New(keepState bool) (*Renderer, error) {
 		// TODO: Beware integer texture formats -- MSAA can at max be
 		//       GL_MAX_INTEGER_SAMPLES with those.
 		var maxSamples int32
-		r.render.GetIntegerv(gl.MAX_SAMPLES, &maxSamples)
-		r.render.Execute()
+		gl.GetIntegerv(gl.MAX_SAMPLES, &maxSamples)
+		//gl.Execute()
 		for i := 0; i < int(maxSamples); i++ {
 			fmts.Samples = append(fmts.Samples, i)
 		}
@@ -641,30 +758,30 @@ func New(keepState bool) (*Renderer, error) {
 
 	// Grab the current renderer bounds (opengl viewport).
 	var viewport [4]int32
-	r.render.GetIntegerv(gl.VIEWPORT, &viewport[0])
-	r.render.Execute()
+	gl.GetIntegerv(gl.VIEWPORT, &viewport[0])
+	//gl.Execute()
 	r.baseCanvas.bounds = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
 
 	if keepState {
 		// Load the existing graphics state.
-		r.graphicsState = queryExistingState(r.render, &r.gpuInfo, r.baseCanvas.bounds)
+		r.graphicsState = queryExistingState(&r.gpuInfo, r.baseCanvas.bounds)
 	} else {
 		r.graphicsState = defaultGraphicsState
 	}
 
 	// Update scissor rectangle.
-	r.stateScissor(r.render, r.baseCanvas.bounds, r.baseCanvas.bounds)
+	r.stateScissor(r.baseCanvas.bounds, r.baseCanvas.bounds)
 
 	// Grab the number of texture compression formats.
 	var numFormats int32
-	r.render.GetIntegerv(gl.NUM_COMPRESSED_TEXTURE_FORMATS, &numFormats)
-	r.render.Execute() // Needed because glGetIntegerv must execute now.
+	gl.GetIntegerv(gl.NUM_COMPRESSED_TEXTURE_FORMATS, &numFormats)
+	//gl.Execute() // Needed because glGetIntegerv must execute now.
 
 	// Store the slice of texture compression formats.
 	if numFormats > 0 {
 		r.compressedTextureFormats = make([]int32, numFormats)
-		r.render.GetIntegerv(gl.COMPRESSED_TEXTURE_FORMATS, &r.compressedTextureFormats[0])
-		r.render.Execute() // Needed because glGetIntegerv must execute now.
+		gl.GetIntegerv(gl.COMPRESSED_TEXTURE_FORMATS, &r.compressedTextureFormats[0])
+		//gl.Execute() // Needed because glGetIntegerv must execute now.
 	}
 	return r, nil
 }
