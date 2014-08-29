@@ -655,6 +655,7 @@ func New(keepState bool) (*Renderer, error) {
 	ei := 0
 	for s := range exts {
 		extsStr[ei] = s
+		ei++
 	}
 
 	// Query whether we have the GL_ARB_framebuffer_object extension.
