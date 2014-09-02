@@ -168,6 +168,15 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	defer w.Unlock()
 	w.props = p
 
+	// Runs f without the currently held lock. Because some functions cause an
+	// event to be generated, calling the event callback and causing a deadlock.
+	withoutLock := func(f func()) {
+		w.Unlock()
+		f()
+		w.Lock()
+	}
+	win := w.window
+
 	// Set each property, only if it differs from the last known value for that
 	// property.
 
@@ -178,7 +187,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	lastWidth, lastHeight := w.last.Size()
 	if force || width != lastWidth || height != lastHeight {
 		w.last.SetSize(width, height)
-		w.window.SetSize(width, height)
+		withoutLock(func() {
+			win.SetSize(width, height)
+		})
 	}
 
 	// Window Position.
@@ -193,7 +204,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 				y = (vm.Height / 2) - (height / 2)
 			}
 		}
-		w.window.SetPosition(x, y)
+		withoutLock(func() {
+			win.SetPosition(x, y)
+		})
 	}
 
 	// Cursor Position.
@@ -202,7 +215,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	if force || cursorX != lastCursorX || cursorY != lastCursorY {
 		w.last.SetCursorPos(cursorX, cursorY)
 		if cursorX != -1 && cursorY != -1 {
-			w.window.SetCursorPosition(cursorX, cursorY)
+			withoutLock(func() {
+				win.SetCursorPosition(cursorX, cursorY)
+			})
 		}
 	}
 
@@ -210,22 +225,26 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	visible := w.props.Visible()
 	if force || w.last.Visible() != visible {
 		w.last.SetVisible(visible)
-		if visible {
-			w.window.Show()
-		} else {
-			w.window.Hide()
-		}
+		withoutLock(func() {
+			if visible {
+				win.Show()
+			} else {
+				win.Hide()
+			}
+		})
 	}
 
 	// Window Minimized.
 	minimized := w.props.Minimized()
 	if force || w.last.Minimized() != minimized {
 		w.last.SetMinimized(minimized)
-		if minimized {
-			w.window.Iconify()
-		} else {
-			w.window.Restore()
-		}
+		withoutLock(func() {
+			if minimized {
+				win.Iconify()
+			} else {
+				win.Restore()
+			}
+		})
 	}
 
 	// Vertical sync mode.
@@ -271,11 +290,13 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		w.lastCursorY = math.Inf(-1)
 
 		// Set input mode.
-		if grabbed {
-			w.window.SetInputMode(glfw.Cursor, glfw.CursorDisabled)
-		} else {
-			w.window.SetInputMode(glfw.Cursor, glfw.CursorNormal)
-		}
+		withoutLock(func() {
+			if grabbed {
+				w.window.SetInputMode(glfw.Cursor, glfw.CursorDisabled)
+			} else {
+				w.window.SetInputMode(glfw.Cursor, glfw.CursorNormal)
+			}
+		})
 	}
 }
 
