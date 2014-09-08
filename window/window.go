@@ -22,35 +22,35 @@ type EventMask uint32
 
 const (
 	// Event mask matching no events at all.
-	NoEvents EventMask = iota
+	NoEvents EventMask = 0
 
 	// Each event mask below matches it's corresponding event (defined in this
 	// package) without the `Events` suffix.
-	CloseEvents
-	DamagedEvents
-	CursorMovedEvents
-	CursorEnterEvents
-	CursorExitEvents
-	MinimizedEvents
-	RestoredEvents
-	GainedFocusEvents
-	LostFocusEvents
-	MovedEvents
-	ResizedEvents
-	FramebufferResizedEvents
-	ItemsDroppedEvents
+	CloseEvents              EventMask = 1 << 0
+	DamagedEvents            EventMask = 1 << 1
+	CursorMovedEvents        EventMask = 1 << 2
+	CursorEnterEvents        EventMask = 1 << 3
+	CursorExitEvents         EventMask = 1 << 4
+	MinimizedEvents          EventMask = 1 << 5
+	RestoredEvents           EventMask = 1 << 6
+	GainedFocusEvents        EventMask = 1 << 7
+	LostFocusEvents          EventMask = 1 << 8
+	MovedEvents              EventMask = 1 << 9
+	ResizedEvents            EventMask = 1 << 10
+	FramebufferResizedEvents EventMask = 1 << 11
+	ItemsDroppedEvents       EventMask = 1 << 12
 
 	// Event mask for the mouse.Event event type.
-	MouseEvents
+	MouseEvents EventMask = 1 << 13
 
 	// Event mask for the mouse.Scrolled event type.
-	MouseScrolledEvents
+	MouseScrolledEvents EventMask = 1 << 14
 
 	// Event mask for the keyboard.TypedEvent event type.
-	KeyboardTypedEvents
+	KeyboardTypedEvents EventMask = 1 << 15
 
 	// Event mask for the keyboard.StateEvent event type.
-	KeyboardStateEvents
+	KeyboardStateEvents EventMask = 1 << 16
 
 	// Event mask matching all possible events.
 	AllEvents = EventMask(math.MaxUint32)
