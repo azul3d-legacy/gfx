@@ -262,7 +262,7 @@ type Renderer interface {
 	LoadShader(s *Shader, done chan *Shader)
 
 	// RenderToTexture creates and returns a canvas that when rendered to,
-	// stores the results into one or multiple of the tree textures (Color,
+	// stores the results into one or multiple of the three textures (Color,
 	// Depth, Stencil) of the given configuration.
 	//
 	// If the any of the configuration's formats are not supported by the
