@@ -214,7 +214,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		return
 	}
 
-	f := func() {
+	f := func() bool {
 		// Find the native mesh, creating a new one if none exists.
 		var native *nativeMesh
 		if !m.Loaded {
@@ -445,14 +445,14 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		case done <- m:
 		default:
 		}
-		return
+		return false // no frame rendered.
 	}
 
 	select {
-	case r.LoaderExec <- f:
+	case r.RenderExec <- f:
 	default:
 		go func() {
-			r.LoaderExec <- f
+			r.RenderExec <- f
 		}()
 	}
 }

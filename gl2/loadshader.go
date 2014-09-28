@@ -72,7 +72,7 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		return
 	}
 
-	f := func() {
+	f := func() bool {
 		shaderCompilerLog := func(s uint32) (log []byte, compiled bool) {
 			var (
 				ok, logSize int32
@@ -237,13 +237,14 @@ func (r *Renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		case done <- s:
 		default:
 		}
+		return false // no frame rendered.
 	}
 
 	select {
-	case r.LoaderExec <- f:
+	case r.RenderExec <- f:
 	default:
 		go func() {
-			r.LoaderExec <- f
+			r.RenderExec <- f
 		}()
 	}
 }

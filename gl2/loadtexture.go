@@ -89,7 +89,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		return
 	}
 
-	n.r.LoaderExec <- func() {
+	n.r.RenderExec <- func() bool {
 		// Create a FBO, bind it now.
 		var fbo uint32
 		gl.GenFramebuffers(1, &fbo)
@@ -124,7 +124,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 			// Log the error.
 			n.r.logf("Download(): glCheckFramebufferStatus() failed! Status == %s.\n", fbErrorString(status))
 			complete <- nil
-			return
+			return false // no frame rendered.
 		}
 
 		// Read texture pixels.
@@ -146,6 +146,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		//gl.Execute()
 
 		complete <- img
+		return false // no frame rendered.
 	}
 }
 
@@ -373,7 +374,7 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	// Prepare the image for uploading.
 	src := prepareImage(r.gpuInfo.NPOT, t.Source)
 
-	f := func() {
+	f := func() bool {
 		// Determine appropriate internal image format.
 		targetFormat := convertTexFormat(t.Format)
 		internalFormat := int32(gl.RGBA)
@@ -434,13 +435,14 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		case done <- t:
 		default:
 		}
+		return false // no frame rendered.
 	}
 
 	select {
-	case r.LoaderExec <- f:
+	case r.RenderExec <- f:
 	default:
 		go func() {
-			r.LoaderExec <- f
+			r.RenderExec <- f
 		}()
 	}
 }

@@ -41,9 +41,8 @@ type pendingQuery struct {
 type Renderer struct {
 	*baseCanvas
 
-	// Render and loader execution channels.
+	// Render execution channels.
 	RenderExec chan func() bool
-	LoaderExec chan func()
 
 	// Whether or not the existing graphics state should be kept between
 	// frames. If set to true before rendering a frame the renderer will ask
@@ -242,18 +241,16 @@ func (r *Renderer) hookedQueryWait(pre, post func()) {
 }
 
 func (r *Renderer) hookedRender(pre, post func()) {
-	// If any finalizers have ran and actually want us to free something, then
-	// we will ask the loader to do so now.
-	r.LoaderExec <- func() {
+	// Ask the render channel to render things now.
+	r.RenderExec <- func() bool {
+		// If any finalizers have ran and actually want us to free something,
+		// then we perform this operation now.
 		r.freeMeshes()
 		r.freeShaders()
 		r.freeTextures()
 		r.freeFBOs()
 		r.freeRenderbuffers()
-	}
 
-	// Ask the render channel to render things now.
-	r.RenderExec <- func() bool {
 		if pre != nil {
 			pre()
 		}
@@ -617,7 +614,6 @@ func New(keepState bool) (*Renderer, error) {
 			msaa: true,
 		},
 		RenderExec:     make(chan func() bool, 1024),
-		LoaderExec:     make(chan func(), 1024),
 		keepState:      keepState,
 		renderComplete: make(chan struct{}, 8),
 		wantFree:       make(chan struct{}, 1),
