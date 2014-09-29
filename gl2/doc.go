@@ -36,5 +36,4 @@
 // alpha transparency mode of an object. It is set to true if the gfx.Object
 // being drawn has a gfx.State.AlphaMode of gfx.BinaryAlpha or if the alpha
 // mode is gfx.AlphaToCoverage but the GPU does not support it.
-//
 package gl2
