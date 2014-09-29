@@ -24,8 +24,6 @@ type nativeAttrib struct {
 type nativeMesh struct {
 	indices                     uint32
 	vertices                    uint32
-	colors                      uint32
-	bary                        uint32
 	texCoords                   []uint32
 	attribs                     map[string]*nativeAttrib
 	verticesCount, indicesCount int32
@@ -76,12 +74,12 @@ func (r *Renderer) deleteVBO(vboId *uint32) {
 
 // attribSize returns the number of rows, and the size of each row measured in
 // 32-bit elements:
-//  rows == 1 == float32, gfx.Vec3, gfx.Vec4
+//  rows == 1 == float32, gfx.Vec3, gfx.Vec4, gfx.Color
 //  rows == 4 == gfx.Mat4
 //
 //  size == 1 == float32
 //  size == 3 == gfx.Vec3
-//  size == 4 == gfx.Vec4, gfx.Mat4
+//  size == 4 == gfx.Vec4, gfx.Color, gfx.Mat4
 // ok == false is returned if x is not one of the above types.
 func attribSize(x interface{}) (rows uint32, size int32, ok bool) {
 	switch x.(type) {
@@ -89,7 +87,7 @@ func attribSize(x interface{}) (rows uint32, size int32, ok bool) {
 		return 1, 1, true
 	case gfx.Vec3:
 		return 1, 3, true
-	case gfx.Vec4:
+	case gfx.Vec4, gfx.Color:
 		return 1, 4, true
 	case gfx.Mat4:
 		return 4, 4, true
@@ -176,8 +174,6 @@ func (r *Renderer) freeMeshes() {
 		// Delete single VBO's.
 		gl.DeleteBuffers(1, &native.indices)
 		gl.DeleteBuffers(1, &native.vertices)
-		gl.DeleteBuffers(1, &native.colors)
-		gl.DeleteBuffers(1, &native.bary)
 
 		// Delete texture coords buffers.
 		if len(native.texCoords) > 0 {
@@ -279,48 +275,21 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 			m.VerticesChanged = false
 		}
 
-		// Update Colors VBO.
-		if !m.Loaded || m.ColorsChanged {
-			if len(m.Colors) == 0 {
-				// Delete colors VBO.
-				r.deleteVBO(&native.colors)
-			} else {
-				if native.colors == 0 {
-					// Create colors VBO.
-					native.colors = r.createVBO()
-				}
-				// Update colors VBO.
-				r.updateVBO(
-					usageHint,
-					unsafe.Sizeof(m.Colors[0]),
-					len(m.Colors),
-					unsafe.Pointer(&m.Colors[0]),
-					native.colors,
-				)
-			}
-			m.ColorsChanged = false
+		allAttribs := make(map[string]gfx.VertexAttrib, len(m.Attribs))
+		for k, s := range m.Attribs {
+			allAttribs[k] = s
 		}
-
-		// Update Bary VBO.
-		if !m.Loaded || m.BaryChanged {
-			if len(m.Bary) == 0 {
-				// Delete bary VBO.
-				r.deleteVBO(&native.bary)
-			} else {
-				if native.bary == 0 {
-					// Create bary VBO.
-					native.bary = r.createVBO()
-				}
-				// Update bary VBO.
-				r.updateVBO(
-					usageHint,
-					unsafe.Sizeof(m.Bary[0]),
-					len(m.Bary),
-					unsafe.Pointer(&m.Bary[0]),
-					native.bary,
-				)
+		if m.Colors != nil {
+			allAttribs["Color"] = gfx.VertexAttrib{
+				Data:    m.Colors,
+				Changed: m.ColorsChanged,
 			}
-			m.BaryChanged = false
+		}
+		if m.Bary != nil {
+			allAttribs["Bary"] = gfx.VertexAttrib{
+				Data:    m.Bary,
+				Changed: m.BaryChanged,
+			}
 		}
 
 		// Any texture coordinate sets that were removed should have their
@@ -372,7 +341,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		// Any custom attributes that were removed should have their VBO's
 		// deleted.
 		for name, attrib := range native.attribs {
-			_, exists := m.Attribs[name]
+			_, exists := allAttribs[name]
 			if exists {
 				// It still exists.
 				continue
@@ -384,7 +353,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		}
 
 		// Any custom attributes that were added should have VBO's created.
-		for name, attrib := range m.Attribs {
+		for name, attrib := range allAttribs {
 			_, exists := native.attribs[name]
 			if exists {
 				// It already has a VBO.
@@ -404,7 +373,7 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 
 		// And finally, any custom attributes that were changed need to have
 		// their VBO's updated.
-		for name, attrib := range m.Attribs {
+		for name, attrib := range allAttribs {
 			if attrib.Changed {
 				// Update the custom attribute's VBO.
 				nAttrib := native.attribs[name]

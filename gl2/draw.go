@@ -348,6 +348,14 @@ func (r *Renderer) updateUniform(native *nativeShader, name string, value interf
 			gl.Uniform4fv(location, int32(len(v)), &v[0].X)
 		}
 
+	case gfx.Color:
+		gl.Uniform4fv(location, 1, &v.R)
+
+	case []gfx.Color:
+		if len(v) > 0 {
+			gl.Uniform4fv(location, int32(len(v)), &v[0].R)
+		}
+
 	case gfx.Mat4:
 		gl.UniformMatrix4fv(location, 1, false, &v[0][0])
 
@@ -514,28 +522,6 @@ func (r *Renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 		gl.EnableVertexAttribArray(location)
 		defer gl.DisableVertexAttribArray(location)
 		gl.VertexAttribPointer(location, 3, gl.FLOAT, false, 0, nil)
-	}
-
-	if native.colors != 0 {
-		// Use colors data.
-		location, ok = r.findAttribLocation(ns, "Color")
-		if ok {
-			gl.BindBuffer(gl.ARRAY_BUFFER, native.colors)
-			gl.EnableVertexAttribArray(location)
-			defer gl.DisableVertexAttribArray(location)
-			gl.VertexAttribPointer(location, 4, gl.FLOAT, false, 0, nil)
-		}
-	}
-
-	if native.bary != 0 {
-		// Use bary data.
-		location, ok = r.findAttribLocation(ns, "Bary")
-		if ok {
-			gl.BindBuffer(gl.ARRAY_BUFFER, native.bary)
-			gl.EnableVertexAttribArray(location)
-			defer gl.DisableVertexAttribArray(location)
-			gl.VertexAttribPointer(location, 3, gl.FLOAT, false, 0, nil)
-		}
 	}
 
 	// Use each texture coordinate set data.
