@@ -95,9 +95,12 @@ func (n nativeObject) needRebuild(o *gfx.Object, c *gfx.Camera) bool {
 }
 
 func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
+	objMat := o.Transform.Mat4()
+	n.Transform = objMat
+
 	// The "Model" matrix is the Object's transformation matrix, we feed it
 	// directly in.
-	n.model = gfx.ConvertMat4(o.Transform.Mat4())
+	n.model = gfx.ConvertMat4(objMat)
 
 	// The "View" matrix is the coordinate system conversion, multiplied
 	// against the camera object's transformation matrix
@@ -117,7 +120,7 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 	n.projection = gfx.ConvertMat4(projection)
 
 	// The "MVP" matrix is Model * View * Projection matrix.
-	mvp := o.Transform.Mat4()
+	mvp := objMat
 	mvp = mvp.Mul(view)
 	mvp = mvp.Mul(projection)
 	n.mvp = gfx.ConvertMat4(mvp)
