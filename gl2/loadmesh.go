@@ -74,10 +74,11 @@ func (r *Renderer) deleteVBO(vboId *uint32) {
 
 // attribSize returns the number of rows, and the size of each row measured in
 // 32-bit elements:
-//  rows == 1 == float32, gfx.Vec3, gfx.Vec4, gfx.Color
+//  rows == 1 == float32, gfx.TexCoord, gfx.Vec3, gfx.Vec4, gfx.Color
 //  rows == 4 == gfx.Mat4
 //
 //  size == 1 == float32
+//  size == 2 == gfx.TexCoord
 //  size == 3 == gfx.Vec3
 //  size == 4 == gfx.Vec4, gfx.Color, gfx.Mat4
 // ok == false is returned if x is not one of the above types.
@@ -85,6 +86,8 @@ func attribSize(x interface{}) (rows uint32, size int32, ok bool) {
 	switch x.(type) {
 	case float32:
 		return 1, 1, true
+	case gfx.TexCoord:
+		return 1, 2, true
 	case gfx.Vec3:
 		return 1, 3, true
 	case gfx.Vec4, gfx.Color:
