@@ -168,6 +168,7 @@
 		"glUniform1i",
 		"glUniform1fv",
 		"glUniform1iv",
+		"glUniform2fv",
 		"glUniform3fv",
 		"glUniform4fv",
 		"glUniformMatrix4fv",
