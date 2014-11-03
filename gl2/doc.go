@@ -19,21 +19,11 @@
 // but mipmapped can only be turned on with a loaded texture if when it loaded
 // it had a mipmapped minification filter set on it.
 //
-// The default GLSL shader inputs are as follows:
+// A shader will have it's inputs (from the gfx.Shader.Inputs map) mapped by
+// name to GLSL uniforms. Types map directly to their GLSL counterparts (e.g.
+// gfx.Vec4 -> GLSL "vec4" type), the only two notable ones are:
 //
-//  attribute vec3 Vertex;      -> from gfx.Mesh.Vertices and gfx.Mesh.Indices
-//  attribute vec4 Color;       -> from gfx.Mesh.Colors
-//  attribute vec3 Bary;        -> from gfx.Mesh.Bary
-//  attribute vec2 TexCoord[N]; -> [N] is the nth index of gfx.Mesh.TexCoords
+//  gfx.Color -> GLSL "vec4" type
+//  gfx.TexCoord -> GLSL "vec2" type
 //
-//  uniform mat4 Model;       -> Model matrix from gfx.Object.Transform
-//  uniform mat4 View;        -> View matrix from gfx.Camera.Transform
-//  uniform mat4 Projection;  -> Projection matrix from gfx.Camera.Projection
-//  uniform mat4 MVP;         -> Premultiplied Model/View/Projection matrix.
-//  uniform bool BinaryAlpha; -> See below.
-//
-// BinaryAlpha is a boolean uniform value that informs the shader of the chosen
-// alpha transparency mode of an object. It is set to true if the gfx.Object
-// being drawn has a gfx.State.AlphaMode of gfx.BinaryAlpha or if the alpha
-// mode is gfx.AlphaToCoverage but the GPU does not support it.
 package gl2
