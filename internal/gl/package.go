@@ -13,7 +13,7 @@
 //  http://github.com/go-gl/glow
 //
 // Generated based on the OpenGL XML specification:
-//  SVN revision 27874
+//  SVN revision 28834
 package gl
 
 // #cgo darwin  LDFLAGS: -framework OpenGL
@@ -187,6 +187,7 @@ package gl
 // typedef void  (APIENTRYP GPUNIFORM1FV)(GLint  location, GLsizei  count, const GLfloat * value);
 // typedef void  (APIENTRYP GPUNIFORM1I)(GLint  location, GLint  v0);
 // typedef void  (APIENTRYP GPUNIFORM1IV)(GLint  location, GLsizei  count, const GLint * value);
+// typedef void  (APIENTRYP GPUNIFORM2FV)(GLint  location, GLsizei  count, const GLfloat * value);
 // typedef void  (APIENTRYP GPUNIFORM3FV)(GLint  location, GLsizei  count, const GLfloat * value);
 // typedef void  (APIENTRYP GPUNIFORM4FV)(GLint  location, GLsizei  count, const GLfloat * value);
 // typedef void  (APIENTRYP GPUNIFORMMATRIX4FV)(GLint  location, GLsizei  count, GLboolean  transpose, const GLfloat * value);
@@ -413,6 +414,9 @@ package gl
 //   (*fnptr)(location, v0);
 // }
 // static void  glowUniform1iv(GPUNIFORM1IV fnptr, GLint  location, GLsizei  count, const GLint * value) {
+//   (*fnptr)(location, count, value);
+// }
+// static void  glowUniform2fv(GPUNIFORM2FV fnptr, GLint  location, GLsizei  count, const GLfloat * value) {
 //   (*fnptr)(location, count, value);
 // }
 // static void  glowUniform3fv(GPUNIFORM3FV fnptr, GLint  location, GLsizei  count, const GLfloat * value) {
@@ -678,6 +682,7 @@ var (
 	gpUniform1fv                     C.GPUNIFORM1FV
 	gpUniform1i                      C.GPUNIFORM1I
 	gpUniform1iv                     C.GPUNIFORM1IV
+	gpUniform2fv                     C.GPUNIFORM2FV
 	gpUniform3fv                     C.GPUNIFORM3FV
 	gpUniform4fv                     C.GPUNIFORM4FV
 	gpUniformMatrix4fv               C.GPUNIFORMMATRIX4FV
@@ -1049,6 +1054,11 @@ func Uniform1iv(location int32, count int32, value *int32) {
 }
 
 // Specify the value of a uniform variable for the current program object
+func Uniform2fv(location int32, count int32, value *float32) {
+	C.glowUniform2fv(gpUniform2fv, (C.GLint)(location), (C.GLsizei)(count), (*C.GLfloat)(unsafe.Pointer(value)))
+}
+
+// Specify the value of a uniform variable for the current program object
 func Uniform3fv(location int32, count int32, value *float32) {
 	C.glowUniform3fv(gpUniform3fv, (C.GLint)(location), (C.GLsizei)(count), (*C.GLfloat)(unsafe.Pointer(value)))
 }
@@ -1343,6 +1353,10 @@ func InitWithProcAddrFunc(getProcAddr procaddr.GetProcAddressFunc) error {
 	gpUniform1iv = (C.GPUNIFORM1IV)(getProcAddr("glUniform1iv"))
 	if gpUniform1iv == nil {
 		return errors.New("glUniform1iv")
+	}
+	gpUniform2fv = (C.GPUNIFORM2FV)(getProcAddr("glUniform2fv"))
+	if gpUniform2fv == nil {
+		return errors.New("glUniform2fv")
 	}
 	gpUniform3fv = (C.GPUNIFORM3FV)(getProcAddr("glUniform3fv"))
 	if gpUniform3fv == nil {
