@@ -335,6 +335,14 @@ func (r *Renderer) updateUniform(native *nativeShader, name string, value interf
 			gl.Uniform1fv(location, int32(len(v)), &v[0])
 		}
 
+	case gfx.TexCoord:
+		gl.Uniform2fv(location, 1, &v.U)
+
+	case []gfx.TexCoord:
+		if len(v) > 0 {
+			gl.Uniform2fv(location, int32(len(v)), &v[0].U)
+		}
+
 	case gfx.Vec3:
 		gl.Uniform3fv(location, 1, &v.X)
 
