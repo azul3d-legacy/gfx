@@ -47,10 +47,10 @@ type VertexAttrib struct {
 	//  [][]float32
 	//  []gfx.Vec3
 	//  [][]gfx.Vec3
-	//  []gfx.Mat4
-	//  [][]gfx.Mat4
 	//  []gfx.Vec4
 	//  [][]gfx.Vec4
+	//  []gfx.Mat4
+	//  [][]gfx.Mat4
 	//  []gfx.Color
 	//  [][]gfx.Color
 	//  []gfx.TexCoord
