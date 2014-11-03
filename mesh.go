@@ -53,6 +53,8 @@ type VertexAttrib struct {
 	//  [][]gfx.Vec4
 	//  []gfx.Color
 	//  [][]gfx.Color
+	//  []gfx.TexCoord
+	//  [][]gfx.TexCoord
 	Data interface{}
 
 	// Weather or not the per-vertex data (see the Data field) has changed
@@ -69,6 +71,11 @@ func (a VertexAttrib) Copy() VertexAttrib {
 	switch t := a.Data.(type) {
 	case []float32:
 		c := make([]float32, len(t))
+		copy(c, t)
+		cpy = c
+
+	case []TexCoord:
+		c := make([]TexCoord, len(t))
 		copy(c, t)
 		cpy = c
 
@@ -96,6 +103,13 @@ func (a VertexAttrib) Copy() VertexAttrib {
 		c := make([][]float32, len(t))
 		for i, s := range t {
 			c[i] = make([]float32, len(s))
+			copy(c[i], t[i])
+		}
+
+	case [][]TexCoord:
+		c := make([][]TexCoord, len(t))
+		for i, s := range t {
+			c[i] = make([]TexCoord, len(s))
 			copy(c[i], t[i])
 		}
 
