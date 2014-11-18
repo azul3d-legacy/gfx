@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"azul3d.org/gfx.v2"
+	"azul3d.org/gfx.v2-dev"
 )
 
 func TestRendererInterface(t *testing.T) {

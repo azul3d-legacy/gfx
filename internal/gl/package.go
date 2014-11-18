@@ -442,8 +442,8 @@ import (
 	"errors"
 	"unsafe"
 
-	"azul3d.org/gfx.v2/gl2/internal/procaddr"
-	"azul3d.org/gfx.v2/gl2/internal/procaddr/auto"
+	"azul3d.org/gfx.v2-dev/gl2/internal/procaddr"
+	"azul3d.org/gfx.v2-dev/gl2/internal/procaddr/auto"
 )
 
 const (

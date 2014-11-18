@@ -2,7 +2,7 @@
 
 package auto
 
-import "azul3d.org/gfx.v2/gl2/internal/procaddr/egl"
+import "azul3d.org/gfx.v2-dev/gl2/internal/procaddr/egl"
 
 func init() {
 	GetProcAddress = egl.GetProcAddress

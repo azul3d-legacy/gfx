@@ -15,8 +15,8 @@ import (
 	"sync"
 
 	"azul3d.org/clock.v1"
-	"azul3d.org/gfx.v2"
-	"azul3d.org/gfx.v2/gl2/internal/gl"
+	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-dev/gl2/internal/gl"
 )
 
 // Used when attempting to create an OpenGL 2.0 renderer in a lesser OpenGL context.

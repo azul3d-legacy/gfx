@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"azul3d.org/gfx.v2"
-	"azul3d.org/gfx.v2/gl2"
+	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-dev/gl2"
 	"azul3d.org/keyboard.v1"
 	"azul3d.org/mouse.v1"
 	glfw "azul3d.org/native/glfw.v3"

@@ -8,7 +8,7 @@
 // - noauto: Disable automatic selection
 package auto
 
-import "azul3d.org/gfx.v2/gl2/internal/procaddr"
+import "azul3d.org/gfx.v2-dev/gl2/internal/procaddr"
 
 // Automatically selected GetProcAddressFunc.
 var GetProcAddress procaddr.GetProcAddressFunc
