@@ -1,5 +1,7 @@
 // +build !egl
 
+package auto
+
 // #cgo windows LDFLAGS: -lopengl32
 // #define WIN32_LEAN_AND_MEAN 1
 // #include <windows.h>
