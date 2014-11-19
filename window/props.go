@@ -74,7 +74,9 @@ func (p *Props) Fullscreen() bool {
 // SetFramebufferSize sets the size of the framebuffer in pixels. Each value is
 // clamped to at least a value of 1.
 //
-// Only the window owner should ever set the framebuffer size.
+// Only the Window implementation should set the framebuffer size: clients who are just
+// utilizing the existing implementations defined in this package should not invoke this
+// method.
 func (p *Props) SetFramebufferSize(width, height int) {
 	if width < 1 {
 		width = 1
