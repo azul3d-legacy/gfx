@@ -22,6 +22,9 @@ This repository hosts Azul3D's graphics packages.
 ##### [gfx.v2/window](https://azul3d.org/gfx.v2/window) package:
 
 * Moved to this repository as a sub-package (see [old repository](https://github.com/azul3d/gfx-window) and [issue 33](https://github.com/azul3d/issues/issues/33)).
+* Better documentation (see [#49](https://github.com/azul3d/gfx/pull/49)).
+* Added support for multiple windows (see [#38](https://github.com/azul3d/gfx/issues/38)).
+* Exposed the main thread for clients that need it (see [#39](https://github.com/azul3d/gfx/issues/39)).
 
 ##### [gfx.v2/gl2](https://azul3d.org/gfx.v2/gl2) package:
 
