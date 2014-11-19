@@ -338,7 +338,7 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 	gl.GetBooleanv(gl.DITHER, &dithering)
 	gl.GetBooleanv(gl.DEPTH_TEST, &depthTest)
 	gl.GetBooleanv(gl.DEPTH_WRITEMASK, &depthWrite)
-	gl.GetBooleanv(gl.STENCIL_WRITEMASK, &stencilTest)
+	gl.GetBooleanv(gl.STENCIL_TEST, &stencilTest)
 	gl.GetBooleanv(gl.BLEND, &blend)
 	if gpuInfo.AlphaToCoverage {
 		gl.GetBooleanv(gl.SAMPLE_ALPHA_TO_COVERAGE, &alphaToCoverage)
