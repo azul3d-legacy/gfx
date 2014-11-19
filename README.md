@@ -8,6 +8,8 @@ This repository hosts Azul3D's graphics packages.
 | [azul3d.org/gfx.v2/window](https://azul3d.org/gfx.v2/window) | *Easiest way to create a window and render graphics to it.* |
 | [azul3d.org/gfx.v2/gl2](https://azul3d.org/gfx.v2/gl2) | *OpenGL 2 based graphics renderer.* |
 
+[![Build Status](https://travis-ci.org/azul3d/gfx.svg?branch=master)](https://travis-ci.org/azul3d/gfx)
+
 ## Version 2
 
 ##### [gfx.v2](https://azul3d.org/gfx.v2) package:
