@@ -390,7 +390,7 @@ func NewProps() *Props {
 		alwaysOnTop:   false,
 		cursorGrabbed: false,
 		precision: gfx.Precision{
-			RedBits: 8, GreenBits: 8, BlueBits: 8, AlphaBits: 8,
+			RedBits: 8, GreenBits: 8, BlueBits: 8, AlphaBits: 0,
 			DepthBits: 24,
 			Samples:   2,
 		},
