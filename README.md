@@ -25,7 +25,7 @@ This repository hosts Azul3D's graphics packages.
 * Better documentation (see [#49](https://github.com/azul3d/gfx/pull/49)).
 * Added support for multiple windows (see [#38](https://github.com/azul3d/gfx/issues/38)).
 * Exposed the main thread for clients that need it (see [#39](https://github.com/azul3d/gfx/issues/39)).
-* Now uses a 24/bpp framebuffer by default (see [#24](https://github.com/azul3d/gfx/issues/41)).
+* Uses a 24/bpp framebuffer by default (see [#24](https://github.com/azul3d/gfx/issues/41)).
 
 ##### [gfx.v2/gl2](https://azul3d.org/gfx.v2/gl2) package:
 
