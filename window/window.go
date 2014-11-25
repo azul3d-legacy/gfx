@@ -271,7 +271,12 @@ func New(p *Props) (w Window, r gfx.Renderer, err error) {
 // Run opens a window with the given properties and runs the given graphics
 // loop in a separate goroutine.
 //
-// This function automatically locks the OS thread for you.
+// This function must be called only from the program's main function (other
+// work should be done in other goroutines):
+//
+//  func main() {
+//      window.Run(gfxLoop, nil)
+//  }
 //
 // For more documentation about the behavior of Run, see the New function.
 func Run(gfxLoop func(w Window, r gfx.Renderer), p *Props) {

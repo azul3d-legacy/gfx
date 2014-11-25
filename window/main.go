@@ -11,6 +11,16 @@ import "runtime"
 //
 // http://slimsag.blogspot.com/2014/11/go-solves-busy-waiting.html
 //
+// For details about the main thread and LockOSThread, see:
+//
+// https://groups.google.com/forum/#!topic/golang-nuts/6Rh4e0wvhn4
+
+func init() {
+	// Lock main.main onto the main OS thread. This allows each function in the
+	// MainLoop to be executed on specifically the main OS thread, which is
+	// required by e.g. Cocoa on OS X (which GLFW uses internally).
+	runtime.LockOSThread()
+}
 
 // MainLoopChan is a channel of functions over which each window created
 // through this package will request for functions to be executed.
@@ -23,8 +33,8 @@ var MainLoopChan = make(chan func())
 // MainLoop enters the main loop, executing the main loop functions received
 // from MainLoopChan until no windows are left open.
 //
-// This function must be called only from your main function (i.e. the main OS
-// thread):
+// This function must be called only from the program's main function (other
+// work should be done in other goroutines):
 //
 //  func main() {
 //      window.MainLoop()
@@ -33,9 +43,6 @@ var MainLoopChan = make(chan func())
 // By implementing MainLoop yourself, you can run other functions on the main
 // OS thread (for instance Cocoa API's on OS X).
 func MainLoop() {
-	// Every function in the main loop must be executed on the main thread.
-	runtime.LockOSThread()
-
 	for {
 		select {
 		case f := <-MainLoopChan:
