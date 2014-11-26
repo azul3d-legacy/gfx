@@ -12,11 +12,6 @@ import (
 	"azul3d.org/gfx.v2-dev"
 )
 
-func TestRendererInterface(t *testing.T) {
-	var r *Renderer
-	_ = gfx.Renderer(r)
-}
-
 func TestRectConversion(t *testing.T) {
 	bounds := image.Rect(0, 0, 100, 100)
 	s := image.Rect(20, 20, 50, 50)

@@ -15,7 +15,7 @@ import (
 	"azul3d.org/gfx.v2-dev/gl2/internal/gl"
 )
 
-func (r *Renderer) freeFBOs() {
+func (r *renderer) freeFBOs() {
 	// Lock the list.
 	r.fbosToFree.Lock()
 
@@ -33,7 +33,7 @@ func (r *Renderer) freeFBOs() {
 	r.fbosToFree.Unlock()
 }
 
-func (r *Renderer) freeRenderbuffers() {
+func (r *renderer) freeRenderbuffers() {
 	// Lock the list.
 	r.renderbuffersToFree.Lock()
 
@@ -54,7 +54,7 @@ func (r *Renderer) freeRenderbuffers() {
 // rttCanvas is the gfx.Canvas returned by RenderToTexture.
 type rttCanvas struct {
 	*baseCanvas
-	r   *Renderer
+	r   *renderer
 	cfg gfx.RTTConfig
 
 	// Frame buffer ID.
@@ -133,7 +133,7 @@ func (r *rttCanvas) noop() bool {
 }
 
 // Short methods that just call the hooked methods. We insert calls to rttBegin
-// and rttEnd (they are executed via r.r.RenderExec, i.e. legal for GL
+// and rttEnd (they are executed via r.r.renderExec, i.e. legal for GL
 // rendering commands to be invoked).
 
 // Implements gfx.Canvas interface.
@@ -241,7 +241,7 @@ func checkFramebufferError(target uint32) error {
 }
 
 // RenderToTexture implements the gfx.Renderer interface.
-func (r *Renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
+func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 	if !cfg.Valid() {
 		panic("RenderToTexture(): Configuration is invalid!")
 	}
@@ -303,7 +303,7 @@ func (r *Renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		nTexColor, nTexDepth, nTexStencil *nativeTexture
 		fbError                           error
 	)
-	r.RenderExec <- func() bool {
+	r.renderExec <- func() bool {
 		width := int32(bounds.Dx())
 		height := int32(bounds.Dy())
 

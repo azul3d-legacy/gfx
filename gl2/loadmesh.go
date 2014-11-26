@@ -27,7 +27,7 @@ type nativeMesh struct {
 	texCoords                   []uint32
 	attribs                     map[string]*nativeAttrib
 	verticesCount, indicesCount int32
-	r                           *Renderer
+	r                           *renderer
 }
 
 func finalizeMesh(n *nativeMesh) {
@@ -41,14 +41,14 @@ func (n *nativeMesh) Destroy() {
 	finalizeMesh(n)
 }
 
-func (r *Renderer) createVBO() (vboID uint32) {
+func (r *renderer) createVBO() (vboID uint32) {
 	// Generate new VBO.
 	gl.GenBuffers(1, &vboID)
 	//gl.Execute()
 	return
 }
 
-func (r *Renderer) updateVBO(usageHint int32, dataSize uintptr, dataLength int, data unsafe.Pointer, vboID uint32) {
+func (r *renderer) updateVBO(usageHint int32, dataSize uintptr, dataLength int, data unsafe.Pointer, vboID uint32) {
 	// Bind the VBO now.
 	gl.BindBuffer(gl.ARRAY_BUFFER, vboID)
 
@@ -62,7 +62,7 @@ func (r *Renderer) updateVBO(usageHint int32, dataSize uintptr, dataLength int, 
 	//gl.Execute()
 }
 
-func (r *Renderer) deleteVBO(vboID *uint32) {
+func (r *renderer) deleteVBO(vboID *uint32) {
 	// Delete the VBO.
 	if *vboID == 0 {
 		return
@@ -98,7 +98,7 @@ func attribSize(x interface{}) (rows uint32, size int32, ok bool) {
 	return 0, 0, false
 }
 
-func (r *Renderer) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.VertexAttrib, n *nativeAttrib) {
+func (r *renderer) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.VertexAttrib, n *nativeAttrib) {
 	v := reflect.ValueOf(attrib.Data)
 
 	// If it's not a slice, or it's length is zero, then it is invalid.
@@ -168,7 +168,7 @@ func (r *Renderer) updateCustomAttribVBO(usageHint int32, name string, attrib gf
 	}
 }
 
-func (r *Renderer) freeMeshes() {
+func (r *renderer) freeMeshes() {
 	// Lock the list.
 	r.meshesToFree.Lock()
 
@@ -199,7 +199,7 @@ func (r *Renderer) freeMeshes() {
 }
 
 // LoadMesh implements the gfx.Renderer interface.
-func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
+func (r *renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 	// Lock the mesh until we are done loading it.
 	m.Lock()
 	if m.Loaded && !m.HasChanged() {
@@ -421,10 +421,10 @@ func (r *Renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 	}
 
 	select {
-	case r.RenderExec <- f:
+	case r.renderExec <- f:
 	default:
 		go func() {
-			r.RenderExec <- f
+			r.renderExec <- f
 		}()
 	}
 }

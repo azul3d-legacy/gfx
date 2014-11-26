@@ -18,7 +18,7 @@ import (
 )
 
 type nativeTexture struct {
-	r              *Renderer
+	r              *renderer
 	id             uint32
 	internalFormat int32
 	width, height  int
@@ -29,7 +29,7 @@ type nativeTexture struct {
 // Generates texture ID, binds, and sets BASE/MAX mipmap levels to zero.
 //
 // Used by both LoadTexture and RenderToTexture methods.
-func newNativeTexture(r *Renderer, internalFormat int32, width, height int) *nativeTexture {
+func newNativeTexture(r *renderer, internalFormat int32, width, height int) *nativeTexture {
 	tex := &nativeTexture{
 		r:              r,
 		internalFormat: internalFormat,
@@ -92,7 +92,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		return
 	}
 
-	n.r.RenderExec <- func() bool {
+	n.r.renderExec <- func() bool {
 		// Create a FBO, bind it now.
 		var fbo uint32
 		gl.GenFramebuffers(1, &fbo)
@@ -212,13 +212,13 @@ func prepareImage(npot bool, img image.Image) *image.RGBA {
 }
 
 // Download implements the gfx.Downloadable interface.
-func (r *Renderer) Download(rect image.Rectangle, complete chan image.Image) {
+func (r *renderer) Download(rect image.Rectangle, complete chan image.Image) {
 	r.hookedDownload(rect, complete, nil, nil)
 }
 
 // Implements gfx.Downloadable interface.
-func (r *Renderer) hookedDownload(rect image.Rectangle, complete chan image.Image, pre, post func()) {
-	r.RenderExec <- func() bool {
+func (r *renderer) hookedDownload(rect image.Rectangle, complete chan image.Image, pre, post func()) {
+	r.renderExec <- func() bool {
 		if pre != nil {
 			pre()
 		}
@@ -293,7 +293,7 @@ func convertFilter(f gfx.TexFilter) int32 {
 	panic("invalid filter.")
 }
 
-func (r *Renderer) freeTextures() {
+func (r *renderer) freeTextures() {
 	// Lock the list.
 	r.texturesToFree.Lock()
 
@@ -357,7 +357,7 @@ func unconvertTexFormat(f int32) gfx.TexFormat {
 }
 
 // LoadTexture implements the gfx.Renderer interface.
-func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
+func (r *renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	// Lock the texture until we are done loading it.
 	t.Lock()
 	if !t.Loaded && t.Source == nil {
@@ -442,10 +442,10 @@ func (r *Renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	}
 
 	select {
-	case r.RenderExec <- f:
+	case r.renderExec <- f:
 	default:
 		go func() {
-			r.RenderExec <- f
+			r.renderExec <- f
 		}()
 	}
 }
