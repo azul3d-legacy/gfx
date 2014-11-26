@@ -48,7 +48,7 @@ type glfwWindow struct {
 	props, last                                        *Props
 	mouse                                              *mouse.Watcher
 	keyboard                                           *keyboard.Watcher
-	renderer                                           *gl2.Renderer
+	renderer                                           gl2.Renderer
 	window                                             *glfw.Window
 	monitor                                            *glfw.Monitor
 	lastCursorX, lastCursorY                           float64
@@ -631,6 +631,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	// to the main thread channel.
 	go func() {
 		updateFPS := time.NewTicker(1 * time.Second)
+		renderExec := r.RenderExec()
 		for {
 			select {
 			case <-w.relayExit:
@@ -649,7 +650,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 					w.Unlock()
 				}
 
-			case fn := <-r.RenderExec:
+			case fn := <-renderExec:
 				MainLoopChan <- func() {
 					// Don't execute functions on closed windows.
 					if w.closed {
