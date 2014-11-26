@@ -8,8 +8,6 @@ import (
 	"image"
 	"math/rand"
 	"testing"
-
-	"azul3d.org/gfx.v2-dev"
 )
 
 func TestRectConversion(t *testing.T) {

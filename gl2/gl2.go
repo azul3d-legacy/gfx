@@ -4,7 +4,7 @@
 
 package gl2
 
-import(
+import (
 	"errors"
 	"image"
 	"io"
