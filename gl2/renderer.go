@@ -588,26 +588,19 @@ func glStr(s string) *int8 {
 	return gl.Str(s + "\x00")
 }
 
-// New returns a new OpenGL 2 based graphics renderer. If any error is returned
-// then a nil renderer is also returned. This function must be called only when
-// an OpenGL 2 context is active.
-//
-// keepState specifies whether or not the existing graphics state should be
-// maintained between frames. If set to true then before rendering a frame the
-// graphics state will be saved, the frame rendered, and the old graphics state
-// restored again. This is particularly useful when the renderer must cooperate
-// with another renderer (e.g. QT5). Do not turn it on needlessly though as it
-// does come with a performance cost.
-func New(keepState bool) (Renderer, error) {
+// newRenderer is the implementation of New.
+func newRenderer(opts ...option) (Renderer, error) {
 	r := &renderer{
 		baseCanvas: &baseCanvas{
 			msaa: true,
 		},
 		renderExec:     make(chan func() bool, 1024),
-		keepState:      keepState,
 		renderComplete: make(chan struct{}, 8),
 		wantFree:       make(chan struct{}, 1),
 		clock:          clock.New(),
+	}
+	for _, opt := range opts {
+		opt(r)
 	}
 
 	// Initialize OpenGL.
@@ -749,7 +742,7 @@ func New(keepState bool) (Renderer, error) {
 	//gl.Execute()
 	r.baseCanvas.bounds = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
 
-	if keepState {
+	if r.keepState {
 		// Load the existing graphics state.
 		r.graphicsState = queryExistingState(&r.gpuInfo, r.baseCanvas.bounds)
 	} else {
