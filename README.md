@@ -31,6 +31,7 @@ This repository hosts packages for Azul3D's graphics core.
 * Renderer now uses just one OpenGL context (see [#24](https://github.com/azul3d/gfx/issues/24)).
 * Improved package documentation ([view commit](https://github.com/azul3d/gfx-gl2/commit/493f72dbb36547e394f2d4995ee7d74dbf7b86d4)).
 * `gl2.Renderer` is now an interface (See [#52](https://github.com/azul3d/gfx/issues/52)).
+* `gl2.New` now takes option function parameters (See [#53](https://github.com/azul3d/gfx/issues/53)).
 
 [Full v2 Changelog](https://github.com/azul3d/gfx/compare/v1.0.1...v2).
 
