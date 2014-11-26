@@ -84,6 +84,23 @@ const (
 	AllEvents = EventMask(math.MaxUint32)
 )
 
+// Clipboard is the interface describing a system's clipboard. Grab a clipboard
+// from a window (some platforms don't support clipboard access):
+//
+//  clip, ok := win.(window.Clipboard)
+//  if ok {
+//      // We have clipboard access.
+//      clip.SetClipboard("Hello World!")
+//  }
+//
+type Clipboard interface {
+	// SetClipboard sets the clipboard string.
+	SetClipboard(clipboard string)
+
+	// Clipboard returns the clipboard string.
+	Clipboard() string
+}
+
 // Window represents a single window that graphics can be rendered to. The
 // window is safe for use concurrently from multiple goroutines.
 type Window interface {
@@ -120,12 +137,6 @@ type Window interface {
 	//  }
 	//
 	Mouse() *mouse.Watcher
-
-	// SetClipboard sets the clipboard string.
-	SetClipboard(clipboard string)
-
-	// Clipboard returns the clipboard string.
-	Clipboard() string
 
 	// Notify causes the window to relay window events to ch based on the event
 	// mask.
