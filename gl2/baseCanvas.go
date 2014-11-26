@@ -13,6 +13,7 @@ import (
 
 // baseCanvas implements portions of a gfx.Canvas shared between Renderer and
 // rttCanvas. It implements all portions of gfx.Canvas except:
+//
 //  Downloadable
 //  Clear(r image.Rectangle, bg Color)
 //  ClearDepth(r image.Rectangle, depth float64)
@@ -20,6 +21,7 @@ import (
 //  Draw(r image.Rectangle, o *Object, c *Camera)
 //  QueryWait()
 //  Render()
+//
 type baseCanvas struct {
 	sync.RWMutex
 	msaa      bool            // The MSAA state.
@@ -50,16 +52,16 @@ func (c *baseCanvas) Precision() gfx.Precision {
 	return precision
 }
 
-func (c *baseCanvas) setBounds(b image.Rectangle) {
-	c.Lock()
-	c.bounds = b
-	c.Unlock()
-}
-
 // Implements the gfx.Canvas interface.
 func (c *baseCanvas) Bounds() image.Rectangle {
 	c.RLock()
 	bounds := c.bounds
 	c.RUnlock()
 	return bounds
+}
+
+func (c *baseCanvas) setBounds(b image.Rectangle) {
+	c.Lock()
+	c.bounds = b
+	c.Unlock()
 }
