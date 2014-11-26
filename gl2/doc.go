@@ -8,6 +8,17 @@
 // such the following documentation only makes note of strictly OpenGL related
 // caveats (like initialization, etc).
 //
+// Window Toolkit
+//
+// The renderer operates independently of the window toolkit in use. It can
+// work well with any window toolkit that provides an OpenGL 2 feature-level
+// context (GLFW, SDL, QT, etc).
+//
+// If you just want to open a window and render graphics to it and don't care
+// about the specifics, the simpler gfx/window package should be used instead:
+//
+// http://azul3d.org/gfx.v2/window
+//
 // Feedback Loops
 //
 // When performing render-to-texture (RTT), feedback loops are explicitly
@@ -85,4 +96,42 @@
 // Slices are mapped directly to GLSL arrays, which can be fixed or dynamically
 // sized, standard GLSL restrictions apply (such as a lack of dynamic indexing
 // on dynamically sized arrays, etc).
+//
+// Basic Usage
+//
+// Functions recieved over the render execution channel should be executed
+// under the presence of the OpenGL context, when a render function returns
+// true gfx.Renderer.Render has been called meaning the frame is finished and
+// the window's buffers should be swapped.
+//
+//  func main() {
+//      // Always make proper use of LockOSThread! The OpenGL context is tied
+//      // to the OS thread.
+//      runtime.LockOSThread()
+//
+//      // Initialize OpenGL, through your window toolkit of choice.
+//      window.GLInit()
+//
+//      // Initialize the renderer, under the OpenGL rendering context.
+//      renderer, err := gl2.New()
+//      handle(err)
+//
+//      // Main loop, execute renderer functions.
+//      renderExec := renderer.RenderExec()
+//      for {
+//          if window.Closed() {
+//              // Cleanup the renderer.
+//              renderer.Destroy()
+//              break
+//          }
+//
+//          // Wait for a task from the renderer to execute.
+//          f := <-renderExec
+//          if f() {
+//              // A frame was rendered, swap the buffers.
+//              window.GLSwapBuffers()
+//          }
+//      }
+//  }
+//
 package gl2
