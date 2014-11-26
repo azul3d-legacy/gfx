@@ -596,7 +596,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	window.MakeContextCurrent()
 
 	// Create the renderer.
-	r, err := gl2.New(true)
+	r, err := gl2.New(gl2.KeepState())
 	if err != nil {
 		return nil, nil, err
 	}
