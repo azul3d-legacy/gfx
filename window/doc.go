@@ -100,7 +100,7 @@
 // (Windows, Linux, OS X, and the web via seperate HTML elements). Only one
 // window can be created on mobile devices such as Android.
 //
-// New can create a new window from any goroutine, for instance in the above
+// New can create a new window from any goroutine, for instance in the below
 // example:
 //
 //  // gfxLoop is our graphics loop, which runs in a separate goroutine.
@@ -127,7 +127,7 @@
 //  }
 //
 // If you prefer not to use the simple Run function, you can use the New and
-// MainLoop functions yourself. The only requirement is that New cannot
+// MainLoop functions yourself. The only restriction is that New cannot
 // complete unless MainLoop is already running.
 //
 // The following code works fine, because New is run in a seperate goroutine:
@@ -141,7 +141,7 @@
 //      window.MainLoop()
 //  }
 //
-// The following code does not work, a deadlock occurs because MainLoop is
+// The following code does not work: a deadlock occurs because MainLoop is
 // called after New, and New cannot complete unless MainLoop is running.
 //
 //  func main() {
