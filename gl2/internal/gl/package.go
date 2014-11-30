@@ -13,7 +13,7 @@
 //  http://github.com/go-gl/glow
 //
 // Generated based on the OpenGL XML specification:
-//  SVN revision 28834
+//  SVN revision 29084
 package gl
 
 // #cgo darwin  LDFLAGS: -framework OpenGL
@@ -113,6 +113,10 @@ package gl
 // typedef void (APIENTRY *GLDEBUGPROCAMD)(GLuint id,GLenum category,GLenum severity,GLsizei length,const GLchar *message,void *userParam);
 // typedef unsigned short GLhalfNV;
 // typedef GLintptr GLvdpauSurfaceNV;
+// extern void glowDebugCallback_gl21(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
+// static void APIENTRY glowCDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+//   glowDebugCallback_gl21(source, type, id, severity, length, message, userParam);
+// }
 // typedef void  (APIENTRYP GPACTIVETEXTURE)(GLenum  texture);
 // typedef void  (APIENTRYP GPATTACHSHADER)(GLuint  program, GLuint  shader);
 // typedef void  (APIENTRYP GPBEGINQUERY)(GLenum  target, GLuint  id);
@@ -134,6 +138,7 @@ package gl
 // typedef GLuint  (APIENTRYP GPCREATEPROGRAM)();
 // typedef GLuint  (APIENTRYP GPCREATESHADER)(GLenum  type);
 // typedef void  (APIENTRYP GPCULLFACE)(GLenum  mode);
+// typedef void  (APIENTRYP GPDEBUGMESSAGECALLBACKARB)(GLDEBUGPROCARB  callback, const void * userParam);
 // typedef void  (APIENTRYP GPDELETEBUFFERS)(GLsizei  n, const GLuint * buffers);
 // typedef void  (APIENTRYP GPDELETEFRAMEBUFFERS)(GLsizei  n, const GLuint * framebuffers);
 // typedef void  (APIENTRYP GPDELETEPROGRAM)(GLuint  program);
@@ -163,6 +168,7 @@ package gl
 // typedef GLint  (APIENTRYP GPGETATTRIBLOCATION)(GLuint  program, const GLchar * name);
 // typedef void  (APIENTRYP GPGETBOOLEANV)(GLenum  pname, GLboolean * data);
 // typedef void  (APIENTRYP GPGETDOUBLEV)(GLenum  pname, GLdouble * data);
+// typedef GLenum  (APIENTRYP GPGETERROR)();
 // typedef void  (APIENTRYP GPGETFLOATV)(GLenum  pname, GLfloat * data);
 // typedef void  (APIENTRYP GPGETINTEGERV)(GLenum  pname, GLint * data);
 // typedef void  (APIENTRYP GPGETPROGRAMINFOLOG)(GLuint  program, GLsizei  bufSize, GLsizei * length, GLchar * infoLog);
@@ -257,6 +263,9 @@ package gl
 // static void  glowCullFace(GPCULLFACE fnptr, GLenum  mode) {
 //   (*fnptr)(mode);
 // }
+// static void  glowDebugMessageCallbackARB(GPDEBUGMESSAGECALLBACKARB fnptr, GLDEBUGPROCARB  callback, const void * userParam) {
+//   (*fnptr)(glowCDebugCallback, userParam);
+// }
 // static void  glowDeleteBuffers(GPDELETEBUFFERS fnptr, GLsizei  n, const GLuint * buffers) {
 //   (*fnptr)(n, buffers);
 // }
@@ -343,6 +352,9 @@ package gl
 // }
 // static void  glowGetDoublev(GPGETDOUBLEV fnptr, GLenum  pname, GLdouble * data) {
 //   (*fnptr)(pname, data);
+// }
+// static GLenum  glowGetError(GPGETERROR fnptr) {
+//   return (*fnptr)();
 // }
 // static void  glowGetFloatv(GPGETFLOATV fnptr, GLenum  pname, GLfloat * data) {
 //   (*fnptr)(pname, data);
@@ -473,6 +485,7 @@ const (
 	CONSTANT_COLOR                            = 0x8001
 	CULL_FACE                                 = 0x0B44
 	CULL_FACE_MODE                            = 0x0B45
+	DEBUG_OUTPUT_SYNCHRONOUS_ARB              = 0x8242
 	DECR                                      = 0x1E03
 	DECR_WRAP                                 = 0x8508
 	DEPTH24_STENCIL8                          = 0x88F0
@@ -517,6 +530,10 @@ const (
 	INCR                                      = 0x1E02
 	INCR_WRAP                                 = 0x8507
 	INFO_LOG_LENGTH                           = 0x8B84
+	INVALID_ENUM                              = 0x0500
+	INVALID_FRAMEBUFFER_OPERATION             = 0x0506
+	INVALID_OPERATION                         = 0x0502
+	INVALID_VALUE                             = 0x0501
 	INVERT                                    = 0x150A
 	KEEP                                      = 0x1E00
 	LEQUAL                                    = 0x0203
@@ -537,6 +554,7 @@ const (
 	NEAREST_MIPMAP_NEAREST                    = 0x2700
 	NEVER                                     = 0x0200
 	NOTEQUAL                                  = 0x0205
+	NO_ERROR                                  = 0
 	NUM_COMPRESSED_TEXTURE_FORMATS            = 0x86A2
 	ONE                                       = 1
 	ONE_MINUS_CONSTANT_ALPHA                  = 0x8004
@@ -545,6 +563,7 @@ const (
 	ONE_MINUS_DST_COLOR                       = 0x0307
 	ONE_MINUS_SRC_ALPHA                       = 0x0303
 	ONE_MINUS_SRC_COLOR                       = 0x0301
+	OUT_OF_MEMORY                             = 0x0505
 	QUERY_COUNTER_BITS                        = 0x8864
 	QUERY_RESULT                              = 0x8866
 	QUERY_RESULT_AVAILABLE                    = 0x8867
@@ -567,6 +586,8 @@ const (
 	SRC_ALPHA                                 = 0x0302
 	SRC_ALPHA_SATURATE                        = 0x0308
 	SRC_COLOR                                 = 0x0300
+	STACK_OVERFLOW                            = 0x0503
+	STACK_UNDERFLOW                           = 0x0504
 	STATIC_DRAW                               = 0x88E4
 	STENCIL_ATTACHMENT                        = 0x8D20
 	STENCIL_BACK_FAIL                         = 0x8801
@@ -629,6 +650,7 @@ var (
 	gpCreateProgram                  C.GPCREATEPROGRAM
 	gpCreateShader                   C.GPCREATESHADER
 	gpCullFace                       C.GPCULLFACE
+	gpDebugMessageCallbackARB        C.GPDEBUGMESSAGECALLBACKARB
 	gpDeleteBuffers                  C.GPDELETEBUFFERS
 	gpDeleteFramebuffers             C.GPDELETEFRAMEBUFFERS
 	gpDeleteProgram                  C.GPDELETEPROGRAM
@@ -658,6 +680,7 @@ var (
 	gpGetAttribLocation              C.GPGETATTRIBLOCATION
 	gpGetBooleanv                    C.GPGETBOOLEANV
 	gpGetDoublev                     C.GPGETDOUBLEV
+	gpGetError                       C.GPGETERROR
 	gpGetFloatv                      C.GPGETFLOATV
 	gpGetIntegerv                    C.GPGETINTEGERV
 	gpGetProgramInfoLog              C.GPGETPROGRAMINFOLOG
@@ -804,6 +827,10 @@ func CreateShader(xtype uint32) uint32 {
 func CullFace(mode uint32) {
 	C.glowCullFace(gpCullFace, (C.GLenum)(mode))
 }
+func DebugMessageCallbackARB(callback DebugProc, userParam unsafe.Pointer) {
+	userDebugCallback = callback
+	C.glowDebugMessageCallbackARB(gpDebugMessageCallbackARB, (C.GLDEBUGPROCARB)(unsafe.Pointer(&callback)), userParam)
+}
 
 // delete named buffer objects
 func DeleteBuffers(n int32, buffers *uint32) {
@@ -928,8 +955,6 @@ func GenTextures(n int32, textures *uint32) {
 func GenerateMipmap(target uint32) {
 	C.glowGenerateMipmap(gpGenerateMipmap, (C.GLenum)(target))
 }
-
-// Returns the location of an attribute variable
 func GetAttribLocation(program uint32, name *int8) int32 {
 	ret := C.glowGetAttribLocation(gpGetAttribLocation, (C.GLuint)(program), (*C.GLchar)(unsafe.Pointer(name)))
 	return (int32)(ret)
@@ -939,6 +964,12 @@ func GetBooleanv(pname uint32, data *bool) {
 }
 func GetDoublev(pname uint32, data *float64) {
 	C.glowGetDoublev(gpGetDoublev, (C.GLenum)(pname), (*C.GLdouble)(unsafe.Pointer(data)))
+}
+
+// return error information
+func GetError() uint32 {
+	ret := C.glowGetError(gpGetError)
+	return (uint32)(ret)
 }
 func GetFloatv(pname uint32, data *float32) {
 	C.glowGetFloatv(gpGetFloatv, (C.GLenum)(pname), (*C.GLfloat)(unsafe.Pointer(data)))
@@ -1166,6 +1197,7 @@ func InitWithProcAddrFunc(getProcAddr procaddr.GetProcAddressFunc) error {
 	if gpCullFace == nil {
 		return errors.New("glCullFace")
 	}
+	gpDebugMessageCallbackARB = (C.GPDEBUGMESSAGECALLBACKARB)(getProcAddr("glDebugMessageCallbackARB"))
 	gpDeleteBuffers = (C.GPDELETEBUFFERS)(getProcAddr("glDeleteBuffers"))
 	if gpDeleteBuffers == nil {
 		return errors.New("glDeleteBuffers")
@@ -1260,6 +1292,10 @@ func InitWithProcAddrFunc(getProcAddr procaddr.GetProcAddressFunc) error {
 	gpGetDoublev = (C.GPGETDOUBLEV)(getProcAddr("glGetDoublev"))
 	if gpGetDoublev == nil {
 		return errors.New("glGetDoublev")
+	}
+	gpGetError = (C.GPGETERROR)(getProcAddr("glGetError"))
+	if gpGetError == nil {
+		return errors.New("glGetError")
 	}
 	gpGetFloatv = (C.GPGETFLOATV)(getProcAddr("glGetFloatv"))
 	if gpGetFloatv == nil {
