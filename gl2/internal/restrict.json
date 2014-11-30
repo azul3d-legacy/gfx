@@ -1,5 +1,14 @@
 {
 	"Enums": [
+		"GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB",
+		"GL_NO_ERROR",
+		"GL_INVALID_ENUM",
+		"GL_INVALID_VALUE",
+		"GL_INVALID_OPERATION",
+		"GL_INVALID_FRAMEBUFFER_OPERATION",
+		"GL_OUT_OF_MEMORY",
+		"GL_STACK_UNDERFLOW",
+		"GL_STACK_OVERFLOW",
 		"GL_SAMPLES_PASSED",
 		"GL_ARRAY_BUFFER",
 		"GL_ELEMENT_ARRAY_BUFFER",
@@ -161,6 +170,8 @@
 		"GL_TEXTURE0"
 	],
 	"Functions": [
+		"glDebugMessageCallbackARB",
+		"glGetError",
 		"glGetAttribLocation",
 		"glGetUniformLocation",
 		"glGetIntegerv",
