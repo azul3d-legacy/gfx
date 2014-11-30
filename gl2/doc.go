@@ -143,6 +143,7 @@
 // More extensive debugging can be enabled via the "gfxdebug" build tag, which
 // enables debugging of the OpenGL renderer itself (not user code). Do not use
 // this build tag except when debugging, as it's performance is purely driver
-// implementation dependant.
+// implementation dependant. This form of debugging should be used with a debug
+// OpenGL context.
 //
 package gl2
