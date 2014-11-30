@@ -47,7 +47,8 @@ type renderer struct {
 	gpuInfo gfx.GPUInfo
 
 	// Whether or not certain extensions we use are present or not.
-	glArbMultisample, glArbFramebufferObject, glArbOcclusionQuery bool
+	glArbDebugOutput, glArbMultisample, glArbFramebufferObject,
+	glArbOcclusionQuery bool
 
 	// Number of multisampling samples, buffers.
 	samples, sampleBuffers int32
@@ -265,6 +266,8 @@ func (r *renderer) hookedRender(pre, post func()) {
 		if post != nil {
 			post()
 		}
+
+		r.debugRender()
 
 		if r.rttCanvas != nil {
 			// We are rendering to a texture. We do not need to clear global
@@ -636,6 +639,8 @@ func newRenderer(opts ...option) (Renderer, error) {
 		extsStr[ei] = s
 		ei++
 	}
+
+	r.debugInit(exts)
 
 	// Query whether we have the GL_ARB_framebuffer_object extension.
 	r.glArbFramebufferObject = extension("GL_ARB_framebuffer_object", exts)

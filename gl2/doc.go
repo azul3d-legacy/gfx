@@ -134,4 +134,12 @@
 //      }
 //  }
 //
+// Debugging
+//
+// The package utilized the build tag "gfxdebug" to enable more extensive
+// debugging of OpenGL use by the renderer.
+//
+// Do not enable this except when debugging the renderer, as it can cause
+// significant performance loss depending on the system's graphics drivers.
+//
 package gl2
