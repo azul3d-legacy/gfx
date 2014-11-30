@@ -584,6 +584,9 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	glfw.WindowHint(glfw.StencilBits, int(prec.StencilBits))
 	glfw.WindowHint(glfw.Samples, prec.Samples)
 	glfw.WindowHint(glfw.SRGBCapable, 1)
+	if gfxdebug {
+		glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
+	}
 
 	// Create the render window.
 	width, height := p.Size()
