@@ -136,10 +136,13 @@
 //
 // Debugging
 //
-// The package utilized the build tag "gfxdebug" to enable more extensive
-// debugging of OpenGL use by the renderer.
+// User applications (i.e. not this renderer itself) can be debugged using the
+// SetDebugOutput method of the Renderer interface. This has little to no
+// overhead.
 //
-// Do not enable this except when debugging the renderer, as it can cause
-// significant performance loss depending on the system's graphics drivers.
+// More extensive debugging can be enabled via the "gfxdebug" build tag, which
+// enables debugging of the OpenGL renderer itself (not user code). Do not use
+// this build tag except when debugging, as it's performance is purely driver
+// implementation dependant.
 //
 package gl2
