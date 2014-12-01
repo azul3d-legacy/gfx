@@ -16,6 +16,7 @@ import (
 	"azul3d.org/clock.v1"
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
 )
 
 type pendingQuery struct {
@@ -267,7 +268,9 @@ func (r *renderer) hookedRender(pre, post func()) {
 			post()
 		}
 
-		r.debugRender()
+		if gfxdebug.Flag {
+			r.debugRender()
+		}
 
 		if r.rttCanvas != nil {
 			// We are rendering to a texture. We do not need to clear global
@@ -640,7 +643,9 @@ func newRenderer(opts ...option) (Renderer, error) {
 		ei++
 	}
 
-	r.debugInit(exts)
+	if gfxdebug.Flag {
+		r.debugInit(exts)
+	}
 
 	// Query whether we have the GL_ARB_framebuffer_object extension.
 	r.glArbFramebufferObject = extension("GL_ARB_framebuffer_object", exts)
