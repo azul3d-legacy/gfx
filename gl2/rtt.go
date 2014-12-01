@@ -13,6 +13,7 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
 func (r *renderer) freeFBOs() {
@@ -53,7 +54,7 @@ func (r *renderer) freeRenderbuffers() {
 
 // rttCanvas is the gfx.Canvas returned by RenderToTexture.
 type rttCanvas struct {
-	*baseCanvas
+	*util.BaseCanvas
 	r   *renderer
 	cfg gfx.RTTConfig
 
@@ -280,20 +281,20 @@ func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 	// Choose correct bounds.
 	bounds := cfg.Bounds
 	if bounds.Empty() {
-		bounds = r.baseCanvas.Bounds()
+		bounds = r.BaseCanvas.Bounds()
 	}
 
 	// Create the RTT canvas.
 	cr, cg, cb, ca := cfg.ColorFormat.Bits()
 	canvas := &rttCanvas{
-		baseCanvas: &baseCanvas{
-			msaa: true,
-			precision: gfx.Precision{
+		BaseCanvas: &util.BaseCanvas{
+			VMSAA: true,
+			VPrecision: gfx.Precision{
 				RedBits: cr, GreenBits: cg, BlueBits: cb, AlphaBits: ca,
 				DepthBits:   cfg.DepthFormat.DepthBits(),
 				StencilBits: cfg.StencilFormat.StencilBits(),
 			},
-			bounds: bounds,
+			VBounds: bounds,
 		},
 		r:   r,
 		cfg: cfg,

@@ -17,6 +17,7 @@ import (
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
+	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
 type pendingQuery struct {
@@ -29,7 +30,7 @@ type pendingQuery struct {
 
 // renderer implements the Renderer interface defined in the gl2.go file.
 type renderer struct {
-	*baseCanvas
+	*util.BaseCanvas
 
 	// Render execution channel.
 	renderExec chan func() bool
@@ -398,11 +399,6 @@ func (r *renderer) performClearStencil(rect image.Rectangle, stencil int) {
 	gl.Clear(uint32(gl.STENCIL_BUFFER_BIT))
 }
 
-// UpdateBounds implements the Renderer interface.
-func (r *renderer) UpdateBounds(bounds image.Rectangle) {
-	r.baseCanvas.setBounds(bounds)
-}
-
 func (r *renderer) setGlobalState() {
 	if !r.stateSetForFrame {
 		r.stateSetForFrame = true
@@ -420,7 +416,7 @@ func (r *renderer) setGlobalState() {
 		}
 
 		// Update viewport bounds.
-		bounds := r.baseCanvas.Bounds()
+		bounds := r.BaseCanvas.Bounds()
 		gl.Viewport(0, 0, int32(bounds.Dx()), int32(bounds.Dy()))
 
 		// Enable scissor testing.
@@ -428,7 +424,7 @@ func (r *renderer) setGlobalState() {
 
 		// Enable multisampling, if available and wanted.
 		if r.glArbMultisample {
-			if r.baseCanvas.MSAA() {
+			if r.BaseCanvas.MSAA() {
 				gl.Enable(gl.MULTISAMPLE)
 			}
 		}
@@ -597,8 +593,8 @@ func glStr(s string) *int8 {
 // newRenderer is the implementation of New.
 func newRenderer(opts ...option) (Renderer, error) {
 	r := &renderer{
-		baseCanvas: &baseCanvas{
-			msaa: true,
+		BaseCanvas: &util.BaseCanvas{
+			VMSAA: true,
 		},
 		renderExec:     make(chan func() bool, 1024),
 		renderComplete: make(chan struct{}, 8),
@@ -628,12 +624,12 @@ func newRenderer(opts ...option) (Renderer, error) {
 	gl.GetIntegerv(gl.STENCIL_BITS, &stencilBits)
 	//gl.Execute()
 
-	r.precision.RedBits = uint8(redBits)
-	r.precision.GreenBits = uint8(greenBits)
-	r.precision.BlueBits = uint8(blueBits)
-	r.precision.AlphaBits = uint8(alphaBits)
-	r.precision.DepthBits = uint8(depthBits)
-	r.precision.StencilBits = uint8(stencilBits)
+	r.BaseCanvas.VPrecision.RedBits = uint8(redBits)
+	r.BaseCanvas.VPrecision.GreenBits = uint8(greenBits)
+	r.BaseCanvas.VPrecision.BlueBits = uint8(blueBits)
+	r.BaseCanvas.VPrecision.AlphaBits = uint8(alphaBits)
+	r.BaseCanvas.VPrecision.DepthBits = uint8(depthBits)
+	r.BaseCanvas.VPrecision.StencilBits = uint8(stencilBits)
 
 	exts := queryExtensions()
 	extsStr := make([]string, len(exts))
@@ -660,7 +656,7 @@ func newRenderer(opts ...option) (Renderer, error) {
 		gl.GetIntegerv(gl.SAMPLES, &r.samples)
 		gl.GetIntegerv(gl.SAMPLE_BUFFERS, &r.sampleBuffers)
 		//gl.Execute() // Needed because glGetIntegerv must execute now.
-		r.precision.Samples = int(r.samples)
+		r.BaseCanvas.VPrecision.Samples = int(r.samples)
 	}
 
 	// Store GPU info.
@@ -750,17 +746,17 @@ func newRenderer(opts ...option) (Renderer, error) {
 	var viewport [4]int32
 	gl.GetIntegerv(gl.VIEWPORT, &viewport[0])
 	//gl.Execute()
-	r.baseCanvas.bounds = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
+	r.BaseCanvas.VBounds = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
 
 	if r.keepState {
 		// Load the existing graphics state.
-		r.graphicsState = queryExistingState(&r.gpuInfo, r.baseCanvas.bounds)
+		r.graphicsState = queryExistingState(&r.gpuInfo, r.BaseCanvas.VBounds)
 	} else {
 		r.graphicsState = defaultGraphicsState
 	}
 
 	// Update scissor rectangle.
-	r.stateScissor(r.baseCanvas.bounds, r.baseCanvas.bounds)
+	r.stateScissor(r.BaseCanvas.VBounds, r.BaseCanvas.VBounds)
 
 	// Grab the number of texture compression formats.
 	var numFormats int32
