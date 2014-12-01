@@ -1,8 +1,10 @@
 // Glow automatically generated OpenGL binding: http://github.com/go-gl/glow
 
 package gles2
+
 import "C"
 import "unsafe"
+
 type DebugProc func(
 	source uint32,
 	gltype uint32,
@@ -11,7 +13,9 @@ type DebugProc func(
 	length int32,
 	message string,
 	userParam unsafe.Pointer)
+
 var userDebugCallback DebugProc
+
 //export glowDebugCallback_gles220
 func glowDebugCallback_gles220(
 	source uint32,
@@ -21,7 +25,7 @@ func glowDebugCallback_gles220(
 	length int32,
 	message *uint8,
 	userParam unsafe.Pointer) {
-  if userDebugCallback != nil {
-    userDebugCallback(source, gltype, id, severity, length, GoStr(message), userParam)
-  }
+	if userDebugCallback != nil {
+		userDebugCallback(source, gltype, id, severity, length, GoStr(message), userParam)
+	}
 }
