@@ -16,6 +16,7 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/gl2"
+	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
 	"azul3d.org/keyboard.v1"
 	"azul3d.org/mouse.v1"
 	glfw "azul3d.org/native/glfw.v3"
@@ -584,7 +585,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	glfw.WindowHint(glfw.StencilBits, int(prec.StencilBits))
 	glfw.WindowHint(glfw.Samples, prec.Samples)
 	glfw.WindowHint(glfw.SRGBCapable, 1)
-	if gfxdebug {
+	if gfxdebug.Flag {
 		glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
 	}
 
