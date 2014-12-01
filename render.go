@@ -210,6 +210,13 @@ type GPUInfo struct {
 	// 4x4 matrix is 16 floating-point values) that can be used inside a GLSL
 	// fragment shader, or -1 if not available. Generally at least 64.
 	GLSLMaxFragmentInputs int
+
+	// Whether or not the graphics hardware supports the use of the
+	// BorderColor TexWrap mode. If the hardware doesn't support it the
+	// renderer falls back to the Clamp TexWrap mode in it's place.
+	//
+	// OpenGL ES 2 does not support BorderColor.
+	TexWrapBorderColor bool
 }
 
 // Renderer is capable of loading meshes, textures, and shaders. A renderer can
