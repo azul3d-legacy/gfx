@@ -185,4 +185,11 @@
 //
 // https://azul3d.org/gfx.v2#hdr-Examples
 //
+// Build Tags
+//
+// The build tag "gles2" is accepted on 386 and amd64 architectures to choose
+// to utilize the OpenGL ES 2 based renderer instead of the OpenGL 2 one. This
+// is useful for testing how your application might run under the more
+// constrained OpenGL ES 2 renderer (which mobile devices must use).
+//
 package window

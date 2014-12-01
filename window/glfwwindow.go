@@ -8,6 +8,7 @@ package window
 import (
 	"fmt"
 	"image"
+	"io"
 	"math"
 	"os"
 	"strings"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/gl2"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
 	"azul3d.org/keyboard.v1"
 	"azul3d.org/mouse.v1"
@@ -43,13 +43,20 @@ type notifier struct {
 	ch chan<- Event
 }
 
+type glfwRenderer interface {
+	gfx.Renderer
+	RenderExec() chan func() bool
+	UpdateBounds(bounds image.Rectangle)
+	SetDebugOutput(w io.Writer)
+}
+
 // glfwWindow implements the Window interface using a GLFW backend.
 type glfwWindow struct {
 	sync.RWMutex
 	props, last                                        *Props
 	mouse                                              *mouse.Watcher
 	keyboard                                           *keyboard.Watcher
-	renderer                                           gl2.Renderer
+	renderer                                           glfwRenderer
 	window                                             *glfw.Window
 	monitor                                            *glfw.Monitor
 	lastCursorX, lastCursorY                           float64
@@ -588,6 +595,9 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	if gfxdebug.Flag {
 		glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
 	}
+	glfw.WindowHint(glfw.ContextVersionMajor, glfwContextVersionMajor)
+	glfw.WindowHint(glfw.ContextVersionMinor, glfwContextVersionMinor)
+	glfw.WindowHint(glfw.ClientAPI, glfwClientAPI)
 
 	// Create the render window.
 	width, height := p.Size()
@@ -600,7 +610,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	window.MakeContextCurrent()
 
 	// Create the renderer.
-	r, err := gl2.New(gl2.KeepState())
+	r, err := glfwNewRenderer()
 	if err != nil {
 		return nil, nil, err
 	}
