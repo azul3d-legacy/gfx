@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gl2
+package util
 
 import (
 	"image"
@@ -11,57 +11,55 @@ import (
 	"azul3d.org/gfx.v2-dev"
 )
 
-// baseCanvas implements portions of a gfx.Canvas shared between Renderer and
-// rttCanvas. It implements all portions of gfx.Canvas except:
+// BaseCanvas implements basic portions of a gfx.Canvas. Specifically the
+// methods it implements are:
 //
-//  Downloadable
-//  Clear(r image.Rectangle, bg Color)
-//  ClearDepth(r image.Rectangle, depth float64)
-//  ClearStencil(r image.Rectangle, stencil int)
-//  Draw(r image.Rectangle, o *Object, c *Camera)
-//  QueryWait()
-//  Render()
+//  SetMSAA
+//  MSAA
+//  Precision
+//  Bounds
 //
-type baseCanvas struct {
+type BaseCanvas struct {
 	sync.RWMutex
-	msaa      bool            // The MSAA state.
-	precision gfx.Precision   // The precision of this canvas.
-	bounds    image.Rectangle // The bounding rectangle of this canvas.
+	VMSAA      bool            // The MSAA state.
+	VPrecision gfx.Precision   // The precision of this canvas.
+	VBounds    image.Rectangle // The bounding rectangle of this canvas.
 }
 
 // Implements gfx.Canvas interface.
-func (c *baseCanvas) SetMSAA(msaa bool) {
+func (c *BaseCanvas) SetMSAA(msaa bool) {
 	c.Lock()
-	c.msaa = msaa
+	c.VMSAA = msaa
 	c.Unlock()
 }
 
 // Implements gfx.Canvas interface.
-func (c *baseCanvas) MSAA() bool {
+func (c *BaseCanvas) MSAA() bool {
 	c.RLock()
-	msaa := c.msaa
+	msaa := c.VMSAA
 	c.RUnlock()
 	return msaa
 }
 
 // Implements gfx.Canvas interface.
-func (c *baseCanvas) Precision() gfx.Precision {
+func (c *BaseCanvas) Precision() gfx.Precision {
 	c.RLock()
-	precision := c.precision
+	precision := c.VPrecision
 	c.RUnlock()
 	return precision
 }
 
 // Implements the gfx.Canvas interface.
-func (c *baseCanvas) Bounds() image.Rectangle {
+func (c *BaseCanvas) Bounds() image.Rectangle {
 	c.RLock()
-	bounds := c.bounds
+	bounds := c.VBounds
 	c.RUnlock()
 	return bounds
 }
 
-func (c *baseCanvas) setBounds(b image.Rectangle) {
+// UpdateBounds updates the bounds of this canvas, under c's write lock.
+func (c *BaseCanvas) UpdateBounds(bounds image.Rectangle) {
 	c.Lock()
-	c.bounds = b
+	c.VBounds = bounds
 	c.Unlock()
 }
