@@ -8,7 +8,7 @@ import (
 	"image"
 
 	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/gl2/internal/gl"
+	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 )
 
 // Set this to true to disable state guarding (i.e. avoiding useless OpenGL
