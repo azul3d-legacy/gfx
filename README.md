@@ -16,6 +16,7 @@ This repository hosts packages for Azul3D's graphics core.
 * Added `MeshState` type to check if two meshes can append together perfectly (see [#21](https://github.com/azul3d/gfx/issues/21)).
 * `TexCoord` and `Color` are now valid types for use in the `Shader.Input` map and as data to `VertexAttrib` (see [#23](https://github.com/azul3d/gfx/issues/23)).
 * Added a convenience `Mesh.Normals` slice for storing the normals of a mesh (see [#11](https://github.com/azul3d/gfx/issues/11)).
+* The TexWrap mode `BorderColor` is not always present, e.g. in OpenGL ES 2 (see [#56](https://github.com/azul3d/gfx/issues/56)).
 
 ##### [gfx.v2/window](https://azul3d.org/gfx.v2/window) package:
 
