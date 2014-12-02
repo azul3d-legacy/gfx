@@ -215,7 +215,9 @@ type GPUInfo struct {
 	// BorderColor TexWrap mode. If the hardware doesn't support it the
 	// renderer falls back to the Clamp TexWrap mode in it's place.
 	//
-	// OpenGL ES 2 does not support BorderColor.
+	// (Mobile) OpenGL ES 2 never supports BorderColor.
+	//
+	// (Desktop) OpenGL 2 always supports BorderColor.
 	TexWrapBorderColor bool
 }
 
