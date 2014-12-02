@@ -156,6 +156,10 @@ type GPUInfo struct {
 	// The number of bits reserved for the sample count when performing
 	// occlusion queries, if the number goes above what this many bits could
 	// store then it is generally (but not always) clamped to that value.
+	//
+	// Some renderers (e.g. OpenGL ES with certain extensions) only support
+	// boolean occlusion queries (i.e. you can only tell if some samples
+	// passed, but not how many specifically).
 	OcclusionQueryBits int
 
 	// The name of the graphics hardware, or an empty string if not available.
