@@ -15,8 +15,8 @@ import (
 
 	"azul3d.org/clock.v1"
 	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
+	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
@@ -684,6 +684,7 @@ func newRenderer(opts ...option) (Renderer, error) {
 	r.gpuInfo.OcclusionQuery = r.glArbOcclusionQuery && occlusionQueryBits > 0
 	r.gpuInfo.OcclusionQueryBits = int(occlusionQueryBits)
 	r.gpuInfo.NPOT = extension("GL_ARB_texture_non_power_of_two", exts)
+	r.gpuInfo.TexWrapBorderColor = true
 	if r.glArbFramebufferObject {
 		// See http://www.opengl.org/wiki/Image_Format for more information.
 		//
