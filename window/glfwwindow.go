@@ -11,6 +11,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -551,19 +552,32 @@ func (w *glfwWindow) initCallbacks() {
 	})
 }
 
+var (
+	// glfwInitialized tells if GLFW has already been initialized or not.
+	// It is only modified in the main thread.
+	glfwInitialized bool
+)
+
 func doNew(p *Props) (Window, gfx.Renderer, error) {
-	// TODO(slimsag): initialize GLFW only if not yet initialized.
-	// Initialize GLFW.
-	err := glfw.Init()
-	if err != nil {
-		return nil, nil, err
+	var (
+		targetMonitor, monitor *glfw.Monitor
+		err                    error
+	)
+
+	// Initialize GLFW, if needed.
+	if !glfwInitialized {
+		err := glfw.Init()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		glfwInitialized = true
 	}
 	// TODO(slimsag): terminate GLFW when application exits.
 	//defer glfw.Terminate()
 
 	// Specify the primary monitor if we want fullscreen, store the monitor
 	// regardless for centering the window.
-	var targetMonitor, monitor *glfw.Monitor
 	monitor, err = glfw.GetPrimaryMonitor()
 	if err != nil {
 		return nil, nil, err
@@ -641,15 +655,27 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	// Done with OpenGL things on this window, for now.
 	glfw.DetachCurrentContext()
 
+	// This goroutine is responsible for performing rendering of this window.
 	// This goroutine is responsible primarily for relaying render functions
 	// to the main thread channel.
 	go func() {
+		// A ticker for updating the window title with the new FPS each second.
 		updateFPS := time.NewTicker(1 * time.Second)
+		defer updateFPS.Stop()
+
 		renderExec := r.RenderExec()
+
+		// OpenGL function calls must occur in the same thread.
+		runtime.LockOSThread()
+
+		// Make the window's context the current one.
+		window.MakeContextCurrent()
+
 		for {
 			select {
 			case <-w.relayExit:
-				updateFPS.Stop()
+				glfw.DetachCurrentContext()
+				runtime.UnlockOSThread()
 				return
 
 			case <-updateFPS.C:
@@ -665,27 +691,20 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 				}
 
 			case fn := <-renderExec:
-				MainLoopChan <- func() {
-					// Don't execute functions on closed windows.
-					if w.closed {
-						return
-					}
+				// Don't execute functions on closed windows.
+				if w.closed {
+					return
+				}
 
-					// Before executing the OpenGL closure from the renderer,
-					// we make the context current.
-					window.MakeContextCurrent()
+				// Execute the render function.
+				if renderedFrame := fn(); renderedFrame {
+					// Swap OpenGL buffers.
+					window.SwapBuffers()
 
-					// Execute the render function.
-					if renderedFrame := fn(); renderedFrame {
-						// Swap OpenGL buffers.
-						window.SwapBuffers()
-
-						// Poll for events.
+					// Poll for events in the main loop.
+					MainLoopChan <- func() {
 						glfw.PollEvents()
 					}
-
-					// Done with OpenGL things on this window, for now.
-					glfw.DetachCurrentContext()
 				}
 			}
 		}
