@@ -302,6 +302,7 @@ func (r *renderer) findUniformLocation(native *nativeShader, name string) int32 
 		// Just for sanity.
 		return -1
 	}
+	native.uniformLookup[name] = location
 	return location
 }
 
