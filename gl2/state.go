@@ -24,10 +24,6 @@ var defaultGraphicsState = &graphicsState{
 	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
 	1.0,   // clear depth
 	0,     // clear stencil
-	true,  // dithering
-	false, // depth test
-	true,  // depth write
-	false, // stencil test
 	false, // blend
 	false, // alpha to coverage
 	0,     // program
@@ -132,20 +128,20 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 				unconvertStencilOp(stencilBackOpDepthPass),
 				unconvertCmp(stencilBackCmp),
 			},
-			DepthCmp:   unconvertCmp(depthFunc),
-			WriteRed:   colorWrite[0],
-			WriteGreen: colorWrite[1],
-			WriteBlue:  colorWrite[2],
-			WriteAlpha: colorWrite[3],
+			DepthCmp:    unconvertCmp(depthFunc),
+			WriteRed:    colorWrite[0],
+			WriteGreen:  colorWrite[1],
+			WriteBlue:   colorWrite[2],
+			WriteAlpha:  colorWrite[3],
+			Dithering:   dithering,
+			DepthTest:   depthTest,
+			DepthWrite:  depthWrite,
+			StencilTest: stencilTest,
 		},
 		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
 		clearColor,
 		clearDepth,
 		int(clearStencil),
-		dithering,
-		depthTest,
-		depthWrite,
-		stencilTest,
 		blend,
 		alphaToCoverage,
 		0, // TODO: use program
@@ -158,12 +154,12 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 type graphicsState struct {
 	*gfx.State
 
-	scissor                                                               image.Rectangle
-	clearColor                                                            gfx.Color
-	clearDepth                                                            float64
-	clearStencil                                                          int
-	dithering, depthTest, depthWrite, stencilTest, blend, alphaToCoverage bool
-	program                                                               uint32
+	scissor                image.Rectangle
+	clearColor             gfx.Color
+	clearDepth             float64
+	clearStencil           int
+	blend, alphaToCoverage bool
+	program                uint32
 }
 
 // loads the graphics state, g, making OpenGL calls as neccesarry to components
@@ -183,10 +179,10 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 	s.stateStencilOp(g.State.StencilFront, g.State.StencilBack)
 	s.stateStencilFunc(g.State.StencilFront, g.State.StencilBack)
 	s.stateStencilMask(g.State.StencilFront.WriteMask, g.State.StencilBack.WriteMask)
-	s.stateDithering(g.dithering)
-	s.stateDepthTest(g.depthTest)
-	s.stateDepthWrite(g.depthWrite)
-	s.stateStencilTest(g.stencilTest)
+	s.stateDithering(g.State.Dithering)
+	s.stateDepthTest(g.State.DepthTest)
+	s.stateDepthWrite(g.State.DepthWrite)
+	s.stateStencilTest(g.State.StencilTest)
 	s.stateBlend(g.blend)
 	s.stateAlphaToCoverage(gpuInfo, g.alphaToCoverage)
 	s.stateFaceCulling(g.State.FaceCulling)
@@ -383,8 +379,8 @@ func (s *graphicsState) stateStencilMask(front, back uint) {
 }
 
 func (s *graphicsState) stateDithering(enabled bool) {
-	if noStateGuard || s.dithering != enabled {
-		s.dithering = enabled
+	if noStateGuard || s.State.Dithering != enabled {
+		s.State.Dithering = enabled
 		if enabled {
 			gl.Enable(gl.DITHER)
 		} else {
@@ -394,8 +390,8 @@ func (s *graphicsState) stateDithering(enabled bool) {
 }
 
 func (s *graphicsState) stateDepthTest(enabled bool) {
-	if noStateGuard || s.depthTest != enabled {
-		s.depthTest = enabled
+	if noStateGuard || s.State.DepthTest != enabled {
+		s.State.DepthTest = enabled
 		if enabled {
 			gl.Enable(gl.DEPTH_TEST)
 		} else {
@@ -405,8 +401,8 @@ func (s *graphicsState) stateDepthTest(enabled bool) {
 }
 
 func (s *graphicsState) stateDepthWrite(enabled bool) {
-	if noStateGuard || s.depthWrite != enabled {
-		s.depthWrite = enabled
+	if noStateGuard || s.State.DepthWrite != enabled {
+		s.State.DepthWrite = enabled
 		if enabled {
 			gl.DepthMask(true)
 		} else {
@@ -416,8 +412,8 @@ func (s *graphicsState) stateDepthWrite(enabled bool) {
 }
 
 func (s *graphicsState) stateStencilTest(stencilTest bool) {
-	if noStateGuard || s.stencilTest != stencilTest {
-		s.stencilTest = stencilTest
+	if noStateGuard || s.State.StencilTest != stencilTest {
+		s.State.StencilTest = stencilTest
 		if stencilTest {
 			gl.Enable(gl.STENCIL_TEST)
 		} else {
