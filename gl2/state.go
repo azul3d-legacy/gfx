@@ -16,50 +16,30 @@ import (
 // state calls). This is useful for debugging the state guard code.
 const noStateGuard = false
 
-var glDefaultStencil = gfx.StencilState{
-	WriteMask: 0xFFFF,
-	Fail:      gfx.SKeep,
-	DepthFail: gfx.SKeep,
-	DepthPass: gfx.SKeep,
-	Cmp:       gfx.Always,
-}
-
-var glDefaultBlend = gfx.BlendState{
-	Color:    gfx.Color{R: 0, G: 0, B: 0, A: 0},
-	SrcRGB:   gfx.BOne,
-	DstRGB:   gfx.BZero,
-	SrcAlpha: gfx.BOne,
-	DstAlpha: gfx.BZero,
-	RGBEq:    gfx.BAdd,
-	AlphaEq:  gfx.BAdd,
-}
-
 // Please ensure these values match the default OpenGL state values listed in
 // the OpenGL documentation.
 var defaultGraphicsState = &graphicsState{
 	image.Rect(0, 0, 0, 0),                    // scissor - Whole screen
 	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
-	glDefaultBlend.Color,                      // blend color
-	1.0,                                       // clear depth
-	0,                                         // clear stencil
+	glutil.DefaultBlendState.Color,            // blend color
+	1.0, // clear depth
+	0,   // clear stencil
 	[4]bool{true, true, true, true}, // color write
 	gfx.Less,                        // depth func
-	glDefaultBlend,                  // blend func seperate
-	glDefaultBlend,                  // blend equation seperate
-	glDefaultStencil,                // stencil op front
-	glDefaultStencil,                // stencil op back
-	glDefaultStencil,                // stencil func front
-	glDefaultStencil,                // stencil func back
-	0xFFFF,                          // stencil mask front
-	0xFFFF,                          // stencil mask back
-	true,                            // dithering
-	false,                           // depth test
-	true,                            // depth write
-	false,                           // stencil test
-	false,                           // blend
-	false,                           // alpha to coverage
-	gfx.NoFaceCulling,               // face culling
-	0,                               // program
+	glutil.DefaultBlendState,        // blend func seperate
+	glutil.DefaultBlendState,        // blend equation seperate
+	glutil.DefaultStencilState,      // stencil front
+	glutil.DefaultStencilState,      // stencil back
+	0xFFFF,            // stencil mask front
+	0xFFFF,            // stencil mask back
+	true,              // dithering
+	false,             // depth test
+	true,              // depth write
+	false,             // stencil test
+	false,             // blend
+	false,             // alpha to coverage
+	gfx.NoFaceCulling, // face culling
+	0,                 // program
 }
 
 // Queries the existing OpenGL graphics state and returns it.
@@ -149,22 +129,18 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 			RGBEq:   unconvertBlendEq(blendEqRGB),
 			AlphaEq: unconvertBlendEq(blendEqAlpha),
 		},
-		stencilOpFront: gfx.StencilState{
+		stencilFront: gfx.StencilState{
 			Fail:      unconvertStencilOp(stencilFrontOpFail),
 			DepthFail: unconvertStencilOp(stencilFrontOpDepthFail),
 			DepthPass: unconvertStencilOp(stencilFrontOpDepthPass),
-		},
-		stencilOpBack: gfx.StencilState{
-			Fail:      unconvertStencilOp(stencilBackOpFail),
-			DepthFail: unconvertStencilOp(stencilBackOpDepthFail),
-			DepthPass: unconvertStencilOp(stencilBackOpDepthPass),
-		},
-		stencilFuncFront: gfx.StencilState{
 			Cmp:       unconvertCmp(stencilFrontCmp),
 			Reference: uint(stencilFrontRef),
 			ReadMask:  uint(stencilFrontReadMask),
 		},
-		stencilFuncBack: gfx.StencilState{
+		stencilBack: gfx.StencilState{
+			Fail:      unconvertStencilOp(stencilBackOpFail),
+			DepthFail: unconvertStencilOp(stencilBackOpDepthFail),
+			DepthPass: unconvertStencilOp(stencilBackOpDepthPass),
 			Cmp:       unconvertCmp(stencilBackCmp),
 			Reference: uint(stencilBackRef),
 			ReadMask:  uint(stencilBackReadMask),
@@ -196,7 +172,7 @@ type graphicsState struct {
 	colorWrite                                                            [4]bool
 	depthFunc                                                             gfx.Cmp
 	blendFuncSeparate, blendEquationSeparate                              gfx.BlendState
-	stencilOpFront, stencilOpBack, stencilFuncFront, stencilFuncBack      gfx.StencilState
+	stencilFront, stencilBack                                             gfx.StencilState
 	stencilMaskFront, stencilMaskBack                                     uint
 	dithering, depthTest, depthWrite, stencilTest, blend, alphaToCoverage bool
 	faceCulling                                                           gfx.FaceCullMode
@@ -217,8 +193,8 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 	s.stateDepthFunc(g.depthFunc)
 	s.stateBlendFuncSeparate(g.blendFuncSeparate)
 	s.stateBlendEquationSeparate(g.blendEquationSeparate)
-	s.stateStencilOp(g.stencilOpFront, g.stencilOpBack)
-	s.stateStencilFunc(g.stencilFuncFront, g.stencilFuncBack)
+	s.stateStencilOp(g.stencilFront, g.stencilBack)
+	s.stateStencilFunc(g.stencilFront, g.stencilBack)
 	s.stateStencilMask(g.stencilMaskFront, g.stencilMaskBack)
 	s.stateDithering(g.dithering)
 	s.stateDepthTest(g.depthTest)
@@ -321,9 +297,19 @@ func (s *graphicsState) stateBlendEquationSeparate(bs gfx.BlendState) {
 }
 
 func (s *graphicsState) stateStencilOp(front, back gfx.StencilState) {
-	if noStateGuard || s.stencilOpFront != front || s.stencilOpBack != back {
-		s.stencilOpFront = front
-		s.stencilOpBack = back
+	diff := func(a, b gfx.StencilState) bool {
+		return a.Fail != b.Fail || a.DepthFail != b.DepthFail || a.DepthPass != b.DepthPass
+	}
+
+	if noStateGuard || diff(s.stencilFront, front) || diff(s.stencilBack, back) {
+		s.stencilFront.Fail = front.Fail
+		s.stencilFront.DepthFail = front.DepthFail
+		s.stencilFront.DepthPass = front.DepthPass
+
+		s.stencilBack.Fail = back.Fail
+		s.stencilBack.DepthFail = back.DepthFail
+		s.stencilBack.DepthPass = back.DepthPass
+
 		if front == back {
 			// We can save a few calls.
 			gl.StencilOpSeparate(
@@ -350,9 +336,19 @@ func (s *graphicsState) stateStencilOp(front, back gfx.StencilState) {
 }
 
 func (s *graphicsState) stateStencilFunc(front, back gfx.StencilState) {
-	if noStateGuard || s.stencilFuncFront != front || s.stencilFuncBack != back {
-		s.stencilFuncFront = front
-		s.stencilFuncBack = back
+	diff := func(a, b gfx.StencilState) bool {
+		return a.Cmp != b.Cmp || a.Reference != b.Reference || a.ReadMask != b.ReadMask
+	}
+
+	if noStateGuard || diff(s.stencilFront, front) || diff(s.stencilBack, back) {
+		s.stencilFront.Cmp = front.Cmp
+		s.stencilFront.Reference = front.Reference
+		s.stencilFront.ReadMask = front.ReadMask
+
+		s.stencilBack.Cmp = back.Cmp
+		s.stencilBack.Reference = back.Reference
+		s.stencilBack.ReadMask = back.ReadMask
+
 		if front == back {
 			// We can save a few calls.
 			gl.StencilFuncSeparate(
