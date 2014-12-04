@@ -22,9 +22,8 @@ var defaultGraphicsState = &graphicsState{
 	glutil.DefaultState,
 	image.Rect(0, 0, 0, 0),                    // scissor - Whole screen
 	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
-	1.0, // clear depth
-	0,   // clear stencil
-	[4]bool{true, true, true, true}, // color write
+	1.0,   // clear depth
+	0,     // clear stencil
 	true,  // dithering
 	false, // depth test
 	true,  // depth write
@@ -133,13 +132,16 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 				unconvertStencilOp(stencilBackOpDepthPass),
 				unconvertCmp(stencilBackCmp),
 			},
-			DepthCmp: unconvertCmp(depthFunc),
+			DepthCmp:   unconvertCmp(depthFunc),
+			WriteRed:   colorWrite[0],
+			WriteGreen: colorWrite[1],
+			WriteBlue:  colorWrite[2],
+			WriteAlpha: colorWrite[3],
 		},
 		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
 		clearColor,
 		clearDepth,
 		int(clearStencil),
-		colorWrite,
 		dithering,
 		depthTest,
 		depthWrite,
@@ -160,7 +162,6 @@ type graphicsState struct {
 	clearColor                                                            gfx.Color
 	clearDepth                                                            float64
 	clearStencil                                                          int
-	colorWrite                                                            [4]bool
 	dithering, depthTest, depthWrite, stencilTest, blend, alphaToCoverage bool
 	program                                                               uint32
 }
@@ -175,7 +176,7 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 	s.stateBlendColor(g.State.Blend.Color)
 	s.stateClearDepth(g.clearDepth)
 	s.stateClearStencil(g.clearStencil)
-	s.stateColorWrite(g.colorWrite)
+	s.stateColorWrite(g.State.WriteRed, g.State.WriteGreen, g.State.WriteBlue, g.State.WriteAlpha)
 	s.stateDepthFunc(g.State.DepthCmp)
 	s.stateBlendFuncSeparate(g.State.Blend)
 	s.stateBlendEquationSeparate(g.State.Blend)
@@ -241,15 +242,13 @@ func (s *graphicsState) stateClearStencil(stencil int) {
 	}
 }
 
-func (s *graphicsState) stateColorWrite(cw [4]bool) {
-	if noStateGuard || s.colorWrite != cw {
-		s.colorWrite = cw
-		gl.ColorMask(
-			cw[0],
-			cw[1],
-			cw[2],
-			cw[3],
-		)
+func (s *graphicsState) stateColorWrite(red, green, blue, alpha bool) {
+	if noStateGuard || (s.State.WriteRed != red || s.State.WriteGreen != green || s.State.WriteBlue != blue || s.State.WriteAlpha != alpha) {
+		s.State.WriteRed = red
+		s.State.WriteGreen = green
+		s.State.WriteBlue = blue
+		s.State.WriteAlpha = alpha
+		gl.ColorMask(red, green, blue, alpha)
 	}
 }
 

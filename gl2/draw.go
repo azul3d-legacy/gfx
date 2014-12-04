@@ -406,7 +406,7 @@ func (r *renderer) endQuery(o *gfx.Object, n nativeObject) nativeObject {
 
 func (r *renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	// Use object state.
-	r.stateColorWrite([4]bool{obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha})
+	r.stateColorWrite(obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha)
 	r.stateDithering(obj.Dithering)
 	r.stateStencilTest(obj.StencilTest)
 	r.stateStencilOp(obj.StencilFront, obj.StencilBack)
