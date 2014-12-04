@@ -26,8 +26,7 @@ var defaultGraphicsState = &graphicsState{
 	0,   // clear stencil
 	[4]bool{true, true, true, true}, // color write
 	gfx.Less,                        // depth func
-	glutil.DefaultBlendState,        // blend func seperate
-	glutil.DefaultBlendState,        // blend equation seperate
+	glutil.DefaultBlendState,        // blend state
 	glutil.DefaultStencilState,      // stencil front
 	glutil.DefaultStencilState,      // stencil back
 	0xFFFF,            // stencil mask front
@@ -119,15 +118,13 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 		clearStencil: int(clearStencil),
 		colorWrite:   colorWrite,
 		depthFunc:    unconvertCmp(depthFunc),
-		blendFuncSeparate: gfx.BlendState{
+		BlendState: gfx.BlendState{
 			DstRGB:   unconvertBlendOp(blendDstRGB),
 			SrcRGB:   unconvertBlendOp(blendSrcRGB),
 			DstAlpha: unconvertBlendOp(blendDstAlpha),
 			SrcAlpha: unconvertBlendOp(blendSrcAlpha),
-		},
-		blendEquationSeparate: gfx.BlendState{
-			RGBEq:   unconvertBlendEq(blendEqRGB),
-			AlphaEq: unconvertBlendEq(blendEqAlpha),
+			RGBEq:    unconvertBlendEq(blendEqRGB),
+			AlphaEq:  unconvertBlendEq(blendEqAlpha),
 		},
 		stencilFront: gfx.StencilState{
 			Fail:      unconvertStencilOp(stencilFrontOpFail),
@@ -165,13 +162,13 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 // setting OpenGL state twice and keeping state between frames if needed for
 // interoperability with, e.g. QT5's renderer.
 type graphicsState struct {
-	scissor                                                               image.Rectangle
-	clearColor, blendColor                                                gfx.Color
-	clearDepth                                                            float64
-	clearStencil                                                          int
-	colorWrite                                                            [4]bool
-	depthFunc                                                             gfx.Cmp
-	blendFuncSeparate, blendEquationSeparate                              gfx.BlendState
+	scissor                image.Rectangle
+	clearColor, blendColor gfx.Color
+	clearDepth             float64
+	clearStencil           int
+	colorWrite             [4]bool
+	depthFunc              gfx.Cmp
+	gfx.BlendState
 	stencilFront, stencilBack                                             gfx.StencilState
 	stencilMaskFront, stencilMaskBack                                     uint
 	dithering, depthTest, depthWrite, stencilTest, blend, alphaToCoverage bool
@@ -191,8 +188,8 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 	s.stateClearStencil(g.clearStencil)
 	s.stateColorWrite(g.colorWrite)
 	s.stateDepthFunc(g.depthFunc)
-	s.stateBlendFuncSeparate(g.blendFuncSeparate)
-	s.stateBlendEquationSeparate(g.blendEquationSeparate)
+	s.stateBlendFuncSeparate(g.BlendState)
+	s.stateBlendEquationSeparate(g.BlendState)
 	s.stateStencilOp(g.stencilFront, g.stencilBack)
 	s.stateStencilFunc(g.stencilFront, g.stencilBack)
 	s.stateStencilMask(g.stencilMaskFront, g.stencilMaskBack)
@@ -275,8 +272,15 @@ func (s *graphicsState) stateDepthFunc(df gfx.Cmp) {
 }
 
 func (s *graphicsState) stateBlendFuncSeparate(bs gfx.BlendState) {
-	if noStateGuard || s.blendFuncSeparate != bs {
-		s.blendFuncSeparate = bs
+	diff := func(a, b gfx.BlendState) bool {
+		return a.SrcRGB != b.SrcRGB || a.DstRGB != b.DstRGB || a.SrcAlpha != b.SrcAlpha
+	}
+
+	if noStateGuard || diff(s.BlendState, bs) {
+		s.BlendState.SrcRGB = bs.SrcRGB
+		s.BlendState.DstRGB = bs.DstRGB
+		s.BlendState.SrcAlpha = bs.SrcAlpha
+
 		gl.BlendFuncSeparate(
 			convertBlendOp(bs.SrcRGB),
 			convertBlendOp(bs.DstRGB),
@@ -287,8 +291,10 @@ func (s *graphicsState) stateBlendFuncSeparate(bs gfx.BlendState) {
 }
 
 func (s *graphicsState) stateBlendEquationSeparate(bs gfx.BlendState) {
-	if noStateGuard || s.blendEquationSeparate != bs {
-		s.blendEquationSeparate = bs
+	if noStateGuard || (s.BlendState.RGBEq != bs.RGBEq || s.BlendState.AlphaEq != bs.AlphaEq) {
+		s.BlendState.RGBEq = bs.RGBEq
+		s.BlendState.AlphaEq = bs.AlphaEq
+
 		gl.BlendEquationSeparate(
 			convertBlendEq(bs.RGBEq),
 			convertBlendEq(bs.AlphaEq),
