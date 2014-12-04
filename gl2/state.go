@@ -25,16 +25,15 @@ var defaultGraphicsState = &graphicsState{
 	1.0, // clear depth
 	0,   // clear stencil
 	[4]bool{true, true, true, true}, // color write
-	gfx.Less,                        // depth func
-	0xFFFF,                          // stencil mask front
-	0xFFFF,                          // stencil mask back
-	true,                            // dithering
-	false,                           // depth test
-	true,                            // depth write
-	false,                           // stencil test
-	false,                           // blend
-	false,                           // alpha to coverage
-	0,                               // program
+	0xFFFF, // stencil mask front
+	0xFFFF, // stencil mask back
+	true,   // dithering
+	false,  // depth test
+	true,   // depth write
+	false,  // stencil test
+	false,  // blend
+	false,  // alpha to coverage
+	0,      // program
 }
 
 // Queries the existing OpenGL graphics state and returns it.
@@ -136,13 +135,13 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 				unconvertStencilOp(stencilBackOpDepthPass),
 				unconvertCmp(stencilBackCmp),
 			},
+			DepthCmp: unconvertCmp(depthFunc),
 		},
 		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
 		clearColor,
 		clearDepth,
 		int(clearStencil),
 		colorWrite,
-		unconvertCmp(depthFunc),
 		uint(stencilFrontWriteMask),
 		uint(stencilBackWriteMask),
 		dithering,
@@ -166,7 +165,6 @@ type graphicsState struct {
 	clearDepth                                                            float64
 	clearStencil                                                          int
 	colorWrite                                                            [4]bool
-	depthFunc                                                             gfx.Cmp
 	stencilMaskFront, stencilMaskBack                                     uint
 	dithering, depthTest, depthWrite, stencilTest, blend, alphaToCoverage bool
 	program                                                               uint32
@@ -183,7 +181,7 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 	s.stateClearDepth(g.clearDepth)
 	s.stateClearStencil(g.clearStencil)
 	s.stateColorWrite(g.colorWrite)
-	s.stateDepthFunc(g.depthFunc)
+	s.stateDepthFunc(g.State.DepthCmp)
 	s.stateBlendFuncSeparate(g.State.Blend)
 	s.stateBlendEquationSeparate(g.State.Blend)
 	s.stateStencilOp(g.State.StencilFront, g.State.StencilBack)
@@ -260,10 +258,10 @@ func (s *graphicsState) stateColorWrite(cw [4]bool) {
 	}
 }
 
-func (s *graphicsState) stateDepthFunc(df gfx.Cmp) {
-	if noStateGuard || s.depthFunc != df {
-		s.depthFunc = df
-		gl.DepthFunc(convertCmp(df))
+func (s *graphicsState) stateDepthFunc(cmp gfx.Cmp) {
+	if noStateGuard || s.State.DepthCmp != cmp {
+		s.State.DepthCmp = cmp
+		gl.DepthFunc(convertCmp(cmp))
 	}
 }
 
