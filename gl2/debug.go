@@ -5,7 +5,6 @@
 package gl2
 
 import (
-	"errors"
 	"unsafe"
 
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
@@ -36,26 +35,7 @@ func (r *renderer) debugInit(exts map[string]bool) {
 }
 
 func (r *renderer) debugRender() {
-	var err error
-	switch gl.GetError() {
-	case gl.NO_ERROR:
-		break
-	case gl.INVALID_ENUM:
-		err = errors.New("GL_INVALID_ENUM")
-	case gl.INVALID_VALUE:
-		err = errors.New("GL_INVALID_VALUE")
-	case gl.INVALID_OPERATION:
-		err = errors.New("GL_INVALID_OPERATION")
-	case gl.INVALID_FRAMEBUFFER_OPERATION:
-		err = errors.New("GL_INVALID_FRAMEBUFFER_OPERATION")
-	case gl.OUT_OF_MEMORY:
-		err = errors.New("GL_OUT_OF_MEMORY")
-	case gl.STACK_UNDERFLOW:
-		err = errors.New("GL_STACK_UNDERFLOW")
-	case gl.STACK_OVERFLOW:
-		err = errors.New("GL_STACK_OVERFLOW")
-	}
-	if err != nil {
+	if err := getError(); err != nil {
 		r.logf("OpenGL Error: %v\n", err)
 	}
 }
