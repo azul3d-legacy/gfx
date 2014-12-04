@@ -16,6 +16,16 @@ import (
 // state calls). This is useful for debugging the state guard code.
 const noStateGuard = false
 
+// glFeature enables or disables the given feature depending on the given
+// boolean.
+func glFeature(feature uint32, enabled bool) {
+	if enabled {
+		gl.Enable(feature)
+		return
+	}
+	gl.Disable(feature)
+}
+
 // Please ensure these values match the default OpenGL state values listed in
 // the OpenGL documentation.
 var defaultGraphicsState = &graphicsState{
@@ -381,55 +391,35 @@ func (s *graphicsState) stateStencilMask(front, back uint) {
 func (s *graphicsState) stateDithering(enabled bool) {
 	if noStateGuard || s.State.Dithering != enabled {
 		s.State.Dithering = enabled
-		if enabled {
-			gl.Enable(gl.DITHER)
-		} else {
-			gl.Disable(gl.DITHER)
-		}
+		glFeature(gl.DITHER, enabled)
 	}
 }
 
 func (s *graphicsState) stateDepthTest(enabled bool) {
 	if noStateGuard || s.State.DepthTest != enabled {
 		s.State.DepthTest = enabled
-		if enabled {
-			gl.Enable(gl.DEPTH_TEST)
-		} else {
-			gl.Disable(gl.DEPTH_TEST)
-		}
+		glFeature(gl.DEPTH_TEST, enabled)
 	}
 }
 
 func (s *graphicsState) stateDepthWrite(enabled bool) {
 	if noStateGuard || s.State.DepthWrite != enabled {
 		s.State.DepthWrite = enabled
-		if enabled {
-			gl.DepthMask(true)
-		} else {
-			gl.DepthMask(false)
-		}
+		gl.DepthMask(enabled)
 	}
 }
 
 func (s *graphicsState) stateStencilTest(stencilTest bool) {
 	if noStateGuard || s.State.StencilTest != stencilTest {
 		s.State.StencilTest = stencilTest
-		if stencilTest {
-			gl.Enable(gl.STENCIL_TEST)
-		} else {
-			gl.Disable(gl.STENCIL_TEST)
-		}
+		glFeature(gl.STENCIL_TEST, stencilTest)
 	}
 }
 
 func (s *graphicsState) stateBlend(blend bool) {
 	if noStateGuard || s.blend != blend {
 		s.blend = blend
-		if blend {
-			gl.Enable(gl.BLEND)
-		} else {
-			gl.Disable(gl.BLEND)
-		}
+		glFeature(gl.BLEND, blend)
 	}
 }
 
@@ -437,11 +427,7 @@ func (s *graphicsState) stateAlphaToCoverage(gpuInfo *gfx.GPUInfo, alphaToCovera
 	if noStateGuard || s.alphaToCoverage != alphaToCoverage {
 		s.alphaToCoverage = alphaToCoverage
 		if gpuInfo.AlphaToCoverage {
-			if alphaToCoverage {
-				gl.Enable(gl.SAMPLE_ALPHA_TO_COVERAGE)
-			} else {
-				gl.Disable(gl.SAMPLE_ALPHA_TO_COVERAGE)
-			}
+			glFeature(gl.SAMPLE_ALPHA_TO_COVERAGE, alphaToCoverage)
 		}
 	}
 }
