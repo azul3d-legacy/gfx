@@ -14,6 +14,7 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glutil"
 	"azul3d.org/gfx.v2-dev/internal/resize"
 )
 
@@ -132,7 +133,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 
 		// Read texture pixels.
 		img := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
-		x, y, w, h := convertRect(rect, bounds)
+		x, y, w, h := glutil.ConvertRect(rect, bounds)
 		gl.ReadPixels(
 			x, y, w, h,
 			gl.RGBA,
@@ -234,7 +235,7 @@ func (r *renderer) hookedDownload(rect image.Rectangle, complete chan image.Imag
 		}
 
 		img := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
-		x, y, w, h := convertRect(rect, bounds)
+		x, y, w, h := glutil.ConvertRect(rect, bounds)
 		gl.ReadPixels(
 			x, y, w, h,
 			gl.RGBA,

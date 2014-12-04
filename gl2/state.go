@@ -9,32 +9,12 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glutil"
 )
 
 // Set this to true to disable state guarding (i.e. avoiding useless OpenGL
 // state calls). This is useful for debugging the state guard code.
 const noStateGuard = false
-
-func convertRect(rect, bounds image.Rectangle) (x, y, width, height int32) {
-	// We must flip the Y axis because image.Rectangle uses top-left as
-	// the origin but OpenGL uses bottom-left as the origin.
-	y = int32(bounds.Dy() - (rect.Min.Y + rect.Dy())) // bottom
-	height = int32(rect.Dy())                         // top
-
-	x = int32(rect.Min.X)
-	width = int32(rect.Dx())
-	return
-}
-
-func unconvertRect(bounds image.Rectangle, x, y, width, height int32) (rect image.Rectangle) {
-	// We must unflip the Y axis because image.Rectangle uses top-left as
-	// the origin but OpenGL uses bottom-left as the origin.
-	x0 := int(x)
-	x1 := int(x + width)
-	y0 := bounds.Dy() - int(y+height)
-	y1 := y0 + int(height)
-	return image.Rect(x0, y0, x1, y1)
-}
 
 var glDefaultStencil = gfx.StencilState{
 	WriteMask: 0xFFFF,
@@ -152,7 +132,7 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 	//gl.Execute()
 
 	return &graphicsState{
-		scissor:      unconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
+		scissor:      glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
 		clearColor:   clearColor,
 		blendColor:   blendColor,
 		clearDepth:   clearDepth,
@@ -266,7 +246,7 @@ func (s *graphicsState) stateScissor(bounds, rect image.Rectangle) {
 	if noStateGuard || s.scissor != rect {
 		// Store the new scissor rectangle.
 		s.scissor = rect
-		x, y, width, height := convertRect(rect, bounds)
+		x, y, width, height := glutil.ConvertRect(rect, bounds)
 		gl.Scissor(x, y, width, height)
 	}
 }
