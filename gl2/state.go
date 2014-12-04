@@ -29,16 +29,15 @@ var defaultGraphicsState = &graphicsState{
 	glutil.DefaultBlendState,        // blend state
 	glutil.DefaultStencilState,      // stencil front
 	glutil.DefaultStencilState,      // stencil back
-	0xFFFF,            // stencil mask front
-	0xFFFF,            // stencil mask back
-	true,              // dithering
-	false,             // depth test
-	true,              // depth write
-	false,             // stencil test
-	false,             // blend
-	false,             // alpha to coverage
-	gfx.NoFaceCulling, // face culling
-	0,                 // program
+	0xFFFF, // stencil mask front
+	0xFFFF, // stencil mask back
+	true,   // dithering
+	false,  // depth test
+	true,   // depth write
+	false,  // stencil test
+	false,  // blend
+	false,  // alpha to coverage
+	0,      // program
 }
 
 // Queries the existing OpenGL graphics state and returns it.
@@ -111,7 +110,9 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 	//gl.Execute()
 
 	return &graphicsState{
-		nil, // TODO: use gfx.State
+		&gfx.State{
+			FaceCulling: unconvertFaceCull(faceCullMode),
+		},
 		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
 		clearColor,
 		clearDepth,
@@ -153,7 +154,6 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 		stencilTest,
 		blend,
 		alphaToCoverage,
-		unconvertFaceCull(faceCullMode),
 		0, // TODO: use program
 	}
 }
@@ -174,7 +174,6 @@ type graphicsState struct {
 	stencilFront, stencilBack                                             gfx.StencilState
 	stencilMaskFront, stencilMaskBack                                     uint
 	dithering, depthTest, depthWrite, stencilTest, blend, alphaToCoverage bool
-	faceCulling                                                           gfx.FaceCullMode
 	program                                                               uint32
 }
 
@@ -201,7 +200,7 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 	s.stateStencilTest(g.stencilTest)
 	s.stateBlend(g.blend)
 	s.stateAlphaToCoverage(gpuInfo, g.alphaToCoverage)
-	s.stateFaceCulling(g.faceCulling)
+	s.stateFaceCulling(g.State.FaceCulling)
 	s.stateProgram(g.program)
 }
 
@@ -465,8 +464,8 @@ func (s *graphicsState) stateAlphaToCoverage(gpuInfo *gfx.GPUInfo, alphaToCovera
 }
 
 func (s *graphicsState) stateFaceCulling(m gfx.FaceCullMode) {
-	if noStateGuard || s.faceCulling != m {
-		s.faceCulling = m
+	if noStateGuard || s.State.FaceCulling != m {
+		s.State.FaceCulling = m
 		switch m {
 		case gfx.BackFaceCulling:
 			gl.Enable(gl.CULL_FACE)
