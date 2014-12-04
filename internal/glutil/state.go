@@ -44,6 +44,6 @@ var DefaultState = &gfx.State{
 	gfx.Less,            // DepthCmp
 	false,               // StencilTest
 	gfx.NoFaceCulling,   // FaceCulling
-	DefaultStencilState, // FIXME: StencilFront
-	DefaultStencilState, // FIXME: StencilBack
+	DefaultStencilState, // StencilFront
+	DefaultStencilState, // StencilBack
 }
