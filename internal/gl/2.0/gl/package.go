@@ -6,6 +6,7 @@
 // Copyright (c) 1991-2006 Silicon Graphics, Inc.
 // This document is licensed under the SGI Free Software B License.
 // For details, see http://oss.sgi.com/projects/FreeB.
+// +build 386 amd64
 
 // Package gl implements Go bindings to OpenGL.
 //
