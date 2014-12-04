@@ -25,8 +25,7 @@ func glDebugCallback(
 }
 
 func (r *renderer) debugInit(exts map[string]bool) {
-	// If we have the GL_ARB_debug_output extension we use it. In all cases
-	// we check glGetError after each frame has been rendered.
+	// If we have the GL_ARB_debug_output extension we utilize it.
 	r.glArbDebugOutput = extension("GL_ARB_debug_output", exts)
 	if r.glArbDebugOutput {
 		gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS_ARB)
@@ -35,6 +34,7 @@ func (r *renderer) debugInit(exts map[string]bool) {
 }
 
 func (r *renderer) debugRender() {
+	// After each frame has been rendered we check for OpenGL errors.
 	if err := getError(); err != nil {
 		r.logf("OpenGL Error: %v\n", err)
 	}
