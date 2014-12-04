@@ -19,6 +19,7 @@ const noStateGuard = false
 // Please ensure these values match the default OpenGL state values listed in
 // the OpenGL documentation.
 var defaultGraphicsState = &graphicsState{
+	glutil.DefaultState,
 	image.Rect(0, 0, 0, 0),                    // scissor - Whole screen
 	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
 	1.0, // clear depth
@@ -110,57 +111,59 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 	//gl.Execute()
 
 	return &graphicsState{
-		scissor:      glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
-		clearColor:   clearColor,
-		clearDepth:   clearDepth,
-		clearStencil: int(clearStencil),
-		colorWrite:   colorWrite,
-		depthFunc:    unconvertCmp(depthFunc),
-		BlendState: gfx.BlendState{
-			DstRGB:   unconvertBlendOp(blendDstRGB),
-			SrcRGB:   unconvertBlendOp(blendSrcRGB),
-			DstAlpha: unconvertBlendOp(blendDstAlpha),
-			SrcAlpha: unconvertBlendOp(blendSrcAlpha),
-			RGBEq:    unconvertBlendEq(blendEqRGB),
-			AlphaEq:  unconvertBlendEq(blendEqAlpha),
-			Color:    blendColor,
+		nil, // TODO: use gfx.State
+		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
+		clearColor,
+		clearDepth,
+		int(clearStencil),
+		colorWrite,
+		unconvertCmp(depthFunc),
+		gfx.BlendState{
+			blendColor,
+			unconvertBlendOp(blendSrcRGB),
+			unconvertBlendOp(blendDstRGB),
+			unconvertBlendOp(blendSrcAlpha),
+			unconvertBlendOp(blendDstAlpha),
+			unconvertBlendEq(blendEqRGB),
+			unconvertBlendEq(blendEqAlpha),
 		},
-		stencilFront: gfx.StencilState{
-			Fail:      unconvertStencilOp(stencilFrontOpFail),
-			DepthFail: unconvertStencilOp(stencilFrontOpDepthFail),
-			DepthPass: unconvertStencilOp(stencilFrontOpDepthPass),
-			Cmp:       unconvertCmp(stencilFrontCmp),
-			Reference: uint(stencilFrontRef),
-			ReadMask:  uint(stencilFrontReadMask),
+		gfx.StencilState{
+			0, // TODO: use write mask
+			uint(stencilFrontReadMask),
+			uint(stencilFrontRef),
+			unconvertStencilOp(stencilFrontOpFail),
+			unconvertStencilOp(stencilFrontOpDepthFail),
+			unconvertStencilOp(stencilFrontOpDepthPass),
+			unconvertCmp(stencilFrontCmp),
 		},
-		stencilBack: gfx.StencilState{
-			Fail:      unconvertStencilOp(stencilBackOpFail),
-			DepthFail: unconvertStencilOp(stencilBackOpDepthFail),
-			DepthPass: unconvertStencilOp(stencilBackOpDepthPass),
-			Cmp:       unconvertCmp(stencilBackCmp),
-			Reference: uint(stencilBackRef),
-			ReadMask:  uint(stencilBackReadMask),
+		gfx.StencilState{
+			0, // TODO: use write mask
+			uint(stencilBackReadMask),
+			uint(stencilBackRef),
+			unconvertStencilOp(stencilBackOpFail),
+			unconvertStencilOp(stencilBackOpDepthFail),
+			unconvertStencilOp(stencilBackOpDepthPass),
+			unconvertCmp(stencilBackCmp),
 		},
-		stencilMaskFront: uint(stencilFrontWriteMask),
-		stencilMaskBack:  uint(stencilBackWriteMask),
-		dithering:        dithering,
-		depthTest:        depthTest,
-		depthWrite:       depthWrite,
-		stencilTest:      stencilTest,
-		blend:            blend,
-		alphaToCoverage:  alphaToCoverage,
-		faceCulling:      unconvertFaceCull(faceCullMode),
+		uint(stencilFrontWriteMask),
+		uint(stencilBackWriteMask),
+		dithering,
+		depthTest,
+		depthWrite,
+		stencilTest,
+		blend,
+		alphaToCoverage,
+		unconvertFaceCull(faceCullMode),
+		0, // TODO: use program
 	}
-
-	/*
-		program                                                                          uint32
-	*/
 }
 
 // Structure for various previously set render states, used to avoid uselessly
 // setting OpenGL state twice and keeping state between frames if needed for
 // interoperability with, e.g. QT5's renderer.
 type graphicsState struct {
+	*gfx.State
+
 	scissor      image.Rectangle
 	clearColor   gfx.Color
 	clearDepth   float64
