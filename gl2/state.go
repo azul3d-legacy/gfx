@@ -21,7 +21,6 @@ const noStateGuard = false
 var defaultGraphicsState = &graphicsState{
 	image.Rect(0, 0, 0, 0),                    // scissor - Whole screen
 	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
-	glutil.DefaultBlendState.Color,            // blend color
 	1.0, // clear depth
 	0,   // clear stencil
 	[4]bool{true, true, true, true}, // color write
@@ -113,7 +112,6 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 	return &graphicsState{
 		scissor:      glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
 		clearColor:   clearColor,
-		blendColor:   blendColor,
 		clearDepth:   clearDepth,
 		clearStencil: int(clearStencil),
 		colorWrite:   colorWrite,
@@ -125,6 +123,7 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 			SrcAlpha: unconvertBlendOp(blendSrcAlpha),
 			RGBEq:    unconvertBlendEq(blendEqRGB),
 			AlphaEq:  unconvertBlendEq(blendEqAlpha),
+			Color:    blendColor,
 		},
 		stencilFront: gfx.StencilState{
 			Fail:      unconvertStencilOp(stencilFrontOpFail),
@@ -162,12 +161,12 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 // setting OpenGL state twice and keeping state between frames if needed for
 // interoperability with, e.g. QT5's renderer.
 type graphicsState struct {
-	scissor                image.Rectangle
-	clearColor, blendColor gfx.Color
-	clearDepth             float64
-	clearStencil           int
-	colorWrite             [4]bool
-	depthFunc              gfx.Cmp
+	scissor      image.Rectangle
+	clearColor   gfx.Color
+	clearDepth   float64
+	clearStencil int
+	colorWrite   [4]bool
+	depthFunc    gfx.Cmp
 	gfx.BlendState
 	stencilFront, stencilBack                                             gfx.StencilState
 	stencilMaskFront, stencilMaskBack                                     uint
@@ -183,7 +182,7 @@ type graphicsState struct {
 func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *graphicsState) {
 	s.stateScissor(bounds, g.scissor)
 	s.stateClearColor(g.clearColor)
-	s.stateBlendColor(g.blendColor)
+	s.stateBlendColor(g.BlendState.Color)
 	s.stateClearDepth(g.clearDepth)
 	s.stateClearStencil(g.clearStencil)
 	s.stateColorWrite(g.colorWrite)
@@ -232,8 +231,8 @@ func (s *graphicsState) stateClearColor(color gfx.Color) {
 }
 
 func (s *graphicsState) stateBlendColor(c gfx.Color) {
-	if noStateGuard || s.blendColor != c {
-		s.blendColor = c
+	if noStateGuard || s.BlendState.Color != c {
+		s.BlendState.Color = c
 		gl.BlendColor(c.R, c.G, c.B, c.A)
 	}
 }
