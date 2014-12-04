@@ -26,4 +26,3 @@ func UnconvertRect(bounds image.Rectangle, x, y, width, height int32) (rect imag
 	y1 := y0 + int(height)
 	return image.Rect(x0, y0, x1, y1)
 }
-
