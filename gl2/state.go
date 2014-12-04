@@ -25,15 +25,13 @@ var defaultGraphicsState = &graphicsState{
 	1.0, // clear depth
 	0,   // clear stencil
 	[4]bool{true, true, true, true}, // color write
-	0xFFFF, // stencil mask front
-	0xFFFF, // stencil mask back
-	true,   // dithering
-	false,  // depth test
-	true,   // depth write
-	false,  // stencil test
-	false,  // blend
-	false,  // alpha to coverage
-	0,      // program
+	true,  // dithering
+	false, // depth test
+	true,  // depth write
+	false, // stencil test
+	false, // blend
+	false, // alpha to coverage
+	0,     // program
 }
 
 // Queries the existing OpenGL graphics state and returns it.
@@ -118,7 +116,7 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 				unconvertBlendEq(blendEqAlpha),
 			},
 			StencilFront: gfx.StencilState{
-				0, // TODO: use write mask
+				uint(stencilFrontWriteMask),
 				uint(stencilFrontReadMask),
 				uint(stencilFrontRef),
 				unconvertStencilOp(stencilFrontOpFail),
@@ -127,7 +125,7 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 				unconvertCmp(stencilFrontCmp),
 			},
 			StencilBack: gfx.StencilState{
-				0, // TODO: use write mask
+				uint(stencilBackWriteMask),
 				uint(stencilBackReadMask),
 				uint(stencilBackRef),
 				unconvertStencilOp(stencilBackOpFail),
@@ -142,8 +140,6 @@ func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsS
 		clearDepth,
 		int(clearStencil),
 		colorWrite,
-		uint(stencilFrontWriteMask),
-		uint(stencilBackWriteMask),
 		dithering,
 		depthTest,
 		depthWrite,
@@ -165,7 +161,6 @@ type graphicsState struct {
 	clearDepth                                                            float64
 	clearStencil                                                          int
 	colorWrite                                                            [4]bool
-	stencilMaskFront, stencilMaskBack                                     uint
 	dithering, depthTest, depthWrite, stencilTest, blend, alphaToCoverage bool
 	program                                                               uint32
 }
@@ -186,7 +181,7 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 	s.stateBlendEquationSeparate(g.State.Blend)
 	s.stateStencilOp(g.State.StencilFront, g.State.StencilBack)
 	s.stateStencilFunc(g.State.StencilFront, g.State.StencilBack)
-	s.stateStencilMask(g.stencilMaskFront, g.stencilMaskBack)
+	s.stateStencilMask(g.State.StencilFront.WriteMask, g.State.StencilBack.WriteMask)
 	s.stateDithering(g.dithering)
 	s.stateDepthTest(g.depthTest)
 	s.stateDepthWrite(g.depthWrite)
@@ -375,9 +370,9 @@ func (s *graphicsState) stateStencilFunc(front, back gfx.StencilState) {
 }
 
 func (s *graphicsState) stateStencilMask(front, back uint) {
-	if noStateGuard || s.stencilMaskFront != front || s.stencilMaskBack != back {
-		s.stencilMaskFront = front
-		s.stencilMaskBack = back
+	if noStateGuard || s.State.StencilFront.WriteMask != front || s.State.StencilBack.WriteMask != back {
+		s.State.StencilFront.WriteMask = front
+		s.State.StencilBack.WriteMask = back
 		if front == back {
 			// We can save a call.
 			gl.StencilMaskSeparate(gl.FRONT_AND_BACK, uint32(front))
