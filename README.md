@@ -18,6 +18,7 @@ This repository hosts packages for Azul3D's graphics core.
 * Added a convenience `Mesh.Normals` slice for storing the normals of a mesh (see [#11](https://github.com/azul3d/gfx/issues/11)).
 * The TexWrap mode `BorderColor` is not always present, e.g. in OpenGL ES 2 (see [#56](https://github.com/azul3d/gfx/issues/56)).
 * Clarify: Some renderers, e.g. OpenGL ES, only support boolean occlusion queries (see [#57](https://github.com/azul3d/gfx/issues/57)).
+* Empty rectangles are no longer considered "the entire area" (see [#15](https://github.com/azul3d/gfx/issues/15)).
 
 ##### [gfx.v2/window](https://azul3d.org/gfx.v2/window) package:
 

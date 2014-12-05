@@ -64,21 +64,21 @@ type Canvas interface {
 	// rectangle of the canvas's color buffer to the specified background
 	// color.
 	//
-	// If the rectangle is empty the entire canvas is cleared.
+	// If the rectangle is empty this function is no-op.
 	Clear(r image.Rectangle, bg Color)
 
 	// ClearDepth submits a depth-clear operation to the renderer. It will
 	// clear the given rectangle of the canvas's depth buffer to the specified
 	// depth value (in the range of 0.0 to 1.0, where 1.0 is furthest away).
 	//
-	// If the rectangle is empty the entire canvas is cleared.
+	// If the rectangle is empty this function is no-op.
 	ClearDepth(r image.Rectangle, depth float64)
 
 	// ClearStencil submits a stencil-clear operation to the renderer. It will
 	// clear the given rectangle of the canvas's stencil buffer to the
 	// specified stencil value.
 	//
-	// If the rectangle is empty the entire canvas is cleared.
+	// If the rectangle is empty this function is no-op.
 	ClearStencil(r image.Rectangle, stencil int)
 
 	// Draw submits a draw operation to the renderer. It will draw the given
@@ -108,7 +108,7 @@ type Canvas interface {
 	//  len(o.Meshes) == 0
 	//  !o.Meshes[N].Loaded && len(o.Meshes[N].Vertices) == 0
 	//
-	// If the rectangle is empty the entire canvas is drawn to.
+	// If the rectangle is empty this function is no-op.
 	Draw(r image.Rectangle, o *Object, c *Camera)
 
 	// QueryWait blocks until all pending draw object's occlusion queries

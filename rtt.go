@@ -124,8 +124,7 @@ const (
 // (RTT) canvas. At least one of Color, Depth, or Stencil textures must be non
 // nil.
 type RTTConfig struct {
-	// Bounds is the target resolution of the canvas to render at. If it is an
-	// empty rectangle, the renderer's bounds is used instead.
+	// Bounds is the target resolution of the canvas to render at.
 	Bounds image.Rectangle
 
 	// The number of samples to use for multisampling. It should be one of the
@@ -159,11 +158,17 @@ type RTTConfig struct {
 
 // Valid tells if this render-to-texture (RTT) configuration is valid or not, a
 // configuration is considered invalid if:
-//  1. All three textures are nil.
-//  2. Any non-nil texture is not accompanies by a format.
-//  3. Either DepthFormat.IsCombined() or StencilFormat.IsCombined() and the other
-//     is not.
+//
+//  1. It's bounding rectangle is empty.
+//  2. All three textures are nil.
+//  3. Any non-nil texture is not accompanies by a format.
+//  4. Either DepthFormat.IsCombined() or StencilFormat.IsCombined() and the
+//     other is not.
+//
 func (c RTTConfig) Valid() bool {
+	if c.Bounds.Empty() {
+		return false
+	}
 	if c.Color == nil && c.Depth == nil && c.Stencil == nil {
 		return false
 	}
@@ -308,12 +313,14 @@ func (f RTTFormats) Choose(p Precision, compression bool) (color TexFormat, dept
 }
 
 // ChooseConfig is short-hand for:
+//
 //  colorFormat, depthFormat, stencilFormat := f.Choose(p, compression)
 //  cfg := RTTConfig{
 //      ColorFormat: colorFormat,
 //      DepthFormat: depthFormat,
 //      StencilFormat: stencilFormat,
 //  }
+//
 func (f RTTFormats) ChooseConfig(p Precision, compression bool) RTTConfig {
 	color, depth, stencil := f.Choose(p, compression)
 	return RTTConfig{
