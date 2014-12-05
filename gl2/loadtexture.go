@@ -114,14 +114,9 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 			0,    // level
 		)
 
-		// If the rectangle is empty use the entire area.
+		// Intersect the rectangle with the texture's bounds.
 		bounds := image.Rect(0, 0, n.width, n.height)
-		if rect.Empty() {
-			rect = bounds
-		} else {
-			// Intersect the rectangle with the texture's bounds.
-			rect = bounds.Intersect(rect)
-		}
+		rect = bounds.Intersect(rect)
 
 		status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
 		if status != gl.FRAMEBUFFER_COMPLETE {
@@ -224,15 +219,9 @@ func (r *renderer) hookedDownload(rect image.Rectangle, complete chan image.Imag
 			pre()
 		}
 
+		// Intersect the rectangle with the renderer's bounds.
 		bounds := r.Bounds()
-
-		// If the rectangle is empty use the entire area.
-		if rect.Empty() {
-			rect = bounds
-		} else {
-			// Intersect the rectangle with the renderer's bounds.
-			rect = bounds.Intersect(rect)
-		}
+		rect = bounds.Intersect(rect)
 
 		img := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
 		x, y, w, h := glutil.ConvertRect(rect, bounds)

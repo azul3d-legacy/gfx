@@ -128,6 +128,11 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 }
 
 func (r *renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
+	// Draw calls with empty rectangles are effectively no-op.
+	if rect.Empty() {
+		return
+	}
+
 	// Make the implicit o.Bounds() call required by gfx.Canvas so that the
 	// object has a chance to calculate a bounding box before it's data slices
 	// are set to nil.

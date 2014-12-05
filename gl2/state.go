@@ -201,16 +201,9 @@ func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *gr
 
 // bounds is the renderer's bounds (e.g. r.Bounds()).
 func (s *graphicsState) stateScissor(bounds, rect image.Rectangle) {
-	// Only if the (final) scissor rectangle has changed do we need to make the
-	// OpenGL call.
-
-	// If the rectangle is empty use the entire area.
-	if rect.Empty() {
-		rect = bounds
-	} else {
-		// Intersect the rectangle with the renderer's bounds.
-		rect = bounds.Intersect(rect)
-	}
+	// Only if the intersected scissor rectangle has changed do we need to make
+	// the OpenGL call.
+	rect = bounds.Intersect(rect)
 
 	if noStateGuard || s.scissor != rect {
 		// Store the new scissor rectangle.

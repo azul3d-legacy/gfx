@@ -169,6 +169,10 @@ func (r *renderer) Render() {
 
 // Implements gfx.Canvas interface.
 func (r *renderer) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post func()) {
+	// Clearing an empty rectangle is effectively no-op.
+	if rect.Empty() {
+		return
+	}
 	r.renderExec <- func() bool {
 		if pre != nil {
 			pre()
@@ -184,6 +188,10 @@ func (r *renderer) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post fun
 
 // Implements gfx.Canvas interface.
 func (r *renderer) hookedClearDepth(rect image.Rectangle, depth float64, pre, post func()) {
+	// Clearing an empty rectangle is effectively no-op.
+	if rect.Empty() {
+		return
+	}
 	r.renderExec <- func() bool {
 		if pre != nil {
 			pre()
@@ -199,6 +207,10 @@ func (r *renderer) hookedClearDepth(rect image.Rectangle, depth float64, pre, po
 
 // Implements gfx.Canvas interface.
 func (r *renderer) hookedClearStencil(rect image.Rectangle, stencil int, pre, post func()) {
+	// Clearing an empty rectangle is effectively no-op.
+	if rect.Empty() {
+		return
+	}
 	r.renderExec <- func() bool {
 		if pre != nil {
 			pre()

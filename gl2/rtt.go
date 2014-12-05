@@ -278,12 +278,6 @@ func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		cfg.Stencil.Lock()
 	}
 
-	// Choose correct bounds.
-	bounds := cfg.Bounds
-	if bounds.Empty() {
-		bounds = r.BaseCanvas.Bounds()
-	}
-
 	// Create the RTT canvas.
 	cr, cg, cb, ca := cfg.ColorFormat.Bits()
 	canvas := &rttCanvas{
@@ -294,7 +288,7 @@ func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 				DepthBits:   cfg.DepthFormat.DepthBits(),
 				StencilBits: cfg.StencilFormat.StencilBits(),
 			},
-			VBounds: bounds,
+			VBounds: cfg.Bounds,
 		},
 		r:   r,
 		cfg: cfg,
@@ -305,8 +299,8 @@ func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		fbError                           error
 	)
 	r.renderExec <- func() bool {
-		width := int32(bounds.Dx())
-		height := int32(bounds.Dy())
+		width := int32(cfg.Bounds.Dx())
+		height := int32(cfg.Bounds.Dy())
 
 		// Create the FBO.
 		gl.GenFramebuffers(1, &canvas.fbo)
@@ -353,7 +347,7 @@ func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		// Create an OpenGL texture for every non-nil cfg texture.
 		if cfg.Color != nil && cfg.ColorFormat != gfx.ZeroTexFormat {
 			// We want a color texture, not a color buffer.
-			nTexColor = newNativeTexture(r, colorFormat, bounds.Dx(), bounds.Dy())
+			nTexColor = newNativeTexture(r, colorFormat, int(width), int(height))
 			gl.TexImage2D(gl.TEXTURE_2D, 0, colorFormat, width, height, 0, gl.BGRA, gl.UNSIGNED_BYTE, nil)
 			gl.GenerateMipmap(gl.TEXTURE_2D)
 			gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, nTexColor.id, 0)
@@ -362,7 +356,7 @@ func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		if !dsCombined {
 			if cfg.Depth != nil && cfg.DepthFormat != gfx.ZeroDSFormat {
 				// We want a depth texture, not a depth buffer.
-				nTexDepth = newNativeTexture(r, depthFormat, bounds.Dx(), bounds.Dy())
+				nTexDepth = newNativeTexture(r, depthFormat, int(width), int(height))
 				gl.TexImage2D(gl.TEXTURE_2D, 0, depthFormat, width, height, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_BYTE, nil)
 				gl.GenerateMipmap(gl.TEXTURE_2D)
 				gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, nTexDepth.id, 0)
@@ -410,7 +404,7 @@ func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		native.rttCanvas = canvas
 		native.destroyHandler = finalizeRTTTexture
 		t.NativeTexture = native
-		t.Bounds = bounds
+		t.Bounds = cfg.Bounds
 		t.Loaded = true
 		t.ClearData()
 		t.Unlock()
