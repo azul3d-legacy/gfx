@@ -692,7 +692,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 
 			case fn := <-renderExec:
 				// Don't execute functions on closed windows.
-				select{
+				select {
 				case <-w.relayExit:
 					return
 				default:
