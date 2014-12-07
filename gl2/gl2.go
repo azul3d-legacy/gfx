@@ -59,8 +59,8 @@ type Renderer interface {
 	Destroy()
 }
 
-// option represents a single option function.
-type option func(r *renderer)
+// Option represents a single option function.
+type Option func(r *renderer)
 
 // KeepState is an option that specifies whether or not the existing OpenGL
 // graphics state should be kept between frames.
@@ -75,7 +75,7 @@ type option func(r *renderer)
 // performance.
 //
 // Do not specify this option unless you're sure that you need it.
-func KeepState() option {
+func KeepState() Option {
 	return func(r *renderer) {
 		r.keepState = true
 	}
@@ -86,7 +86,7 @@ func KeepState() option {
 //
 // The given other renderer must be from this package specifically, or else a
 // panic will occur.
-func Share(other Renderer) option {
+func Share(other Renderer) Option {
 	return func(r *renderer) {
 		r.shared = other.(*renderer)
 	}
@@ -97,7 +97,7 @@ func Share(other Renderer) option {
 //
 // It is only safe to call this function under the presence of an OpenGL 2
 // feature level context.
-func New(opts ...option) (Renderer, error) {
+func New(opts ...Option) (Renderer, error) {
 	r, err := newRenderer(opts...)
 	if err != nil {
 		return nil, err

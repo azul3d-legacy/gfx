@@ -610,7 +610,7 @@ func glStr(s string) *int8 {
 }
 
 // newRenderer is the implementation of New.
-func newRenderer(opts ...option) (Renderer, error) {
+func newRenderer(opts ...Option) (Renderer, error) {
 	r := &renderer{
 		BaseCanvas: &util.BaseCanvas{
 			VMSAA: true,
