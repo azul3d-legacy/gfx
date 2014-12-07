@@ -35,6 +35,9 @@ type renderer struct {
 	// Render execution channel.
 	renderExec chan func() bool
 
+	// The other shared renderer to be used for loading assets, or nil.
+	shared *renderer
+
 	// Whether or not the existing graphics state should be kept between
 	// frames. If set to true before rendering a frame the renderer will ask
 	// OpenGL for the existing state, the frame will be rendered, and the old
@@ -484,6 +487,10 @@ func (r *renderer) SetDebugOutput(w io.Writer) {
 	r.debug.RLock()
 	r.debug.W = w
 	r.debug.RUnlock()
+}
+
+// Destroy implements the Renderer interface.
+func (r *renderer) Destroy() {
 }
 
 func parseVersionString(ver string) (major, minor, release int, vendor string) {

@@ -30,17 +30,33 @@ type Renderer interface {
 	gfx.Renderer
 
 	// RenderExec returns the renderer execution channel.
+	//
+	// Whenever the renderer needs to perform a OpenGL task of any sort it is
+	// done through this execution channel.
+	//
+	// If a function returns true, it is effectively a signal that Render() has
+	// been called:the frame is complete and has been fully rendered, and you
+	// should swap the window's buffers.
+	//
+	// The functions sent to this channel must be executed under the presence
+	// of an OpenGL context.
 	RenderExec() chan func() bool
 
-	// UpdateBounds updates the effective bounding rectangle of this renderer. It
-	// must be called whenever the OpenGL canvas size should change (e.g. on window
-	// resize).
+	// UpdateBounds updates the effective bounding rectangle of this renderer.
+	//
+	// It must be called whenever the OpenGL canvas size should change (e.g. on
+	// window resize).
 	UpdateBounds(bounds image.Rectangle)
 
-	// SetDebugOutput sets the writer, w, to write debug output to. It will mostly
-	// contain just shader debug information, but other information may be written
-	// in future versions as well.
+	// SetDebugOutput sets the writer, w, to write debug output to. It will
+	// mostly contain just shader debug information, but other information may
+	// be written in future versions as well.
 	SetDebugOutput(w io.Writer)
+
+	// Destroy immediately destroys this renderer and it's assets.
+	//
+	// This function must be called under the presence of an OpenGL context.
+	Destroy()
 }
 
 // option represents a single option function.
@@ -62,6 +78,17 @@ type option func(r *renderer)
 func KeepState() option {
 	return func(r *renderer) {
 		r.keepState = true
+	}
+}
+
+// Share is an option that specifies that this renderer should request the
+// other renderer to perform loading of all assets.
+//
+// The given other renderer must be from this package specifically, or else a
+// panic will occur.
+func Share(other Renderer) option {
+	return func(r *renderer) {
+		r.shared = other.(*renderer)
 	}
 }
 
