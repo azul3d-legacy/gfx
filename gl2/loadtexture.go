@@ -348,6 +348,16 @@ func unconvertTexFormat(f int32) gfx.TexFormat {
 
 // LoadTexture implements the gfx.Renderer interface.
 func (r *renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
+	// If we are sharing assets with another renderer, allow it to load the
+	// texture instead.
+	r.shared.RLock()
+	if r.shared.renderer != nil {
+		r.shared.renderer.LoadTexture(t, done)
+		r.shared.RUnlock()
+		return
+	}
+	r.shared.RUnlock()
+
 	// Lock the texture until we are done loading it.
 	t.Lock()
 	if !t.Loaded && t.Source == nil {

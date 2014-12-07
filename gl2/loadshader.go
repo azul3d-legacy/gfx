@@ -59,6 +59,16 @@ func (r *renderer) freeShaders() {
 
 // LoadShader implements the gfx.Renderer interface.
 func (r *renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
+	// If we are sharing assets with another renderer, allow it to load the
+	// shader instead.
+	r.shared.RLock()
+	if r.shared.renderer != nil {
+		r.shared.renderer.LoadShader(s, done)
+		r.shared.RUnlock()
+		return
+	}
+	r.shared.RUnlock()
+
 	// Lock the shader until we are done loading it.
 	s.Lock()
 	if s.Loaded || len(s.Error) > 0 {

@@ -36,7 +36,10 @@ type renderer struct {
 	renderExec chan func() bool
 
 	// The other shared renderer to be used for loading assets, or nil.
-	shared *renderer
+	shared struct {
+		sync.RWMutex
+		*renderer
+	}
 
 	// Whether or not the existing graphics state should be kept between
 	// frames. If set to true before rendering a frame the renderer will ask

@@ -200,6 +200,16 @@ func (r *renderer) freeMeshes() {
 
 // LoadMesh implements the gfx.Renderer interface.
 func (r *renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
+	// If we are sharing assets with another renderer, allow it to load the
+	// mesh instead.
+	r.shared.RLock()
+	if r.shared.renderer != nil {
+		r.shared.renderer.LoadMesh(m, done)
+		r.shared.RUnlock()
+		return
+	}
+	r.shared.RUnlock()
+
 	// Lock the mesh until we are done loading it.
 	m.Lock()
 	if m.Loaded && !m.HasChanged() {

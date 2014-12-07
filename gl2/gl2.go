@@ -88,7 +88,7 @@ func KeepState() Option {
 // panic will occur.
 func Share(other Renderer) Option {
 	return func(r *renderer) {
-		r.shared = other.(*renderer)
+		r.shared.renderer = other.(*renderer)
 	}
 }
 
