@@ -38,6 +38,7 @@ This repository hosts packages for Azul3D's graphics core.
 * `gl2.New` now takes option function parameters (See [#53](https://github.com/azul3d/gfx/issues/53)).
 * Documented basic usage and window toolkit independence (See [#54](https://github.com/azul3d/gfx/issues/54)).
 * Fix caching failure of shader uniform locations (See [#58](https://github.com/azul3d/gfx/issues/58)).
+* Assets are now (optionally) shared across multiple renderers (See [#28](https://github.com/azul3d/gfx/issues/28)).
 
 [Full v2 Changelog](https://github.com/azul3d/gfx/compare/v1.0.1...v2).
 
