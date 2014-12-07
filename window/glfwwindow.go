@@ -49,6 +49,7 @@ type glfwRenderer interface {
 	RenderExec() chan func() bool
 	UpdateBounds(bounds image.Rectangle)
 	SetDebugOutput(w io.Writer)
+	Destroy()
 }
 
 // glfwWindow implements the Window interface using a GLFW backend.
@@ -556,7 +557,68 @@ var (
 	// glfwInitialized tells if GLFW has already been initialized or not.
 	// It is only modified in the main thread.
 	glfwInitialized bool
+
+	asset struct {
+		// A hidden window which is used for it's context to own OpenGL assets
+		// shared between render windows.
+		*glfw.Window
+
+		// The renderer of the hidden window, again just used to store assets.
+		glfwRenderer
+	}
 )
+
+// assetLoader is the goroutine responsible for running the asset renderer.
+//
+// TODO(slimsag): it should exit when no more windows are open
+func assetLoader() {
+	renderExec := asset.glfwRenderer.RenderExec()
+
+	// OpenGL function calls must occur in the same thread.
+	runtime.LockOSThread()
+
+	// Make the window's context the current one.
+	asset.Window.MakeContextCurrent()
+
+	for {
+		select {
+		case fn := <-renderExec:
+			fn()
+		}
+	}
+}
+
+// doInit initializes GLFW and the hidden asset window/renderer, if not already
+// initialized.
+func doInit() error {
+	// Initialize GLFW, if needed.
+	if !glfwInitialized {
+		err := glfw.Init()
+		if err != nil {
+			return err
+		}
+
+		// Create the hidden asset window.
+		glfw.WindowHint(glfw.Visible, 0)
+		asset.Window, err = glfw.CreateWindow(128, 128, "assets", nil, nil)
+		if err != nil {
+			return err
+		}
+
+		// Create the asset renderer.
+		asset.Window.MakeContextCurrent()
+		asset.glfwRenderer, err = glfwNewRenderer()
+		if err != nil {
+			return err
+		}
+		glfw.DetachCurrentContext()
+
+		go assetLoader()
+
+		glfwInitialized = true
+	}
+	return nil
+}
 
 func doNew(p *Props) (Window, gfx.Renderer, error) {
 	var (
@@ -564,14 +626,8 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 		err                    error
 	)
 
-	// Initialize GLFW, if needed.
-	if !glfwInitialized {
-		err := glfw.Init()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		glfwInitialized = true
+	if err := doInit(); err != nil {
+		return nil, nil, err
 	}
 	// TODO(slimsag): terminate GLFW when application exits.
 	//defer glfw.Terminate()
@@ -615,7 +671,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 
 	// Create the render window.
 	width, height := p.Size()
-	window, err := glfw.CreateWindow(width, height, p.Title(), targetMonitor, nil)
+	window, err := glfw.CreateWindow(width, height, p.Title(), targetMonitor, asset.Window)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -624,7 +680,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	window.MakeContextCurrent()
 
 	// Create the renderer.
-	r, err := glfwNewRenderer()
+	r, err := glfwNewRenderer(keepState(), share(asset.glfwRenderer))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -655,7 +711,6 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	// Done with OpenGL things on this window, for now.
 	glfw.DetachCurrentContext()
 
-	// This goroutine is responsible for performing rendering of this window.
 	// This goroutine is responsible primarily for relaying render functions
 	// to the main thread channel.
 	go func() {

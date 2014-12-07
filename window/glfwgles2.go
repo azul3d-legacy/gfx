@@ -16,6 +16,11 @@ const (
 	glfwContextVersionMinor = 0
 )
 
-func glfwNewRenderer() (glfwRenderer, error) {
-	return gles2.New(gles2.KeepState())
+var (
+	keepState = gles2.KeepState
+	share     = gles2.Share
+)
+
+func glfwNewRenderer(opts ...gles2.Option) (glfwRenderer, error) {
+	return gles2.New(opts...)
 }

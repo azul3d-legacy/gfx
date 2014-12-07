@@ -16,6 +16,11 @@ const (
 	glfwContextVersionMinor = 0
 )
 
-func glfwNewRenderer() (glfwRenderer, error) {
-	return gl2.New(gl2.KeepState())
+var (
+	keepState = gl2.KeepState
+	share     = gl2.Share
+)
+
+func glfwNewRenderer(opts ...gl2.Option) (glfwRenderer, error) {
+	return gl2.New(opts...)
 }
