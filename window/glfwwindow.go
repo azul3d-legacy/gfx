@@ -348,6 +348,9 @@ func (w *glfwWindow) sendEvent(ev Event, m EventMask) {
 }
 
 // initCallbacks sets a callback handler for each GLFW window event.
+//
+// It may only be called on the main thread, and under the presence of the
+// window's lock.
 func (w *glfwWindow) initCallbacks() {
 	// Close event.
 	w.window.SetCloseCallback(func(gw *glfw.Window) {
