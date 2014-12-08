@@ -573,13 +573,20 @@ func (w *glfwWindow) run() {
 			}
 
 			// Decrement the number of open windows by one.
-			Num(-1)
+			windowCount := Num(-1)
 
 			// Signal that a window has closed to the main loop.
 			MainLoopChan <- nil
 
 			// Unlock the thread.
 			runtime.UnlockOSThread()
+
+			if windowCount == 0 {
+				// No more windows are open, so de-initialize.
+				MainLoopChan <- func() {
+					doExit()
+				}
+			}
 			return
 
 		case <-updateFPS.C:
@@ -614,8 +621,6 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	if err := doInit(); err != nil {
 		return nil, nil, err
 	}
-	// TODO(slimsag): terminate GLFW when application exits.
-	//defer glfw.Terminate()
 
 	// Specify the primary monitor if we want fullscreen, store the monitor
 	// regardless for centering the window.

@@ -23,12 +23,13 @@ var (
 
 		// The renderer of the hidden window, again just used to store assets.
 		glfwRenderer
+
+		// Signals shutdown to the assetLoader goroutine.
+		exit chan error
 	}
 )
 
 // assetLoader is the goroutine responsible for running the asset renderer.
-//
-// TODO(slimsag): it should exit when no more windows are open
 func assetLoader() {
 	renderExec := asset.glfwRenderer.RenderExec()
 
@@ -40,6 +41,21 @@ func assetLoader() {
 
 	for {
 		select {
+		case <-asset.exit:
+			// Destroy renderer, while window and context are active.
+			asset.glfwRenderer.Destroy()
+
+			// Release context, before destroying window.
+			glfw.DetachCurrentContext()
+
+			// Destroy window and unlock the thread.
+			asset.Window.Destroy() // TODO(slimsag): grab error once GLFW3 bindings updated
+			runtime.UnlockOSThread()
+
+			// Signal completion.
+			asset.exit <- nil // TODO(slimsag): send error once GLFW3 bindings updated
+			return
+
 		case fn := <-renderExec:
 			fn()
 		}
@@ -49,31 +65,57 @@ func assetLoader() {
 // doInit initializes GLFW and the hidden asset window/renderer, if not already
 // initialized.
 func doInit() error {
-	// Initialize GLFW, if needed.
-	if !glfwInit {
-		err := glfw.Init()
-		if err != nil {
-			return err
-		}
-
-		// Create the hidden asset window.
-		glfw.WindowHint(glfw.Visible, 0)
-		asset.Window, err = glfw.CreateWindow(128, 128, "assets", nil, nil)
-		if err != nil {
-			return err
-		}
-
-		// Create the asset renderer.
-		asset.Window.MakeContextCurrent()
-		asset.glfwRenderer, err = glfwNewRenderer()
-		if err != nil {
-			return err
-		}
-		glfw.DetachCurrentContext()
-
-		go assetLoader()
-
-		glfwInit = true
+	if glfwInit {
+		// Already initialized.
+		return nil
 	}
+
+	// Initialize GLFW now.
+	err := glfw.Init()
+	if err != nil {
+		return err
+	}
+
+	// Create the hidden asset window.
+	glfw.WindowHint(glfw.Visible, 0)
+	asset.Window, err = glfw.CreateWindow(128, 128, "assets", nil, nil)
+	if err != nil {
+		return err
+	}
+
+	// Create the asset renderer.
+	asset.exit = make(chan error)
+	asset.Window.MakeContextCurrent()
+	asset.glfwRenderer, err = glfwNewRenderer()
+	if err != nil {
+		return err
+	}
+	glfw.DetachCurrentContext()
+
+	go assetLoader()
+
+	glfwInit = true
+	return nil
+}
+
+// doExit de-initializes GLFW and the hidden asset/window renderer, only if it
+// is initialized.
+func doExit() error {
+	if !glfwInit {
+		// Not even initialized.
+		return nil
+	}
+
+	// Exit the assetLoader goroutine.
+	asset.exit <- nil
+	err := <-asset.exit
+	if err != nil {
+		return err
+	}
+
+	// Terminate GLFW now.
+	glfw.Terminate() // TODO(slimsag): use error once GLFW3 bindings updated
+
+	glfwInit = false
 	return nil
 }
