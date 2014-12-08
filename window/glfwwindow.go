@@ -68,7 +68,7 @@ type glfwWindow struct {
 	closed                                             bool
 }
 
-// Implements the Window interface.
+// Props implements the Window interface.
 func (w *glfwWindow) Props() *Props {
 	w.RLock()
 	props := w.props
@@ -76,14 +76,14 @@ func (w *glfwWindow) Props() *Props {
 	return props
 }
 
-// Implements the Window interface.
+// Request implements the Window interface.
 func (w *glfwWindow) Request(p *Props) {
 	MainLoopChan <- func() {
 		w.useProps(p, false)
 	}
 }
 
-// Implements the Window interface.
+// Keyboard implements the Window interface.
 func (w *glfwWindow) Keyboard() *keyboard.Watcher {
 	w.RLock()
 	keyboard := w.keyboard
@@ -91,7 +91,7 @@ func (w *glfwWindow) Keyboard() *keyboard.Watcher {
 	return keyboard
 }
 
-// Implements the Window interface.
+// Mouse implements the Window interface.
 func (w *glfwWindow) Mouse() *mouse.Watcher {
 	w.RLock()
 	mouse := w.mouse
@@ -99,7 +99,7 @@ func (w *glfwWindow) Mouse() *mouse.Watcher {
 	return mouse
 }
 
-// Implements the Window interface.
+// SetClipboard implements the Clipboard interface.
 func (w *glfwWindow) SetClipboard(clipboard string) {
 	MainLoopChan <- func() {
 		w.Lock()
@@ -108,7 +108,7 @@ func (w *glfwWindow) SetClipboard(clipboard string) {
 	}
 }
 
-// Implements the Window interface.
+// Clipboard implements the Clipboard interface.
 func (w *glfwWindow) Clipboard() string {
 	w.RLock()
 	var str string
@@ -119,7 +119,7 @@ func (w *glfwWindow) Clipboard() string {
 	return str
 }
 
-// Implements the Window interface.
+// Close implements the Window interface.
 func (w *glfwWindow) Close() {
 	// Protect against double-closes.
 	w.Lock()
@@ -145,8 +145,8 @@ func (w *glfwWindow) Notify(ch chan<- Event, m EventMask) {
 	w.Unlock()
 }
 
-// searches for the event notifier associated with ch, returns it's slice index
-// or -1.
+// findNotifier searches for the event notifier associated with ch, returns
+// it's slice index or -1.
 //
 // w.Lock must be held for it to operate safely.
 func (w *glfwWindow) findNotifier(ch chan<- Event) int {
@@ -158,7 +158,7 @@ func (w *glfwWindow) findNotifier(ch chan<- Event) int {
 	return -1
 }
 
-// deletes all notifiers associated with ch.
+// deleteNotifiers deletes all notifiers associated with ch.
 func (w *glfwWindow) deleteNotifiers(ch chan<- Event) {
 	s := w.notifiers
 	idx := w.findNotifier(ch)
@@ -167,6 +167,21 @@ func (w *glfwWindow) deleteNotifiers(ch chan<- Event) {
 		idx = w.findNotifier(ch)
 	}
 	w.notifiers = s
+}
+
+// sendEvent sends the given event to all of the notifiers whose bitmask
+// matches with m.
+func (w *glfwWindow) sendEvent(ev Event, m EventMask) {
+	w.RLock()
+	for _, nf := range w.notifiers {
+		if (nf.EventMask & m) != 0 {
+			select {
+			case nf.ch <- ev:
+			default:
+			}
+		}
+	}
+	w.RUnlock()
 }
 
 // waitFor runs f on the main thread and waits for the function to complete.
@@ -179,7 +194,7 @@ func (w *glfwWindow) waitFor(f func()) {
 	<-done
 }
 
-// Update window title and accounts for "{FPS}" strings.
+// updateTitle updates the window title and accounts for "{FPS}" strings.
 //
 // It may only be called on the main thread, and under the presence of the
 // window's read lock.
@@ -324,19 +339,6 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 			}
 		})
 	}
-}
-
-func (w *glfwWindow) sendEvent(ev Event, m EventMask) {
-	w.RLock()
-	for _, nf := range w.notifiers {
-		if (nf.EventMask & m) != 0 {
-			select {
-			case nf.ch <- ev:
-			default:
-			}
-		}
-	}
-	w.RUnlock()
 }
 
 // initCallbacks sets a callback handler for each GLFW window event.
