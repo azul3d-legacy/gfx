@@ -191,6 +191,9 @@ func (w *glfwWindow) waitFor(f func()) {
 }
 
 // Update window title and accounts for "{FPS}" strings.
+//
+// It may only be called on the main thread, and under the presence of the
+// window's read lock.
 func (w *glfwWindow) updateTitle() {
 	fps := fmt.Sprintf("%dFPS", int(math.Ceil(w.renderer.Clock().FrameRate())))
 	title := strings.Replace(w.props.Title(), "{FPS}", fps, 1)
@@ -350,7 +353,7 @@ func (w *glfwWindow) sendEvent(ev Event, m EventMask) {
 // initCallbacks sets a callback handler for each GLFW window event.
 //
 // It may only be called on the main thread, and under the presence of the
-// window's lock.
+// window's read lock.
 func (w *glfwWindow) initCallbacks() {
 	// Close event.
 	w.window.SetCloseCallback(func(gw *glfw.Window) {
