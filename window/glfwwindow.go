@@ -64,7 +64,7 @@ type glfwWindow struct {
 	lastCursorX, lastCursorY                           float64
 	extWGLEXTSwapControlTear, extGLXEXTSwapControlTear bool
 	notifiers                                          []notifier
-	relayExit                                          chan struct{}
+	exit                                          chan struct{}
 
 	// Only modified on the main thread:
 	closed bool
@@ -140,8 +140,8 @@ func (w *glfwWindow) Close() {
 		// Signal that a window has closed to the main loop.
 		MainLoopChan <- nil
 
-		// Signal to the relay goroutine that it should exit.
-		w.relayExit <- struct{}{}
+		// Signal to the window goroutine that it should exit.
+		w.exit <- struct{}{}
 	}
 }
 
@@ -553,6 +553,61 @@ func (w *glfwWindow) initCallbacks() {
 	})
 }
 
+// run is the goroutine responsible for manging this window.
+func (w *glfwWindow) run() {
+	// A ticker for updating the window title with the new FPS each second.
+	updateFPS := time.NewTicker(1 * time.Second)
+	defer updateFPS.Stop()
+
+	renderExec := w.renderer.RenderExec()
+
+	// OpenGL function calls must occur in the same thread.
+	runtime.LockOSThread()
+
+	// Make the window's context the current one.
+	w.window.MakeContextCurrent()
+
+	for {
+		select {
+		case <-w.exit:
+			glfw.DetachCurrentContext()
+			runtime.UnlockOSThread()
+			return
+
+		case <-updateFPS.C:
+			// Update title with FPS.
+			MainLoopChan <- func() {
+				// Don't execute functions on closed windows.
+				if w.closed {
+					return
+				}
+				w.Lock()
+				w.updateTitle()
+				w.Unlock()
+			}
+
+		case fn := <-renderExec:
+			// Don't execute functions on closed windows.
+			select {
+			case <-w.exit:
+				return
+			default:
+			}
+
+			// Execute the render function.
+			if renderedFrame := fn(); renderedFrame {
+				// Swap OpenGL buffers.
+				w.window.SwapBuffers()
+
+				// Poll for events in the main loop.
+				MainLoopChan <- func() {
+					glfw.PollEvents()
+				}
+			}
+		}
+	}
+}
+
 var (
 	// glfwInitialized tells if GLFW has already been initialized or not.
 	// It is only modified in the main thread.
@@ -697,7 +752,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 		renderer:  r,
 		window:    window,
 		monitor:   monitor,
-		relayExit: make(chan struct{}, 1),
+		exit: make(chan struct{}, 1),
 	}
 
 	// Test for adaptive vsync extensions.
@@ -711,60 +766,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	// Done with OpenGL things on this window, for now.
 	glfw.DetachCurrentContext()
 
-	// This goroutine is responsible primarily for relaying render functions
-	// to the main thread channel.
-	go func() {
-		// A ticker for updating the window title with the new FPS each second.
-		updateFPS := time.NewTicker(1 * time.Second)
-		defer updateFPS.Stop()
-
-		renderExec := r.RenderExec()
-
-		// OpenGL function calls must occur in the same thread.
-		runtime.LockOSThread()
-
-		// Make the window's context the current one.
-		window.MakeContextCurrent()
-
-		for {
-			select {
-			case <-w.relayExit:
-				glfw.DetachCurrentContext()
-				runtime.UnlockOSThread()
-				return
-
-			case <-updateFPS.C:
-				// Update title with FPS.
-				MainLoopChan <- func() {
-					// Don't execute functions on closed windows.
-					if w.closed {
-						return
-					}
-					w.Lock()
-					w.updateTitle()
-					w.Unlock()
-				}
-
-			case fn := <-renderExec:
-				// Don't execute functions on closed windows.
-				select {
-				case <-w.relayExit:
-					return
-				default:
-				}
-
-				// Execute the render function.
-				if renderedFrame := fn(); renderedFrame {
-					// Swap OpenGL buffers.
-					window.SwapBuffers()
-
-					// Poll for events in the main loop.
-					MainLoopChan <- func() {
-						glfw.PollEvents()
-					}
-				}
-			}
-		}
-	}()
+	// Spawn the goroutine responsible for running the window.
+	go w.run()
 	return w, r, nil
 }
