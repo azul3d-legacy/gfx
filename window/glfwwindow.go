@@ -64,10 +64,8 @@ type glfwWindow struct {
 	lastCursorX, lastCursorY                           float64
 	extWGLEXTSwapControlTear, extGLXEXTSwapControlTear bool
 	notifiers                                          []notifier
-	exit                                          chan struct{}
-
-	// Only modified on the main thread:
-	closed bool
+	exit                                               chan struct{}
+	closed                                             bool
 }
 
 // Implements the Window interface.
@@ -123,26 +121,17 @@ func (w *glfwWindow) Clipboard() string {
 
 // Implements the Window interface.
 func (w *glfwWindow) Close() {
-	// Destroy the window on the main thread.
-	var doubleClose bool
-	MainLoopChan <- func() {
-		// Protect against any double-closes that we might encounter.
-		if w.closed {
-			doubleClose = true
-			return
-		}
-		w.closed = true
-		w.window.Destroy()
-		Num(-1) // Decrement the number of open windows by one.
+	// Protect against double-closes.
+	w.Lock()
+	if w.closed {
+		w.Unlock()
+		return
 	}
+	w.closed = true
+	w.Unlock()
 
-	if !doubleClose {
-		// Signal that a window has closed to the main loop.
-		MainLoopChan <- nil
-
-		// Signal to the window goroutine that it should exit.
-		w.exit <- struct{}{}
-	}
+	// Signal to the window of it's closing.
+	w.exit <- struct{}{}
 }
 
 // Implements the Window interface.
@@ -576,30 +565,36 @@ func (w *glfwWindow) run() {
 	for {
 		select {
 		case <-w.exit:
+			// Destroy the renderer.
+			w.renderer.Destroy()
+
+			// Release the context.
 			glfw.DetachCurrentContext()
+
+			// Destroy the window on the main thread.
+			MainLoopChan <- func() {
+				w.window.Destroy()
+			}
+
+			// Decrement the number of open windows by one.
+			Num(-1)
+
+			// Signal that a window has closed to the main loop.
+			MainLoopChan <- nil
+
+			// Unlock the thread.
 			runtime.UnlockOSThread()
 			return
 
 		case <-updateFPS.C:
 			// Update title with FPS.
 			MainLoopChan <- func() {
-				// Don't execute functions on closed windows.
-				if w.closed {
-					return
-				}
 				w.Lock()
 				w.updateTitle()
 				w.Unlock()
 			}
 
 		case fn := <-renderExec:
-			// Don't execute functions on closed windows.
-			select {
-			case <-w.exit:
-				return
-			default:
-			}
-
 			// Execute the render function.
 			if renderedFrame := fn(); renderedFrame {
 				// Swap OpenGL buffers.
@@ -751,14 +746,14 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 
 	// Initialize window.
 	w := &glfwWindow{
-		props:     p,
-		last:      NewProps(),
-		mouse:     mouse.NewWatcher(),
-		keyboard:  keyboard.NewWatcher(),
-		renderer:  r,
-		window:    window,
-		monitor:   monitor,
-		exit: make(chan struct{}, 1),
+		props:    p,
+		last:     NewProps(),
+		mouse:    mouse.NewWatcher(),
+		keyboard: keyboard.NewWatcher(),
+		renderer: r,
+		window:   window,
+		monitor:  monitor,
+		exit:     make(chan struct{}, 1),
 	}
 
 	// Test for adaptive vsync extensions.
