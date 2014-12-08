@@ -20,7 +20,7 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
 	"azul3d.org/keyboard.v1"
 	"azul3d.org/mouse.v1"
-	glfw "azul3d.org/native/glfw.v3"
+	"azul3d.org/native/glfw.v4"
 )
 
 // TODO(slimsag): rebuild window when fullscreen/precision changes.
@@ -35,7 +35,9 @@ func intBool(b bool) int {
 
 // logError simply logs the error.
 func logError(err error) {
-	fmt.Fprintf(os.Stderr, "window: %v\n", err)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "window: %v\n", err)
+	}
 }
 
 type notifier struct {
@@ -101,8 +103,7 @@ func (w *glfwWindow) Mouse() *mouse.Watcher {
 func (w *glfwWindow) SetClipboard(clipboard string) {
 	MainLoopChan <- func() {
 		w.Lock()
-		// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-		//logError(w.window.SetClipboardString(clipboard))
+		logError(w.window.SetClipboardString(clipboard))
 		w.window.SetClipboardString(clipboard)
 		w.Unlock()
 	}
@@ -116,7 +117,6 @@ func (w *glfwWindow) Clipboard() string {
 		err error
 	)
 	w.waitFor(func() {
-		// TODO(slimsag): handle the error.
 		str, err = w.window.GetClipboardString()
 	})
 	w.RUnlock()
@@ -206,9 +206,7 @@ func (w *glfwWindow) waitFor(f func()) {
 func (w *glfwWindow) updateTitle() {
 	fps := fmt.Sprintf("%dFPS", int(math.Ceil(w.renderer.Clock().FrameRate())))
 	title := strings.Replace(w.props.Title(), "{FPS}", fps, 1)
-	// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-	//logError(w.window.SetTitle(title))
-	w.window.SetTitle(title)
+	logError(w.window.SetTitle(title))
 }
 
 func (w *glfwWindow) useProps(p *Props, force bool) {
@@ -236,9 +234,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	if force || width != lastWidth || height != lastHeight {
 		w.last.SetSize(width, height)
 		withoutLock(func() {
-			// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-			//logError(win.SetSize(width, height))
-			win.SetSize(width, height)
+			logError(win.SetSize(width, height))
 		})
 	}
 
@@ -256,9 +252,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 			}
 		}
 		withoutLock(func() {
-			// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-			//logError(win.SetPosition(x, y))
-			win.SetPosition(x, y)
+			logError(win.SetPosition(x, y))
 		})
 	}
 
@@ -269,9 +263,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		w.last.SetCursorPos(cursorX, cursorY)
 		if cursorX != -1 && cursorY != -1 {
 			withoutLock(func() {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(win.SetCursorPosition(cursorX, cursorY))
-				win.SetCursorPosition(cursorX, cursorY)
+				logError(win.SetCursorPosition(cursorX, cursorY))
 			})
 		}
 	}
@@ -282,13 +274,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		w.last.SetVisible(visible)
 		withoutLock(func() {
 			if visible {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(win.Show())
-				win.Show()
+				logError(win.Show())
 			} else {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(win.Hide())
-				win.Hide()
+				logError(win.Hide())
 			}
 		})
 	}
@@ -299,13 +287,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		w.last.SetMinimized(minimized)
 		withoutLock(func() {
 			if minimized {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(win.Iconify())
-				win.Iconify()
+				logError(win.Iconify())
 			} else {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(win.Restore())
-				win.Restore()
+				logError(win.Restore())
 			}
 		})
 	}
@@ -328,9 +312,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 				swapInterval = 1
 			}
 		}
-		// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-		//logError(glfw.SwapInterval(swapInterval))
-		glfw.SwapInterval(swapInterval)
+		logError(glfw.SwapInterval(swapInterval))
 	}
 
 	// The following cannot be changed via GLFW post window creation -- and
@@ -357,13 +339,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		// Set input mode.
 		withoutLock(func() {
 			if grabbed {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(w.window.SetInputMode(glfw.Cursor, glfw.CursorDisabled))
-				w.window.SetInputMode(glfw.Cursor, glfw.CursorDisabled)
+				logError(w.window.SetInputMode(glfw.Cursor, glfw.CursorDisabled))
 			} else {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(w.window.SetInputMode(glfw.Cursor, glfw.CursorNormal))
-				w.window.SetInputMode(glfw.Cursor, glfw.CursorNormal)
+				logError(w.window.SetInputMode(glfw.Cursor, glfw.CursorNormal))
 			}
 		})
 	}
@@ -599,15 +577,11 @@ func (w *glfwWindow) run() {
 			w.renderer.Destroy()
 
 			// Release the context.
-			// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-			//logError(glfw.DetachCurrentContext())
-			glfw.DetachCurrentContext()
+			logError(glfw.DetachCurrentContext())
 
 			// Destroy the window on the main thread.
 			MainLoopChan <- func() {
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(w.window.Destroy())
-				w.window.Destroy()
+				logError(w.window.Destroy())
 			}
 
 			// Decrement the number of open windows by one.
@@ -639,15 +613,11 @@ func (w *glfwWindow) run() {
 			// Execute the render function.
 			if renderedFrame := fn(); renderedFrame {
 				// Swap OpenGL buffers.
-				// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-				//logError(w.window.SwapBuffers())
-				w.window.SwapBuffers()
+				logError(w.window.SwapBuffers())
 
 				// Poll for events in the main loop.
 				MainLoopChan <- func() {
-					// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-					//logError(glfw.PollEvents())
-					glfw.PollEvents()
+					logError(glfw.PollEvents())
 				}
 			}
 		}
@@ -674,38 +644,36 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 		targetMonitor = monitor
 	}
 
-	windowHint := func(hint glfw.Hint, value int) {
-		// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-		//logError(glfw.WindowHint(hint, value))
-		glfw.WindowHint(hint, value)
-	}
-
 	// Hint standard properties (note visibility is always false, we show the
 	// window later after moving it).
-	windowHint(glfw.Visible, 0)
-	//windowHint(glfw.Focused, intBool(p.Focused()))
-	//windowHint(glfw.Iconified, intBool(p.Minimized()))
-	windowHint(glfw.Resizable, intBool(p.Resizable()))
-	windowHint(glfw.Decorated, intBool(p.Decorated()))
-	windowHint(glfw.AutoIconify, 1)
-	windowHint(glfw.Floating, intBool(p.AlwaysOnTop()))
-
-	// Hint context properties.
 	prec := p.Precision()
-	windowHint(glfw.RedBits, int(prec.RedBits))
-	windowHint(glfw.GreenBits, int(prec.GreenBits))
-	windowHint(glfw.BlueBits, int(prec.BlueBits))
-	windowHint(glfw.AlphaBits, int(prec.AlphaBits))
-	windowHint(glfw.DepthBits, int(prec.DepthBits))
-	windowHint(glfw.StencilBits, int(prec.StencilBits))
-	windowHint(glfw.Samples, prec.Samples)
-	windowHint(glfw.SRGBCapable, 1)
-	if gfxdebug.Flag {
-		windowHint(glfw.OpenGLDebugContext, glfw.True)
+	hints := map[glfw.Hint]int{
+		glfw.Visible: 0,
+		//glfw.Focused: intBool(p.Focused()),
+		//glfw.Iconified: intBool(p.Minimized()),
+		glfw.Resizable:           intBool(p.Resizable()),
+		glfw.Decorated:           intBool(p.Decorated()),
+		glfw.AutoIconify:         1,
+		glfw.Floating:            intBool(p.AlwaysOnTop()),
+		glfw.RedBits:             int(prec.RedBits),
+		glfw.GreenBits:           int(prec.GreenBits),
+		glfw.BlueBits:            int(prec.BlueBits),
+		glfw.AlphaBits:           int(prec.AlphaBits),
+		glfw.DepthBits:           int(prec.DepthBits),
+		glfw.StencilBits:         int(prec.StencilBits),
+		glfw.Samples:             prec.Samples,
+		glfw.SRGBCapable:         1,
+		glfw.OpenGLDebugContext:  intBool(gfxdebug.Flag),
+		glfw.ContextVersionMajor: glfwContextVersionMajor,
+		glfw.ContextVersionMinor: glfwContextVersionMinor,
+		glfw.ClientAPI:           glfwClientAPI,
 	}
-	windowHint(glfw.ContextVersionMajor, glfwContextVersionMajor)
-	windowHint(glfw.ContextVersionMinor, glfwContextVersionMinor)
-	windowHint(glfw.ClientAPI, glfwClientAPI)
+	for hint, value := range hints {
+		err = glfw.WindowHint(hint, value)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 
 	// Create the render window.
 	width, height := p.Size()
@@ -715,9 +683,10 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	}
 
 	// OpenGL rendering context must be active.
-	// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-	//logError(window.MakeContextCurrent())
-	window.MakeContextCurrent()
+	err = window.MakeContextCurrent()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Create the renderer.
 	r, err := glfwNewRenderer(keepState(), share(asset.glfwRenderer))
@@ -741,17 +710,24 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	}
 
 	// Test for adaptive vsync extensions.
-	w.extWGLEXTSwapControlTear = glfw.ExtensionSupported("WGL_EXT_swap_control_tear")
-	w.extGLXEXTSwapControlTear = glfw.ExtensionSupported("GLX_EXT_swap_control_tear")
+	w.extWGLEXTSwapControlTear, err = glfw.ExtensionSupported("WGL_EXT_swap_control_tear")
+	if err != nil {
+		return nil, nil, err
+	}
+	w.extGLXEXTSwapControlTear, err = glfw.ExtensionSupported("GLX_EXT_swap_control_tear")
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Setup callbacks and the window.
 	w.initCallbacks()
 	w.useProps(p, true)
 
 	// Done with OpenGL things on this window, for now.
-	// FIXME(slimsag): swap lines when GLFW 3 bindings are updated.
-	//logError(glfw.DetachCurrentContext())
-	glfw.DetachCurrentContext()
+	err = glfw.DetachCurrentContext()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Spawn the goroutine responsible for running the window.
 	go w.run()

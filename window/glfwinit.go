@@ -8,7 +8,7 @@ package window
 import (
 	"runtime"
 
-	glfw "azul3d.org/native/glfw.v3"
+	"azul3d.org/native/glfw.v4"
 )
 
 var (
@@ -49,11 +49,11 @@ func assetLoader() {
 			glfw.DetachCurrentContext()
 
 			// Destroy window and unlock the thread.
-			asset.Window.Destroy() // TODO(slimsag): grab error once GLFW3 bindings updated
+			err := asset.Window.Destroy()
 			runtime.UnlockOSThread()
 
 			// Signal completion.
-			asset.exit <- nil // TODO(slimsag): send error once GLFW3 bindings updated
+			asset.exit <- err
 			return
 
 		case fn := <-renderExec:
@@ -77,7 +77,10 @@ func doInit() error {
 	}
 
 	// Create the hidden asset window.
-	glfw.WindowHint(glfw.Visible, 0)
+	err = glfw.WindowHint(glfw.Visible, 0)
+	if err != nil {
+		return err
+	}
 	asset.Window, err = glfw.CreateWindow(128, 128, "assets", nil, nil)
 	if err != nil {
 		return err
@@ -114,8 +117,7 @@ func doExit() error {
 	}
 
 	// Terminate GLFW now.
-	glfw.Terminate() // TODO(slimsag): use error once GLFW3 bindings updated
-
+	err = glfw.Terminate()
 	glfwInit = false
-	return nil
+	return err
 }
