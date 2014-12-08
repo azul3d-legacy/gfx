@@ -356,7 +356,7 @@ func (w *glfwWindow) initCallbacks() {
 	w.window.SetCloseCallback(func(gw *glfw.Window) {
 		// If they want us to close the window, then close the window.
 		if w.Props().ShouldClose() {
-			go w.Close()
+			w.Close()
 
 			// Return so we don't give people the idea that they can rely on
 			// Close event below to cleanup things.
