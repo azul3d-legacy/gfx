@@ -25,12 +25,6 @@ import (
 
 // TODO(slimsag): rebuild window when fullscreen/precision changes.
 
-var (
-	// Whether or not GLFW has been initialized yet (only modified on the main
-	// thread).
-	glfwInit bool
-)
-
 // intBool returns 0 or 1 depending on b.
 func intBool(b bool) int {
 	if b {
@@ -609,73 +603,6 @@ func (w *glfwWindow) run() {
 			}
 		}
 	}
-}
-
-var (
-	// glfwInitialized tells if GLFW has already been initialized or not.
-	// It is only modified in the main thread.
-	glfwInitialized bool
-
-	asset struct {
-		// A hidden window which is used for it's context to own OpenGL assets
-		// shared between render windows.
-		*glfw.Window
-
-		// The renderer of the hidden window, again just used to store assets.
-		glfwRenderer
-	}
-)
-
-// assetLoader is the goroutine responsible for running the asset renderer.
-//
-// TODO(slimsag): it should exit when no more windows are open
-func assetLoader() {
-	renderExec := asset.glfwRenderer.RenderExec()
-
-	// OpenGL function calls must occur in the same thread.
-	runtime.LockOSThread()
-
-	// Make the window's context the current one.
-	asset.Window.MakeContextCurrent()
-
-	for {
-		select {
-		case fn := <-renderExec:
-			fn()
-		}
-	}
-}
-
-// doInit initializes GLFW and the hidden asset window/renderer, if not already
-// initialized.
-func doInit() error {
-	// Initialize GLFW, if needed.
-	if !glfwInitialized {
-		err := glfw.Init()
-		if err != nil {
-			return err
-		}
-
-		// Create the hidden asset window.
-		glfw.WindowHint(glfw.Visible, 0)
-		asset.Window, err = glfw.CreateWindow(128, 128, "assets", nil, nil)
-		if err != nil {
-			return err
-		}
-
-		// Create the asset renderer.
-		asset.Window.MakeContextCurrent()
-		asset.glfwRenderer, err = glfwNewRenderer()
-		if err != nil {
-			return err
-		}
-		glfw.DetachCurrentContext()
-
-		go assetLoader()
-
-		glfwInitialized = true
-	}
-	return nil
 }
 
 func doNew(p *Props) (Window, gfx.Renderer, error) {
