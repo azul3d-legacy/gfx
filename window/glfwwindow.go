@@ -51,21 +51,21 @@ type glfwRenderer interface {
 type glfwWindow struct {
 	// The below variables are read-only after initialization of this struct,
 	// and thus do not use the RWMutex.
-	mouse    *mouse.Watcher
-	keyboard *keyboard.Watcher
+	mouse                                              *mouse.Watcher
+	keyboard                                           *keyboard.Watcher
+	extWGLEXTSwapControlTear, extGLXEXTSwapControlTear bool
+	exit                                               chan struct{}
 
 	// The below variables are read-write after initialization of this struct,
 	// and as such must only be modified under the RWMutex.
 	sync.RWMutex
-	props, last                                        *Props
-	renderer                                           glfwRenderer
-	window                                             *glfw.Window
-	monitor                                            *glfw.Monitor
-	lastCursorX, lastCursorY                           float64
-	extWGLEXTSwapControlTear, extGLXEXTSwapControlTear bool
-	notifiers                                          []notifier
-	exit                                               chan struct{}
-	closed                                             bool
+	props, last              *Props
+	renderer                 glfwRenderer
+	window                   *glfw.Window
+	monitor                  *glfw.Monitor
+	lastCursorX, lastCursorY float64
+	notifiers                []notifier
+	closed                   bool
 }
 
 // Props implements the Window interface.
