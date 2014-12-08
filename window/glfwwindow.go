@@ -9,13 +9,13 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"log"
 	"math"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-	"log"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
@@ -49,10 +49,15 @@ type glfwRenderer interface {
 
 // glfwWindow implements the Window interface using a GLFW backend.
 type glfwWindow struct {
+	// The below variables are read-only after initialization of this struct,
+	// and thus do not use the RWMutex.
+	mouse    *mouse.Watcher
+	keyboard *keyboard.Watcher
+
+	// The below variables are read-write after initialization of this struct,
+	// and as such must only be modified under the RWMutex.
 	sync.RWMutex
 	props, last                                        *Props
-	mouse                                              *mouse.Watcher
-	keyboard                                           *keyboard.Watcher
 	renderer                                           glfwRenderer
 	window                                             *glfw.Window
 	monitor                                            *glfw.Monitor
@@ -80,18 +85,12 @@ func (w *glfwWindow) Request(p *Props) {
 
 // Keyboard implements the Window interface.
 func (w *glfwWindow) Keyboard() *keyboard.Watcher {
-	w.RLock()
-	keyboard := w.keyboard
-	w.RUnlock()
-	return keyboard
+	return w.keyboard
 }
 
 // Mouse implements the Window interface.
 func (w *glfwWindow) Mouse() *mouse.Watcher {
-	w.RLock()
-	mouse := w.mouse
-	w.RUnlock()
-	return mouse
+	return w.mouse
 }
 
 // SetClipboard implements the Clipboard interface.
