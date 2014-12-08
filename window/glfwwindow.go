@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"log"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
@@ -584,7 +585,9 @@ func (w *glfwWindow) run() {
 			if windowCount == 0 {
 				// No more windows are open, so de-initialize.
 				MainLoopChan <- func() {
-					doExit()
+					if err := doExit(); err != nil {
+						log.Println("window", err)
+					}
 				}
 			}
 			return
