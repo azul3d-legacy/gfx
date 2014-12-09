@@ -140,10 +140,58 @@ type Canvas interface {
 	Render()
 }
 
+// GLInfo holds information about the OpenGL implementation.
+type GLInfo struct {
+	// Major and minor versions of the OpenGL version in use. For example:
+	//
+	//  3, 0 (for OpenGL 3.0)
+	//
+	VersionMajor, VersionMinor int
+
+	// A read-only slice of OpenGL extension strings.
+	Extensions []string
+}
+
+// GLSLInfo holds information about the GLSL implementation.
+type GLSLInfo struct {
+	// Major and minor versions of the OpenGL Shading Language version that is
+	// present. For example:
+	//
+	//  1, 30 (for GLSL 1.30)
+	//
+	VersionMajor, VersionMinor int
+
+	// MaxVaryingFloats is the number of floating-point varying variables
+	// available inside GLSL programs.
+	//
+	// Generally at least 32.
+	MaxVaryingFloats int
+
+	// MaxVertexInputs is the maximum number of vertex shader inputs (i.e.
+	// floating-point values, where a 4x4 matrix is 16 floating-point values).
+	//
+	// Generally at least 512.
+	MaxVertexInputs int
+
+	// MaxFragmentInputs is the maximum number of fragment shader inputs (i.e.
+	// floating-point values, where a 4x4 matrix is 16 floating-point values).
+	//
+	// Generally at least 64.
+	MaxFragmentInputs int
+}
+
 // DeviceInfo describes general information and limitations of the graphics
 // device, such as the maximum texture size and other features which may or may
 // not be supported by the graphics device.
 type DeviceInfo struct {
+	// GL is a pointer to information about the OpenGL implementation, if the
+	// device is a OpenGL device. Otherwise it is nil.
+	GL *GLInfo
+
+	// GLSL is a pointer to information about the GLSL implementation, if the
+	// device is a OpenGL device. Otherwise it is nil.
+	GLSL *GLSLInfo
+
 	// MaxTextureSize is the maximum size of either X or Y dimension of texture
 	// images for use with the device, or -1 if not available.
 	MaxTextureSize int
@@ -192,34 +240,6 @@ type DeviceInfo struct {
 
 	// The formats available for render-to-texture (RTT).
 	RTTFormats
-
-	// Major and minor versions of the OpenGL version in use, or -1 if not
-	// available. For example:
-	//  3, 0 (for OpenGL 3.0)
-	GLMajor, GLMinor int
-
-	// A read-only slice of OpenGL extension strings, empty if not available.
-	GLExtensions []string
-
-	// Major and minor versions of the OpenGL Shading Language version in use,
-	// or -1 if not available. For example:
-	//  1, 30 (for GLSL 1.30)
-	GLSLMajor, GLSLMinor int
-
-	// The maximum number of floating-point variables available for varying
-	// variables inside GLSL programs, or -1 if not available. Generally at
-	// least 32.
-	GLSLMaxVaryingFloats int
-
-	// The maximum number of shader inputs (i.e. floating-point values, where a
-	// 4x4 matrix is 16 floating-point values) that can be used inside a GLSL
-	// vertex shader, or -1 if not available. Generally at least 512.
-	GLSLMaxVertexInputs int
-
-	// The maximum number of shader inputs (i.e. floating-point values, where a
-	// 4x4 matrix is 16 floating-point values) that can be used inside a GLSL
-	// fragment shader, or -1 if not available. Generally at least 64.
-	GLSLMaxFragmentInputs int
 
 	// Whether or not the graphics hardware supports the use of the BorderColor
 	// TexWrap mode. If the hardware doesn't support it the device falls back
