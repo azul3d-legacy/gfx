@@ -40,6 +40,11 @@ This repository hosts packages for Azul3D's graphics core.
 * Fix caching failure of shader uniform locations (See [#58](https://github.com/azul3d/gfx/issues/58)).
 * Assets are now (optionally) shared across multiple renderers (See [#28](https://github.com/azul3d/gfx/issues/28)).
 
+##### [gfx.v2/gfxsort](https://azul3d.org/gfx.v2/gfxsort) package:
+
+* Sorting utilities from the `gfx` package moved here (See [#59](https://github.com/azul3d/gfx/issues/59)).
+  * `ByDist` `ByState` and `InsertionSort`.
+
 [Full v2 Changelog](https://github.com/azul3d/gfx/compare/v1.0.1...v2).
 
 ## Version 1.0.1
