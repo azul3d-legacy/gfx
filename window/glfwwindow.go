@@ -649,6 +649,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 	prec := p.Precision()
 	hints := map[glfw.Hint]int{
 		glfw.Visible: 0,
+		// TODO(slimsag): once GLFW 3.1 is released we can use these hints:
 		//glfw.Focused: intBool(p.Focused()),
 		//glfw.Iconified: intBool(p.Minimized()),
 		glfw.Resizable:           intBool(p.Resizable()),
