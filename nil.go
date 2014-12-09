@@ -38,7 +38,7 @@ type nilNativeShader struct{}
 
 func (n nilNativeShader) Destroy() {}
 
-type nilRenderer struct {
+type nilDevice struct {
 	// The MSAA state.
 	msaa struct {
 		sync.RWMutex
@@ -51,54 +51,54 @@ type nilRenderer struct {
 	clock *clock.Clock
 }
 
-func (n *nilRenderer) Clock() *clock.Clock {
+func (n *nilDevice) Clock() *clock.Clock {
 	return n.clock
 }
 
-func (n *nilRenderer) Bounds() image.Rectangle {
+func (n *nilDevice) Bounds() image.Rectangle {
 	return image.Rect(0, 0, 640, 480)
 }
 
-func (n *nilRenderer) Precision() Precision {
+func (n *nilDevice) Precision() Precision {
 	return n.precision
 }
 
-func (n *nilRenderer) GPUInfo() GPUInfo {
-	return GPUInfo{
+func (n *nilDevice) Info() DeviceInfo {
+	return DeviceInfo{
 		MaxTextureSize:  8096,
 		AlphaToCoverage: true,
 		OcclusionQuery:  false,
 	}
 }
-func (n *nilRenderer) Download(r image.Rectangle, complete chan image.Image) {
+func (n *nilDevice) Download(r image.Rectangle, complete chan image.Image) {
 	complete <- nil
 }
-func (n *nilRenderer) SetMSAA(msaa bool) {
+func (n *nilDevice) SetMSAA(msaa bool) {
 	n.msaa.Lock()
 	n.msaa.enabled = msaa
 	n.msaa.Unlock()
 }
-func (n *nilRenderer) MSAA() (msaa bool) {
+func (n *nilDevice) MSAA() (msaa bool) {
 	n.msaa.RLock()
 	msaa = n.msaa.enabled
 	n.msaa.RUnlock()
 	return
 }
-func (n *nilRenderer) Clear(r image.Rectangle, bg Color)           {}
-func (n *nilRenderer) ClearDepth(r image.Rectangle, depth float64) {}
-func (n *nilRenderer) ClearStencil(r image.Rectangle, stencil int) {}
-func (n *nilRenderer) Draw(r image.Rectangle, o *Object, c *Camera) {
+func (n *nilDevice) Clear(r image.Rectangle, bg Color)           {}
+func (n *nilDevice) ClearDepth(r image.Rectangle, depth float64) {}
+func (n *nilDevice) ClearStencil(r image.Rectangle, stencil int) {}
+func (n *nilDevice) Draw(r image.Rectangle, o *Object, c *Camera) {
 	o.Bounds()
 	o.Lock()
 	o.NativeObject = nilNativeObject{}
 	o.Unlock()
 }
-func (n *nilRenderer) QueryWait() {}
-func (n *nilRenderer) Render() {
+func (n *nilDevice) QueryWait() {}
+func (n *nilDevice) Render() {
 	n.clock.Tick()
 }
 
-func (n *nilRenderer) LoadMesh(m *Mesh, done chan *Mesh) {
+func (n *nilDevice) LoadMesh(m *Mesh, done chan *Mesh) {
 	m.Lock()
 	m.Loaded = true
 	m.ClearData()
@@ -109,7 +109,7 @@ func (n *nilRenderer) LoadMesh(m *Mesh, done chan *Mesh) {
 	default:
 	}
 }
-func (n *nilRenderer) LoadTexture(t *Texture, done chan *Texture) {
+func (n *nilDevice) LoadTexture(t *Texture, done chan *Texture) {
 	t.Lock()
 	t.Loaded = true
 	t.ClearData()
@@ -122,7 +122,7 @@ func (n *nilRenderer) LoadTexture(t *Texture, done chan *Texture) {
 	default:
 	}
 }
-func (n *nilRenderer) LoadShader(s *Shader, done chan *Shader) {
+func (n *nilDevice) LoadShader(s *Shader, done chan *Shader) {
 	s.Lock()
 	s.Loaded = true
 	s.ClearData()
@@ -134,13 +134,13 @@ func (n *nilRenderer) LoadShader(s *Shader, done chan *Shader) {
 	}
 }
 
-func (n *nilRenderer) RenderToTexture(cfg RTTConfig) Canvas {
+func (n *nilDevice) RenderToTexture(cfg RTTConfig) Canvas {
 	return nil
 }
 
-// Nil returns a renderer that does not actually render anything.
-func Nil() Renderer {
-	r := new(nilRenderer)
+// Nil returns a device that does not actually draw anything.
+func Nil() Device {
+	r := new(nilDevice)
 	r.precision = Precision{
 		RedBits:     255,
 		GreenBits:   255,

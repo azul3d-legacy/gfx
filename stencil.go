@@ -5,7 +5,7 @@
 package gfx
 
 // StencilState represents the state to use when the stencil test occurs for a
-// front or back facing pixel of an object during rendering. If written in Go
+// front or back facing pixel of an object during drawing. If written in Go
 // it would look something like:
 //
 //  if (s.Reference & s.ReadMask) s.Cmp (stencilValue & s.ReadMask) {
@@ -17,10 +17,11 @@ package gfx
 //  } else {
 //      stencilValue = s.Fail() & s.WriteMask
 //  }
+//
 type StencilState struct {
 	// A mask that will be AND'd with each pixel to be written to the stencil
 	// buffer, e.g. 0xFFFF would allow writing to the full range of every pixel
-	// in the stencil buffer when rendering the object.
+	// in the stencil buffer when drawing the object.
 	WriteMask uint
 
 	// A mask that will be AND'd with each pixel to be read/compared to the

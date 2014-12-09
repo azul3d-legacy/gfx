@@ -7,7 +7,7 @@ package gfx
 import "sync"
 
 // NativeShader represents the native object of a shader. Typically only
-// renderers will create these.
+// devices will create these.
 type NativeShader Destroyable
 
 // Shader represents a single shader program.
@@ -18,7 +18,7 @@ type Shader struct {
 	sync.RWMutex
 
 	// The native object of this shader. Once loaded (if no compiler error
-	// occured) then the renderer using this shader must assign a value to this
+	// occured) then the device using this shader must assign a value to this
 	// field. Typically clients should not assign values to this field at all.
 	NativeShader
 
@@ -43,6 +43,7 @@ type Shader struct {
 	// A map of names and values to use as inputs for the shader program while
 	// rendering. Values must be of the following data types or else they will
 	// be ignored:
+	//
 	//  bool
 	//  float32
 	//  []float32
@@ -56,6 +57,7 @@ type Shader struct {
 	//  []gfx.Color
 	//  gfx.TexCoord
 	//  []gfx.TexCoord
+	//
 	Inputs map[string]interface{}
 
 	// The error log from compiling the shader program, if any. Only set once

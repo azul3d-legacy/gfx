@@ -9,9 +9,9 @@ import (
 	"testing"
 )
 
-func TestNilRenderer(t *testing.T) {
-	// Create a nil renderer.
-	r := Nil()
+func TestNilDevice(t *testing.T) {
+	// Create a nil device.
+	d := Nil()
 
 	// Create a slice of 50 objects.
 	var objects []*Object
@@ -27,17 +27,17 @@ func TestNilRenderer(t *testing.T) {
 
 	// Render 30 frames.
 	for frame := 0; frame < 30; frame++ {
-		rect := r.Bounds()
+		rect := d.Bounds()
 
 		// Clear a rectangle on the drawable.
-		r.Clear(rect, white)
+		d.Clear(rect, white)
 
 		// Draw each object on the rectangle of the drawable.
 		for _, obj := range objects {
-			r.Draw(rect, obj, cam)
+			d.Draw(rect, obj, cam)
 		}
 
 		// Render the frame.
-		r.Render()
+		d.Render()
 	}
 }

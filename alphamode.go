@@ -7,7 +7,7 @@ package gfx
 import "fmt"
 
 // AlphaMode describes a single alpha transparency mode that can be used for
-// rendering transparent parts of objects.
+// drawing transparent parts of objects.
 type AlphaMode uint8
 
 // String returns a string representation of this alpha transparency mode.
@@ -40,7 +40,7 @@ const (
 	//     Pixels can be semi-transparent.
 	//
 	// Cons:
-	//     Render order dependant. Opaque objects mut be drawn before
+	//     Draw order dependant. Opaque objects mut be drawn before
 	//     transparent ones due to the way alpha blending works.
 	//
 	//     Does not work well with self-occluding transparent objects (e.g. a
@@ -60,7 +60,7 @@ const (
 	// non-transparent).
 	//
 	// Pros:
-	//     Render order independent. Regardless of the order objects are drawn
+	//     Draw order independent. Regardless of the order objects are drawn
 	//     the result will look the same (unlike AlphaBlend).
 	//
 	// Cons:
@@ -72,7 +72,7 @@ const (
 	// with special multisample bits.
 	//
 	// Pros:
-	//     Render order independent. Regardless of the order objects are drawn
+	//     Draw order independent. Regardless of the order objects are drawn
 	//     the result will look the same (unlike AlphaBlend).
 	//
 	//     No jagged-looking edges, pixels may be semi-transparent (unlike
@@ -81,7 +81,7 @@ const (
 	// Cons:
 	//     Only some newer hardware supports it (in the event that hardware
 	//     does not support it the fallback used is BinaryAlpha because it also
-	//     does not suffer from render ordering issues, although it does cause
+	//     does not suffer from draw ordering issues, although it does cause
 	//     jagged-looking edges).
 	AlphaToCoverage
 )

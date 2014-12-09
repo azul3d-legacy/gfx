@@ -5,9 +5,9 @@
 package gfx
 
 // State represents a generic set of graphics state properties to be used when
-// rendering a graphics object. Changes to such properties across multiple draw
-// calls (called 'graphics state changes' or 'render state changes') have a
-// performance cost.
+// drawing a graphics object. Changes to such properties across multiple draw
+// calls (called 'graphics state changes' or sometimes 'render state changes')
+// have a performance cost.
 //
 // The performance penalty mentioned depends on several factors (graphics
 // hardware, drivers, the specific property being changed, etc). The important
@@ -16,7 +16,8 @@ package gfx
 // previously drawn object.
 type State struct {
 	// A single alpha transparency mode describing how transparent parts of
-	// of the object are to be rendered.
+	// of the object are to be drawn.
+	//
 	// Must be one of: NoAlpha, AlphaBlend, BinaryAlpha, AlphaToCoverage
 	AlphaMode AlphaMode
 
@@ -26,26 +27,27 @@ type State struct {
 	Blend BlendState
 
 	// Whether or not red/green/blue/alpha should be written to the color
-	// buffer or not when rendering this object.
+	// buffer or not when drawing the object.
 	WriteRed, WriteGreen, WriteBlue, WriteAlpha bool
 
-	// Whether or not dithering should be used when rendering the object.
+	// Whether or not dithering should be used when drawing the object.
 	Dithering bool
 
 	// Whether or not depth testing and depth writing should be enabled when
-	// rendering the object.
+	// drawing the object.
 	DepthTest, DepthWrite bool
 
 	// The comparison operator to use for depth testing against existing pixels
 	// in the depth buffer.
 	DepthCmp Cmp
 
-	// Whether or not stencil testing should be enabled when rendering the
+	// Whether or not stencil testing should be enabled when drawing the
 	// object.
 	StencilTest bool
 
-	// Whether or not (and how) face culling should occur when rendering
-	// the object.
+	// Whether or not (and how) face culling should occur when drawing the
+	// object.
+	//
 	// Must be one of: BackFaceCulling, FrontFaceCulling, NoFaceCulling
 	FaceCulling FaceCullMode
 

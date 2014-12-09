@@ -32,7 +32,7 @@ type TexCoordSet struct {
 	Slice []TexCoord
 
 	// Weather or not the texture coordinates of this set have changed since
-	// the last time the mesh was loaded. If set to true the renderer should
+	// the last time the mesh was loaded. If set to true the device should
 	// take note and re-upload the data slice to the graphics hardware.
 	Changed bool
 }
@@ -58,8 +58,8 @@ type VertexAttrib struct {
 	Data interface{}
 
 	// Weather or not the per-vertex data (see the Data field) has changed
-	// since the last time the mesh was loaded. If set to true the renderer
-	// should take note and re-upload the data slice to the graphics hardware.
+	// since the last time the mesh was loaded. If set to true the device
+	// should take note and re-upload the data slice to the device's memory.
 	Changed bool
 }
 
@@ -147,7 +147,7 @@ func (a VertexAttrib) Copy() VertexAttrib {
 	return VertexAttrib{Data: cpy}
 }
 
-// NativeMesh represents the native object of a mesh, typically only renderers
+// NativeMesh represents the native object of a mesh, typically only devices
 // create these.
 type NativeMesh Destroyable
 
@@ -164,7 +164,7 @@ type NativeMesh Destroyable
 type Mesh struct {
 	sync.RWMutex
 
-	// The native object of this mesh. Once loaded the renderer using this mesh
+	// The native object of this mesh. Once loaded the device using this mesh
 	// must assign a value to this field. Typically clients should not assign
 	// values to this field at all.
 	NativeMesh
@@ -188,20 +188,21 @@ type Mesh struct {
 
 	// A slice of indices, if non-nil then this slice contains indices into
 	// each other slice (such as Vertices) and this is a indexed mesh.
+	//
 	// The indices are uint32 (instead of int) for compatability with graphics
 	// hardware.
 	Indices []uint32
 
 	// Weather or not the indices have changed since the last time the mesh
-	// was loaded. If set to true the renderer should take note and
-	// re-upload the data slice to the graphics hardware.
+	// was loaded. If set to true the device should take note and re-upload the
+	// data slice to the graphics hardware.
 	IndicesChanged bool
 
 	// The slice of vertices for the mesh.
 	Vertices []Vec3
 
 	// Weather or not the vertices have changed since the last time the
-	// mesh was loaded. If set to true the renderer should take note and
+	// mesh was loaded. If set to true the device should take note and
 	// re-upload the data slice to the graphics hardware.
 	VerticesChanged bool
 
@@ -209,7 +210,7 @@ type Mesh struct {
 	Colors []Color
 
 	// Weather or not the vertex colors have changed since the last time
-	// the mesh was loaded. If set to true the renderer should take note
+	// the mesh was loaded. If set to true the device should take note
 	// and re-upload the data slice to the graphics hardware.
 	ColorsChanged bool
 
@@ -217,7 +218,7 @@ type Mesh struct {
 	Normals []Vec3
 
 	// Weather or not the normals have changed since the last time the
-	// mesh was loaded. If set to true the renderer should take note and
+	// mesh was loaded. If set to true the device should take note and
 	// re-upload the data slice to the graphics hardware.
 	NormalsChanged bool
 
@@ -225,7 +226,7 @@ type Mesh struct {
 	Bary []Vec3
 
 	// Whether or not the barycentric coordinates have changed since the last
-	// time the mesh was loaded. If set to true the renderer should take note
+	// time the mesh was loaded. If set to true the device should take note
 	// and re-upload the data slice to the graphics hardware.
 	BaryChanged bool
 
@@ -245,7 +246,7 @@ type Mesh struct {
 	//  }
 	//
 	// If changes to the data are made, the data set will have to be uploaded
-	// to the graphics hardware again, so you must inform the renderer when you
+	// to the graphics hardware again, so you must inform the device when you
 	// change the data:
 	//  ... modify myData ...
 	//  mesh.Attribs["MyName"].Changed = true

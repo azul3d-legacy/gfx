@@ -26,7 +26,7 @@ type Destroyable interface {
 }
 
 // NativeObject represents a native graphics object, they are normally only
-// created by renderers.
+// created by devices.
 type NativeObject interface {
 	Destroyable
 
@@ -40,16 +40,16 @@ type NativeObject interface {
 	SampleCount() int
 }
 
-// Object represents a single graphics object for rendering, it has a
+// Object represents a single graphics object for drawing, it has a
 // transformation matrix which is applied to each vertex of each mesh, it
-// has a shader program, meshes, and textures used for rendering the object.
+// has a shader program, meshes, and textures used for drawing the object.
 //
 // Clients are responsible for utilizing the RWMutex of the object when using
 // it or invoking methods.
 type Object struct {
 	sync.RWMutex
 
-	// The native object of this graphics object. The renderer using this
+	// The native object of this graphics object. The device using this
 	// graphics object must assign a value to this field after a call to
 	// Draw() has finished before unlocking the object.
 	NativeObject
@@ -64,17 +64,16 @@ type Object struct {
 	// The transformation of the object.
 	*Transform
 
-	// The shader program to be used during rendering the object.
+	// The shader program to be used during drawing the object.
 	*Shader
 
 	// A slice of meshes which make up the object. The order in which the
 	// meshes appear in this slice also affects the order in which they are
 	// sent to the graphics card.
 	//
-	// This is a slice specifically to allow renderer implementations to
-	// optimize the number of draw calls that must occur to render
-	// consecutively listed meshes here (this allows for 'hardware' instancing
-	// support).
+	// This is a slice specifically to allow device implementations to optimize
+	// the number of draw calls that must occur to draw consecutively listed
+	// meshes.
 	Meshes []*Mesh
 
 	// A slice of textures which are used to texture the meshes of this object.
@@ -90,6 +89,7 @@ type Object struct {
 	// object, or if you add / remove meshes from this object, the bounds will
 	// not reflect this automatically. Instead, you must clear the cached
 	// bounds explicitly:
+	//
 	//  o.Lock()
 	//  o.CachedBounds = nil
 	//  o.Unlock()

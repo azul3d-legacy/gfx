@@ -37,15 +37,15 @@ const (
 	// BorderColor represents the extra area of the texture by the border color
 	// specified on the Texture object.
 	//
-	// Not all renderers support BorderColor (See GPUInfo.TexWrapBorderColor
+	// Not all devices support BorderColor (See DeviceInfo.TexWrapBorderColor
 	// for more information). To check for support:
 	//
-	//  if gpuInfo.TexWrapBorderColor {
+	//  if devInfo.TexWrapBorderColor {
 	//      // Have BorderColor support.
 	//  }
 	//
-	// Renderers fall back to the Clamp TexWrap mode in the event that you
-	// try and use BorderColor and the GPU does not support it.
+	// Devices fall back to the Clamp TexWrap mode in the event that you
+	// try and use BorderColor and the device does not support it.
 	BorderColor
 
 	// Mirror represents the extra area of the texture by mirroring itself into

@@ -39,14 +39,13 @@ type Canvas interface {
 	Downloadable
 
 	// SetMSAA should request that this canvas use multi-sample anti-aliasing
-	// during rendering. By default MSAA is enabled.
+	// during drawing. By default MSAA is enabled.
 	//
 	// Even if MSAA is requested to be enabled, there is no guarantee that it
-	// will actually be used. For instance if the graphics hardware or
-	// rendering API does not support it.
+	// will actually be used. For instance if the device does not support it.
 	SetMSAA(enabled bool)
 
-	// MSAA returns the last value passed into SetMSAA on this renderer.
+	// MSAA returns the last value passed into SetMSAA on this canvas.
 	MSAA() bool
 
 	// Precision should return the precision of the canvas's color, depth, and
@@ -56,32 +55,33 @@ type Canvas interface {
 	// Bounds should return the bounding rectangle of this canvas, any and all
 	// methods of this canvas that take rectangles as parameters will be
 	// clamped to these bounds.
+	//
 	// The bounds returned by this method may change at any given time (e.g.
 	// when a user resizes the window).
 	Bounds() image.Rectangle
 
-	// Clear submits a clear operation to the renderer. It will clear the given
+	// Clear submits a clear operation to the canvas. It will clear the given
 	// rectangle of the canvas's color buffer to the specified background
 	// color.
 	//
 	// If the rectangle is empty this function is no-op.
 	Clear(r image.Rectangle, bg Color)
 
-	// ClearDepth submits a depth-clear operation to the renderer. It will
-	// clear the given rectangle of the canvas's depth buffer to the specified
-	// depth value (in the range of 0.0 to 1.0, where 1.0 is furthest away).
+	// ClearDepth submits a depth-clear operation to the canvas. It will clear
+	// the given rectangle of the canvas's depth buffer to the specified depth
+	// value (in the range of 0.0 to 1.0, where 1.0 is furthest away).
 	//
 	// If the rectangle is empty this function is no-op.
 	ClearDepth(r image.Rectangle, depth float64)
 
-	// ClearStencil submits a stencil-clear operation to the renderer. It will
+	// ClearStencil submits a stencil-clear operation to the canvas. It will
 	// clear the given rectangle of the canvas's stencil buffer to the
 	// specified stencil value.
 	//
 	// If the rectangle is empty this function is no-op.
 	ClearStencil(r image.Rectangle, stencil int)
 
-	// Draw submits a draw operation to the renderer. It will draw the given
+	// Draw submits a draw operation to the canvas. It will draw the given
 	// graphics object onto the specified rectangle of the canvas.
 	//
 	// The canvas will lock the object and camera object and they may stay
@@ -115,22 +115,24 @@ type Canvas interface {
 	// completely finish. Most clients should avoid this call as it can easilly
 	// cause graphics pipeline stalls if not handled with care.
 	//
-	// Instead of calling QueryWait immediately for conditional rendering, it is
+	// Instead of calling QueryWait immediately for conditional drawing, it is
 	// common practice to instead make use of the previous frame's occlusion
 	// query results as this allows the CPU and GPU to work in parralel instead
 	// of being directly synchronized with one another.
 	//
-	// If the GPU does not support occlusion queries (see
-	// GPUInfo.OcclusionQuery) then this function is no-op.
+	// If the GPU does not support occlusion queries (see DeviceInfo's
+	// OcclusionQuery field) then this function is no-op.
 	QueryWait()
 
 	// Render should finalize all pending clear and draw operations as if they
 	// where all submitted over a single channel like so:
+	//
 	//  pending := len(ops)
 	//  for i := 0; i < pending; i++ {
 	//      op := <-ops
 	//      finalize(op)
 	//  }
+	//
 	// and once complete the final frame should be sent to the graphics
 	// hardware for rasterization.
 	//
@@ -138,12 +140,12 @@ type Canvas interface {
 	Render()
 }
 
-// GPUInfo describes general information and limitations of the graphics
-// hardware, such as the maximum texture size and other features which may or
-// may not be supported by the graphics hardware.
-type GPUInfo struct {
+// DeviceInfo describes general information and limitations of the graphics
+// device, such as the maximum texture size and other features which may or may
+// not be supported by the graphics device.
+type DeviceInfo struct {
 	// MaxTextureSize is the maximum size of either X or Y dimension of texture
-	// images for use with the renderer, or -1 if not available.
+	// images for use with the device, or -1 if not available.
 	MaxTextureSize int
 
 	// Whether or not the AlphaToCoverage alpha mode is supported (if false
@@ -157,19 +159,23 @@ type GPUInfo struct {
 	// occlusion queries, if the number goes above what this many bits could
 	// store then it is generally (but not always) clamped to that value.
 	//
-	// Some renderers (e.g. OpenGL ES with certain extensions) only support
-	// boolean occlusion queries (i.e. you can only tell if some samples
-	// passed, but not how many specifically).
+	// Some devices (e.g. OpenGL ES ones without certain extensions) only
+	// support boolean occlusion queries (i.e. you can only tell if some
+	// samples passed, but not how many specifically).
 	OcclusionQueryBits int
 
 	// The name of the graphics hardware, or an empty string if not available.
 	// For example it may look something like:
+	//
 	//  Mesa DRI Intel(R) Sandybridge Mobile
+	//
 	Name string
 
 	// The vendor name of the graphics hardware, or an empty string if not
 	// available. For example:
+	//
 	//  Intel Open Source Technology Center
+	//
 	Vendor string
 
 	// Whether or not the graphics hardware supports Non Power Of Two texture
@@ -180,7 +186,7 @@ type GPUInfo struct {
 	// compression or mipmapping).
 	//
 	// If false, then texture dimensions must be a power of two (e.g. 32x64,
-	// 512x512, etc) or else the texture will be resized by the renderer to the
+	// 512x512, etc) or else the texture will be resized by the device to the
 	// nearest power-of-two.
 	NPOT bool
 
@@ -215,9 +221,9 @@ type GPUInfo struct {
 	// fragment shader, or -1 if not available. Generally at least 64.
 	GLSLMaxFragmentInputs int
 
-	// Whether or not the graphics hardware supports the use of the
-	// BorderColor TexWrap mode. If the hardware doesn't support it the
-	// renderer falls back to the Clamp TexWrap mode in it's place.
+	// Whether or not the graphics hardware supports the use of the BorderColor
+	// TexWrap mode. If the hardware doesn't support it the device falls back
+	// to the Clamp TexWrap mode in it's place.
 	//
 	// (Mobile) OpenGL ES 2 never supports BorderColor.
 	//
@@ -225,26 +231,28 @@ type GPUInfo struct {
 	TexWrapBorderColor bool
 }
 
-// Renderer is capable of loading meshes, textures, and shaders. A renderer can
-// be drawn to as it implements the Canvas interface, and can also be used to
+// Device represents a graphics device and is capable of loading meshes,
+// textures, and shaders. A device itself has a base canvas which can be drawn
+// to (typically a window on the screen, for instance).
+//
 // All methods must be safe to call from multiple goroutines.
-type Renderer interface {
+type Device interface {
 	Canvas
 
 	// Clock should return the graphics clock object which monitors the time
-	// between frames, etc. The renderer is responsible for ticking it every
-	// time a frame is rendered.
+	// between frames, etc. The device is responsible for ticking it every
+	// time a frame is device.
 	Clock() *clock.Clock
 
-	// GPUInfo should return information about the graphics hardware.
-	GPUInfo() GPUInfo
+	// Info should return information about the graphics hardware.
+	Info() DeviceInfo
 
 	// LoadMesh should begin loading the specified mesh asynchronously.
 	//
-	// Additionally, the renderer will set m.Loaded to true, and then invoke
+	// Additionally, the device will set m.Loaded to true, and then invoke
 	// m.ClearData(), thus allowing the data slices to be garbage collected).
 	//
-	// The renderer will lock the mesh and it may stay locked until sometime in
+	// The device will lock the mesh and it may stay locked until sometime in
 	// the future when the load operation completes. The mesh will be sent over
 	// the done channel once the load operation has completed if the channel is
 	// not nil and sending would not block.
@@ -252,10 +260,10 @@ type Renderer interface {
 
 	// LoadTexture should begin loading the specified texture asynchronously.
 	//
-	// Additionally, the renderer will set t.Loaded to true, and then invoke
+	// Additionally, the device will set t.Loaded to true, and then invoke
 	// t.ClearData(), thus allowing the source image to be garbage collected.
 	//
-	// The renderer will lock the texture and it may stay locked until sometime
+	// The device will lock the texture and it may stay locked until sometime
 	// in the future when the load operation completes. The texture will be
 	// sent over the done channel once the load operation has completed if the
 	// channel is not nil and sending would not block.
@@ -264,19 +272,19 @@ type Renderer interface {
 	// LoadShader should begin loading the specified shader asynchronously.
 	//
 	// Additionally, if the shader was successfully loaded (no error log was
-	// written) then the renderer will set s.Loaded to true, and then invoke
+	// written) then the device will set s.Loaded to true, and then invoke
 	// s.ClearData(), thus allowing the source data slices to be garbage
 	// collected.
 	//
-	// The renderer will lock the shader and it may stay locked until sometime
+	// The device will lock the shader and it may stay locked until sometime
 	// in the future when the load operation completes. The shader will be sent
 	// over the done channel once the load operation has completed if the
 	// channel is not nil and sending would not block.
 	LoadShader(s *Shader, done chan *Shader)
 
-	// RenderToTexture creates and returns a canvas that when rendered to,
-	// stores the results into one or multiple of the three textures (Color,
-	// Depth, Stencil) of the given configuration.
+	// RenderToTexture creates and returns a canvas that when drawn to, stores
+	// the results into one or multiple of the three textures (Color, Depth,
+	// Stencil) of the given configuration.
 	//
 	// If the any of the configuration's formats are not supported by the
 	// graphics hardware (i.e. not in GPUInfo.RTTFormats), then nil is

@@ -7,7 +7,7 @@ package gfx
 import "fmt"
 
 // TexFilter represents a single texture filter to be used for minification or
-// magnification of a texture during rendering.
+// magnification of a texture during drawing.
 type TexFilter uint8
 
 // String returns a string representation of this TexFilter.

@@ -116,18 +116,18 @@ type Downloadable interface {
 	// etc.
 	//
 	// Only a texture created from render-to-texture is guaranteed to succeed,
-	// others may not (esp. compressed textures). Most renderers support
-	// downloading RGB/A textures and sometimes depth/alpha ones.
+	// others may not (esp. compressed textures). Most devices support
+	// downloading RGB/A textures and some support depth/alpha ones.
 	Download(r image.Rectangle, complete chan image.Image)
 }
 
-// NativeTexture represents the native object of a *Texture, the renderer is
+// NativeTexture represents the native object of a *Texture, the device is
 // responsible for creating these and fulfilling the interface.
 type NativeTexture interface {
 	Destroyable
 	Downloadable
 
-	// ChosenFormat tells the texture format chosen by the renderer for storing
+	// ChosenFormat tells the texture format chosen by the device for storing
 	// this texture on the graphics device. It may differ from the Texture's
 	// Format field only if the graphics device does not support that format.
 	ChosenFormat() TexFormat
@@ -141,7 +141,7 @@ type NativeTexture interface {
 type Texture struct {
 	sync.RWMutex
 
-	// The native object of this texture. Once loaded the renderer using this
+	// The native object of this texture. Once loaded the device using this
 	// texture must assign a value to this field. Typically clients should not
 	// assign values to this field at all.
 	NativeTexture
@@ -166,8 +166,8 @@ type Texture struct {
 	// The texture format to use for storing this texture on the GPU, which may
 	// result in lossy conversions (e.g. RGB would lose the alpha channel, etc).
 	//
-	// If the format is not supported then the renderer may use an image format
-	// that is similar and is supported (and the format chosen by the renderer
+	// If the format is not supported then the device may use an image format
+	// that is similar and is supported (and the format chosen by the device
 	// can be determined via NativeTexture's ChosenFormat method).
 	Format TexFormat
 

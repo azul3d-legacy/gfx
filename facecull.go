@@ -26,14 +26,14 @@ func (f FaceCullMode) String() string {
 
 const (
 	// BackFaceCulling is a face culling mode for culling back faces only (i.e.
-	// only the front side will be rendered).
+	// only the front side will be drawn).
 	BackFaceCulling FaceCullMode = iota
 
 	// FrontFaceCulling is a face culling mode for culling front faces only
-	// (i.e. only the back side is rendered).
+	// (i.e. only the back side is drawn).
 	FrontFaceCulling
 
 	// NoFaceCulling is a face culling mode for culling no faces at all (i.e.
-	// both sides will be rendered).
+	// both sides will be drawn).
 	NoFaceCulling
 )
