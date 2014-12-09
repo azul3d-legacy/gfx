@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gfx
+package gfxsort
 
 import (
 	"sort"
 
 	"azul3d.org/lmath.v1"
+	"azul3d.org/gfx.v2-dev"
 )
 
 // ByDist sorts a list of graphics objects based on their distance away from
@@ -21,7 +22,7 @@ import (
 // The Less() method properly read-locks the objects when required.
 type ByDist struct {
 	// The list of objects to sort.
-	Objects []*Object
+	Objects []*gfx.Object
 
 	// The target position to compare against. The list is sorted based off
 	// each object's distance away from this position (typically this is the
@@ -57,8 +58,8 @@ func (b ByDist) Less(ii, jj int) bool {
 	j.RUnlock()
 
 	// Convert each position to world space.
-	iPos := iTransform.ConvertPos(iTransform.Pos(), ParentToWorld)
-	jPos := jTransform.ConvertPos(jTransform.Pos(), ParentToWorld)
+	iPos := iTransform.ConvertPos(iTransform.Pos(), gfx.ParentToWorld)
+	jPos := jTransform.ConvertPos(jTransform.Pos(), gfx.ParentToWorld)
 
 	// Calculate the distance from each object to the target position.
 	iDist := iPos.Sub(b.Target).LengthSq()
@@ -86,7 +87,7 @@ func InsertionSort(data sort.Interface) {
 // differ.
 //
 // The Less() method properly read-locks the objects when required.
-type ByState []*Object
+type ByState []*gfx.Object
 
 // Implements sort.Interface.
 func (b ByState) Len() int {

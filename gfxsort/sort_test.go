@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gfx
+package gfxsort
 
 import (
 	"math/rand"
@@ -10,20 +10,21 @@ import (
 	"testing"
 
 	"azul3d.org/lmath.v1"
+	"azul3d.org/gfx.v2-dev"
 )
 
 func TestSortByDist(t *testing.T) {
-	a := NewObject()
+	a := gfx.NewObject()
 	a.Transform.SetPos(lmath.Vec3{10, 10, 10})
 
-	b := NewObject()
+	b := gfx.NewObject()
 	b.Transform.SetPos(lmath.Vec3{-10, 2, 2})
 
-	c := NewObject()
+	c := gfx.NewObject()
 	c.Transform.SetPos(lmath.Vec3{0, 6, 5})
 
 	byDist := ByDist{
-		Objects: []*Object{a, b, c, a, b, c, b, c, a},
+		Objects: []*gfx.Object{a, b, c, a, b, c, b, c, a},
 		Target:  lmath.Vec3{0, 0, 0},
 	}
 	sort.Sort(byDist)
@@ -53,7 +54,7 @@ func TestSortByDist(t *testing.T) {
 func sortByDist(shifts, amount int, b *testing.B, standard bool) {
 	b.StopTimer()
 	byDist := ByDist{
-		Objects: make([]*Object, amount),
+		Objects: make([]*gfx.Object, amount),
 		Target: lmath.Vec3{
 			rand.Float64(),
 			rand.Float64(),
@@ -61,7 +62,7 @@ func sortByDist(shifts, amount int, b *testing.B, standard bool) {
 		},
 	}
 	for i := 0; i < amount; i++ {
-		byDist.Objects[i] = NewObject()
+		byDist.Objects[i] = gfx.NewObject()
 	}
 
 	for _, o := range byDist.Objects {
@@ -143,7 +144,7 @@ func BenchmarkDistSortStd5k(b *testing.B) {
 }
 
 func TestSortByState(t *testing.T) {
-	a := NewObject()
+	a := gfx.NewObject()
 	a.State.Dithering = true
 	a.State.DepthTest = true
 	a.State.DepthWrite = true
@@ -152,7 +153,7 @@ func TestSortByState(t *testing.T) {
 	a.State.WriteBlue = false
 	a.State.WriteAlpha = true
 
-	b := NewObject()
+	b := gfx.NewObject()
 	b.State.Dithering = false
 	b.State.DepthTest = true
 	b.State.DepthWrite = false
@@ -161,7 +162,7 @@ func TestSortByState(t *testing.T) {
 	a.State.WriteBlue = true
 	a.State.WriteAlpha = true
 
-	var l = []*Object{a, b, a, b, a, a, b, b, a, a, a, a, b, b, b, b}
+	var l = []*gfx.Object{a, b, a, b, a, a, b, b, a, a, a, a, b, b, b, b}
 	sort.Sort(ByState(l))
 
 	for i := 0; i < 8; i++ {
@@ -181,9 +182,9 @@ func TestSortByState(t *testing.T) {
 
 func sortByState(amount int, b *testing.B) {
 	b.StopTimer()
-	objs := make([]*Object, amount)
+	objs := make([]*gfx.Object, amount)
 	for i := 0; i < amount; i++ {
-		objs[i] = NewObject()
+		objs[i] = gfx.NewObject()
 	}
 
 	randBool := func() bool {
@@ -191,7 +192,7 @@ func sortByState(amount int, b *testing.B) {
 	}
 
 	for _, o := range objs {
-		o.State = State{
+		o.State = gfx.State{
 			WriteRed:    randBool(),
 			WriteGreen:  randBool(),
 			WriteBlue:   randBool(),
