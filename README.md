@@ -20,6 +20,8 @@ This repository hosts packages for Azul3D's graphics core.
 * Clarify: Some renderers, e.g. OpenGL ES, only support boolean occlusion queries (see [#57](https://github.com/azul3d/gfx/issues/57)).
 * Empty rectangles are no longer considered "the entire area" (see [#15](https://github.com/azul3d/gfx/issues/15)).
 * `Renderer` is now `Device` (See [#60](https://github.com/azul3d/gfx/issues/60)).
+* `GPUInfo` is now `DeviceInfo` (See [#60](https://github.com/azul3d/gfx/issues/60)).
+* `Renderer.GPUInfo()` is now `Device.Info()` (See [#60](https://github.com/azul3d/gfx/issues/60)).
 
 ##### [gfx.v2/window](https://azul3d.org/gfx.v2/window) package:
 
