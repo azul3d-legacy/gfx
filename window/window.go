@@ -101,8 +101,8 @@ type Clipboard interface {
 	Clipboard() string
 }
 
-// Window represents a single window that graphics can be rendered to. The
-// window is safe for use concurrently from multiple goroutines.
+// Window represents a single window that graphics can be drawn to. The window
+// is safe for use concurrently from multiple goroutines.
 type Window interface {
 	// Props returns the window's properties.
 	Props() *Props
@@ -228,7 +228,7 @@ var ErrSingleWindow = errors.New("only a single window is allowed")
 // is no concept of multiple windows).
 //
 // If any error is returned, the window could not be created, and the returned
-// window and renderer are nil.
+// window and device are nil.
 //
 // New requests several operations be run on the main loop internally, because
 // of this it cannot be run on the main thread itself. That is, MainLoop must
@@ -239,8 +239,8 @@ var ErrSingleWindow = errors.New("only a single window is allowed")
 //  func main() {
 //      go func() {
 //          // New runs in a seperate goroutine, after MainLoop has started.
-//          w, r, err := window.New(nil)
-//          ... use w, r, handle err ...
+//          w, d, err := window.New(nil)
+//          ... use w, d, handle err ...
 //      }()
 //      window.MainLoop()
 //  }
@@ -250,12 +250,12 @@ var ErrSingleWindow = errors.New("only a single window is allowed")
 //
 //  func main() {
 //      // Won't ever complete: the main loop isn't running yet!
-//      w, r, err := window.New(nil)
-//      ... use w, r, handle err ...
+//      w, d, err := window.New(nil)
+//      ... use w, d, handle err ...
 //      window.MainLoop()
 //  }
 //
-func New(p *Props) (w Window, r gfx.Renderer, err error) {
+func New(p *Props) (w Window, d gfx.Device, err error) {
 	if p == nil {
 		p = DefaultProps
 	}
@@ -264,7 +264,7 @@ func New(p *Props) (w Window, r gfx.Renderer, err error) {
 	done := make(chan struct{}, 1)
 	MainLoopChan <- func() {
 		// Create a new window via the platform-specific backend.
-		w, r, err = doNew(p)
+		w, d, err = doNew(p)
 		done <- struct{}{}
 	}
 	<-done
@@ -276,7 +276,7 @@ func New(p *Props) (w Window, r gfx.Renderer, err error) {
 
 	// No error occured, increment the number of open windows and return.
 	Num(1)
-	return w, r, err
+	return w, d, err
 }
 
 // Run opens a window with the given properties and runs the given graphics
@@ -290,7 +290,7 @@ func New(p *Props) (w Window, r gfx.Renderer, err error) {
 //  }
 //
 // For more documentation about the behavior of Run, see the New function.
-func Run(gfxLoop func(w Window, r gfx.Renderer), p *Props) {
+func Run(gfxLoop func(w Window, d gfx.Device), p *Props) {
 	if gfxLoop == nil {
 		panic("window: nil graphics loop function!")
 	}
@@ -299,7 +299,7 @@ func Run(gfxLoop func(w Window, r gfx.Renderer), p *Props) {
 	// requires that the main loop be running before it can complete.
 	go func() {
 		// Create the window with the given properties.
-		w, r, err := New(p)
+		w, d, err := New(p)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -314,7 +314,7 @@ func Run(gfxLoop func(w Window, r gfx.Renderer), p *Props) {
 		}()
 
 		// Enter the graphics loop.
-		gfxLoop(w, r)
+		gfxLoop(w, d)
 	}()
 
 	// Enter the main loop now.

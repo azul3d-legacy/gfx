@@ -314,9 +314,9 @@ func (p *Props) CursorGrabbed() bool {
 // hardware dependent.
 //
 // To check what framebuffer precision you actually receive, look at the
-// precision of the renderer's canvas:
+// precision of the device's default canvas:
 //
-//  r.Canvas.Precision()
+//  device.Precision()
 //
 func (p *Props) SetPrecision(precision gfx.Precision) {
 	p.l.Lock()
@@ -332,9 +332,9 @@ func (p *Props) SetPrecision(precision gfx.Precision) {
 // will receive (as that is hardware dependent).
 //
 // To check what framebuffer precision you actually receive, look at the
-// precision of the renderer's canvas:
+// precision of the device's default canvas:
 //
-//  r.Canvas.Precision()
+//  device.Precision()
 //
 func (p *Props) Precision() gfx.Precision {
 	p.l.RLock()

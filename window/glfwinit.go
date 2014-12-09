@@ -18,20 +18,20 @@ var (
 
 	asset struct {
 		// A hidden window which is used for it's context to own OpenGL assets
-		// shared between render windows.
+		// shared between multiple windows.
 		*glfw.Window
 
-		// The renderer of the hidden window, again just used to store assets.
-		glfwRenderer
+		// The device of the hidden window, again just used to store assets.
+		glfwDevice
 
 		// Signals shutdown to the assetLoader goroutine.
 		exit chan error
 	}
 )
 
-// assetLoader is the goroutine responsible for running the asset renderer.
+// assetLoader is the goroutine responsible for running the asset device.
 func assetLoader() {
-	renderExec := asset.glfwRenderer.RenderExec()
+	exec := asset.glfwDevice.Exec()
 
 	// OpenGL function calls must occur in the same thread.
 	runtime.LockOSThread()
@@ -42,8 +42,9 @@ func assetLoader() {
 	for {
 		select {
 		case <-asset.exit:
-			// Destroy renderer, while window and context are active.
-			asset.glfwRenderer.Destroy()
+			// Destroy the device while the window is alive and OpenGL context
+			// is active.
+			asset.glfwDevice.Destroy()
 
 			// Release context, before destroying window.
 			glfw.DetachCurrentContext()
@@ -56,13 +57,13 @@ func assetLoader() {
 			asset.exit <- err
 			return
 
-		case fn := <-renderExec:
+		case fn := <-exec:
 			fn()
 		}
 	}
 }
 
-// doInit initializes GLFW and the hidden asset window/renderer, if not already
+// doInit initializes GLFW and the hidden asset window/device, if not already
 // initialized.
 func doInit() error {
 	if glfwInit {
@@ -86,10 +87,10 @@ func doInit() error {
 		return err
 	}
 
-	// Create the asset renderer.
+	// Create the asset device.
 	asset.exit = make(chan error)
 	asset.Window.MakeContextCurrent()
-	asset.glfwRenderer, err = glfwNewRenderer()
+	asset.glfwDevice, err = glfwNewDevice()
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func doInit() error {
 	return nil
 }
 
-// doExit de-initializes GLFW and the hidden asset/window renderer, only if it
+// doExit de-initializes GLFW and the hidden asset/window device, only if it
 // is initialized.
 func doExit() error {
 	if !glfwInit {

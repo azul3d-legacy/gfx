@@ -21,6 +21,6 @@ var (
 	share     = gl2.Share
 )
 
-func glfwNewRenderer(opts ...gl2.Option) (glfwRenderer, error) {
+func glfwNewDevice(opts ...gl2.Option) (glfwDevice, error) {
 	return gl2.New(opts...)
 }

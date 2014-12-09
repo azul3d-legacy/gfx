@@ -9,8 +9,8 @@ import (
 	"sort"
 	"testing"
 
-	"azul3d.org/lmath.v1"
 	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/lmath.v1"
 )
 
 func TestSortByDist(t *testing.T) {

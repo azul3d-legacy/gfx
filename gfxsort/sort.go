@@ -7,8 +7,8 @@ package gfxsort
 import (
 	"sort"
 
-	"azul3d.org/lmath.v1"
 	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/lmath.v1"
 )
 
 // ByDist sorts a list of graphics objects based on their distance away from

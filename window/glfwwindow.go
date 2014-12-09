@@ -40,9 +40,9 @@ func logError(err error) {
 	}
 }
 
-type glfwRenderer interface {
-	gfx.Renderer
-	RenderExec() chan func() bool
+type glfwDevice interface {
+	gfx.Device
+	Exec() chan func() bool
 	UpdateBounds(bounds image.Rectangle)
 	SetDebugOutput(w io.Writer)
 	Destroy()
@@ -62,7 +62,7 @@ type glfwWindow struct {
 	// and as such must only be modified under the RWMutex.
 	sync.RWMutex
 	props, last              *Props
-	renderer                 glfwRenderer
+	device                   glfwDevice
 	window                   *glfw.Window
 	monitor                  *glfw.Monitor
 	lastCursorX, lastCursorY float64
@@ -149,7 +149,7 @@ func (w *glfwWindow) waitFor(f func()) {
 // It may only be called on the main thread, and under the presence of the
 // window's read lock.
 func (w *glfwWindow) updateTitle() {
-	fps := fmt.Sprintf("%dFPS", int(math.Ceil(w.renderer.Clock().FrameRate())))
+	fps := fmt.Sprintf("%dFPS", int(math.Ceil(w.device.Clock().FrameRate())))
 	title := strings.Replace(w.props.Title(), "{FPS}", fps, 1)
 	logError(w.window.SetTitle(title))
 }
@@ -385,8 +385,8 @@ func (w *glfwWindow) initCallbacks() {
 		w.props.SetFramebufferSize(width, height)
 		w.RUnlock()
 
-		// Update renderer bounds.
-		w.renderer.UpdateBounds(image.Rect(0, 0, width, height))
+		// Update device's bounds.
+		w.device.UpdateBounds(image.Rect(0, 0, width, height))
 
 		// Send the event.
 		w.sendEvent(FramebufferResized{
@@ -513,7 +513,7 @@ func (w *glfwWindow) run() {
 	updateFPS := time.NewTicker(1 * time.Second)
 	defer updateFPS.Stop()
 
-	renderExec := w.renderer.RenderExec()
+	exec := w.device.Exec()
 
 	// OpenGL function calls must occur in the same thread.
 	runtime.LockOSThread()
@@ -524,8 +524,8 @@ func (w *glfwWindow) run() {
 	for {
 		select {
 		case <-w.exit:
-			// Destroy the renderer.
-			w.renderer.Destroy()
+			// Destroy the device.
+			w.device.Destroy()
 
 			// Release the context.
 			logError(glfw.DetachCurrentContext())
@@ -560,8 +560,8 @@ func (w *glfwWindow) run() {
 				w.Unlock()
 			}
 
-		case fn := <-renderExec:
-			// Execute the render function.
+		case fn := <-exec:
+			// Execute the device's render function.
 			if renderedFrame := fn(); renderedFrame {
 				// Swap OpenGL buffers.
 				logError(w.window.SwapBuffers())
@@ -575,7 +575,7 @@ func (w *glfwWindow) run() {
 	}
 }
 
-func doNew(p *Props) (Window, gfx.Renderer, error) {
+func doNew(p *Props) (Window, gfx.Device, error) {
 	var (
 		targetMonitor, monitor *glfw.Monitor
 		err                    error
@@ -627,26 +627,26 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 		}
 	}
 
-	// Create the render window.
+	// Create the window.
 	width, height := p.Size()
 	window, err := glfw.CreateWindow(width, height, p.Title(), targetMonitor, asset.Window)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// OpenGL rendering context must be active.
+	// OpenGL context must be active.
 	err = window.MakeContextCurrent()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Create the renderer.
-	r, err := glfwNewRenderer(keepState(), share(asset.glfwRenderer))
+	// Create the device.
+	r, err := glfwNewDevice(keepState(), share(asset.glfwDevice))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Write renderer debug output (shader errors, etc) to stdout.
+	// Write device debug output (shader errors, etc) to stdout.
 	r.SetDebugOutput(os.Stderr)
 
 	// Initialize window.
@@ -656,7 +656,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 		last:     NewProps(),
 		mouse:    mouse.NewWatcher(),
 		keyboard: keyboard.NewWatcher(),
-		renderer: r,
+		device:   r,
 		window:   window,
 		monitor:  monitor,
 		exit:     make(chan struct{}, 1),

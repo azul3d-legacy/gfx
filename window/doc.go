@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package window is the easiest way to open a window and render graphics.
+// Package window is the easiest way to open a window and draw graphics.
 //
-// Through this package you can easilly create windows that can be rendered to
-// via the gfx package. A single API is used and works to target desktop,
-// mobile and web platforms.
+// Through this package you can easilly create windows that can be drawn to via
+// the gfx package. A single API is used and works to target desktop, mobile
+// and web platforms.
 //
 // Simple
 //
@@ -14,13 +14,13 @@
 // call the Run function:
 //
 //  // gfxLoop is our graphics loop, which runs in a separate goroutine.
-//  func gfxLoop(w window.Window, r gfx.Renderer) {
+//  func gfxLoop(w window.Window, d gfx.Device) {
 //      // Initialization here.
 //
 //      // Enter our render loop:
 //      for {
 //          // TODO: clear and draw to the canvas, r.
-//          r.Render()
+//          d.Render()
 //      }
 //  }
 //
@@ -104,20 +104,20 @@
 // example:
 //
 //  // gfxLoop is our graphics loop, which runs in a separate goroutine.
-//  func gfxLoop(w window.Window, r gfx.Renderer) {
+//  func gfxLoop(w window.Window, d gfx.Device) {
 //      // Create a second window!
-//      w2, r2, err := window.New(nil)
+//      w2, d2, err := window.New(nil)
 //      if err != nil {
 //          log.Fatal(err)
 //      }
 //
-//      // Spawn the same graphics loop, but rendering to the second window!
-//      go gfxLoop(w2, r2)
+//      // Spawn the same graphics loop, but drawing to the second window!
+//      go gfxLoop(w2, d2)
 //
 //      // Enter our render loop:
 //      for {
-//          // TODO: clear and draw to the canvas, r.
-//          r.Render()
+//          // TODO: clear and draw to the device's default canvas.
+//          d.Render()
 //      }
 //  }
 //
@@ -146,8 +146,8 @@
 //
 //  func main() {
 //      // Won't ever complete: the main loop isn't running yet!
-//      w, r, err := window.New(nil)
-//      ... use w, r, handle err ...
+//      w, d, err := window.New(nil)
+//      ... use w, d, handle err ...
 //      window.MainLoop()
 //  }
 //
@@ -188,8 +188,8 @@
 // Build Tags
 //
 // The build tag "gles2" is accepted on 386 and amd64 architectures to choose
-// to utilize the OpenGL ES 2 based renderer instead of the OpenGL 2 one. This
-// is useful for testing how your application might run under the more
-// constrained OpenGL ES 2 renderer (which mobile devices must use).
+// to utilize a OpenGL ES 2 based device instead of the OpenGL 2 one. This is
+// useful for testing how your application might run under more constrained
+// OpenGL ES 2 devices (i.e. mobile devices).
 //
 package window
