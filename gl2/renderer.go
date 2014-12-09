@@ -29,7 +29,7 @@ type pendingQuery struct {
 }
 
 // renderer implements the Renderer interface defined in the gl2.go file.
-type renderer struct {
+type device struct {
 	*util.BaseCanvas
 
 	// Render execution channel.
@@ -38,7 +38,7 @@ type renderer struct {
 	// The other shared renderer to be used for loading assets, or nil.
 	shared struct {
 		sync.RWMutex
-		*renderer
+		*device
 	}
 
 	// Whether or not the existing graphics state should be kept between
@@ -131,12 +131,12 @@ type renderer struct {
 }
 
 // Exec implements the Renderer interface.
-func (r *renderer) Exec() chan func() bool {
+func (r *device) Exec() chan func() bool {
 	return r.renderExec
 }
 
 // Clock implements the gfx.Renderer interface.
-func (r *renderer) Clock() *clock.Clock {
+func (r *device) Clock() *clock.Clock {
 	return r.clock
 }
 
@@ -144,37 +144,37 @@ func (r *renderer) Clock() *clock.Clock {
 // rtt.go file for render to texture things).
 
 // Clear implements the gfx.Canvas interface.
-func (r *renderer) Clear(rect image.Rectangle, bg gfx.Color) {
+func (r *device) Clear(rect image.Rectangle, bg gfx.Color) {
 	r.hookedClear(rect, bg, nil, nil)
 }
 
 // ClearDepth implements the gfx.Canvas interface.
-func (r *renderer) ClearDepth(rect image.Rectangle, depth float64) {
+func (r *device) ClearDepth(rect image.Rectangle, depth float64) {
 	r.hookedClearDepth(rect, depth, nil, nil)
 }
 
 // ClearStencil implements the gfx.Canvas interface.
-func (r *renderer) ClearStencil(rect image.Rectangle, stencil int) {
+func (r *device) ClearStencil(rect image.Rectangle, stencil int) {
 	r.hookedClearStencil(rect, stencil, nil, nil)
 }
 
 // Draw implements the gfx.Canvas interface.
-func (r *renderer) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
+func (r *device) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
 	r.hookedDraw(rect, o, c, nil, nil)
 }
 
 // QueryWait implements the gfx.Canvas interface.
-func (r *renderer) QueryWait() {
+func (r *device) QueryWait() {
 	r.hookedQueryWait(nil, nil)
 }
 
 // Render implements the gfx.Canvas interface.
-func (r *renderer) Render() {
+func (r *device) Render() {
 	r.hookedRender(nil, nil)
 }
 
 // Implements gfx.Canvas interface.
-func (r *renderer) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post func()) {
+func (r *device) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post func()) {
 	// Clearing an empty rectangle is effectively no-op.
 	if rect.Empty() {
 		return
@@ -193,7 +193,7 @@ func (r *renderer) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post fun
 }
 
 // Implements gfx.Canvas interface.
-func (r *renderer) hookedClearDepth(rect image.Rectangle, depth float64, pre, post func()) {
+func (r *device) hookedClearDepth(rect image.Rectangle, depth float64, pre, post func()) {
 	// Clearing an empty rectangle is effectively no-op.
 	if rect.Empty() {
 		return
@@ -212,7 +212,7 @@ func (r *renderer) hookedClearDepth(rect image.Rectangle, depth float64, pre, po
 }
 
 // Implements gfx.Canvas interface.
-func (r *renderer) hookedClearStencil(rect image.Rectangle, stencil int, pre, post func()) {
+func (r *device) hookedClearStencil(rect image.Rectangle, stencil int, pre, post func()) {
 	// Clearing an empty rectangle is effectively no-op.
 	if rect.Empty() {
 		return
@@ -230,7 +230,7 @@ func (r *renderer) hookedClearStencil(rect image.Rectangle, stencil int, pre, po
 	}
 }
 
-func (r *renderer) hookedQueryWait(pre, post func()) {
+func (r *device) hookedQueryWait(pre, post func()) {
 	// Ask the render channel to wait for query results now.
 	r.renderExec <- func() bool {
 		if pre != nil {
@@ -255,7 +255,7 @@ func (r *renderer) hookedQueryWait(pre, post func()) {
 	<-r.renderComplete
 }
 
-func (r *renderer) hookedRender(pre, post func()) {
+func (r *device) hookedRender(pre, post func()) {
 	// Ask the render channel to render things now.
 	r.renderExec <- func() bool {
 		// If any finalizers have ran and actually want us to free something,
@@ -315,7 +315,7 @@ func (r *renderer) hookedRender(pre, post func()) {
 
 // Tries to receive pending occlusion query results, returns immediately if
 // none are available yet. Returns the number of queries still pending.
-func (r *renderer) queryYield() int {
+func (r *device) queryYield() int {
 	if !r.glArbOcclusionQuery {
 		return 0
 	}
@@ -349,7 +349,7 @@ func (r *renderer) queryYield() int {
 }
 
 // Blocks until all pending occlusion query results are received.
-func (r *renderer) queryWait() {
+func (r *device) queryWait() {
 	if !r.glArbOcclusionQuery {
 		return
 	}
@@ -367,13 +367,13 @@ func (r *renderer) queryWait() {
 }
 
 // GPUInfo implements the gfx.Renderer interface.
-func (r *renderer) Info() gfx.DeviceInfo {
+func (r *device) Info() gfx.DeviceInfo {
 	return r.gpuInfo
 }
 
 // Effectively just calls stateScissor(), but passes in the proper bounds
 // according to whether or not we are rendering to an rttCanvas or not.
-func (r *renderer) performScissor(rect image.Rectangle) {
+func (r *device) performScissor(rect image.Rectangle) {
 	if r.rttCanvas != nil {
 		r.stateScissor(r.rttCanvas.Bounds(), rect)
 	} else {
@@ -381,7 +381,7 @@ func (r *renderer) performScissor(rect image.Rectangle) {
 	}
 }
 
-func (r *renderer) performClear(rect image.Rectangle, bg gfx.Color) {
+func (r *device) performClear(rect image.Rectangle, bg gfx.Color) {
 	r.setGlobalState()
 
 	// Color write mask effects the glClear call below.
@@ -393,7 +393,7 @@ func (r *renderer) performClear(rect image.Rectangle, bg gfx.Color) {
 	gl.Clear(uint32(gl.COLOR_BUFFER_BIT))
 }
 
-func (r *renderer) performClearDepth(rect image.Rectangle, depth float64) {
+func (r *device) performClearDepth(rect image.Rectangle, depth float64) {
 	r.setGlobalState()
 
 	// Depth write mask effects the glClear call below.
@@ -405,7 +405,7 @@ func (r *renderer) performClearDepth(rect image.Rectangle, depth float64) {
 	gl.Clear(uint32(gl.DEPTH_BUFFER_BIT))
 }
 
-func (r *renderer) performClearStencil(rect image.Rectangle, stencil int) {
+func (r *device) performClearStencil(rect image.Rectangle, stencil int) {
 	r.setGlobalState()
 
 	// Stencil mask effects the glClear call below.
@@ -417,7 +417,7 @@ func (r *renderer) performClearStencil(rect image.Rectangle, stencil int) {
 	gl.Clear(uint32(gl.STENCIL_BUFFER_BIT))
 }
 
-func (r *renderer) setGlobalState() {
+func (r *device) setGlobalState() {
 	if !r.stateSetForFrame {
 		r.stateSetForFrame = true
 
@@ -449,7 +449,7 @@ func (r *renderer) setGlobalState() {
 	}
 }
 
-func (r *renderer) clearGlobalState() {
+func (r *device) clearGlobalState() {
 	if r.stateSetForFrame {
 		r.stateSetForFrame = false
 
@@ -476,7 +476,7 @@ func (r *renderer) clearGlobalState() {
 	}
 }
 
-func (r *renderer) logf(format string, args ...interface{}) {
+func (r *device) logf(format string, args ...interface{}) {
 	// Log the error.
 	r.debug.RLock()
 	if r.debug.W != nil {
@@ -486,14 +486,14 @@ func (r *renderer) logf(format string, args ...interface{}) {
 }
 
 // SetDebugOutput implements the Renderer interface.
-func (r *renderer) SetDebugOutput(w io.Writer) {
+func (r *device) SetDebugOutput(w io.Writer) {
 	r.debug.RLock()
 	r.debug.W = w
 	r.debug.RUnlock()
 }
 
 // Destroy implements the Renderer interface.
-func (r *renderer) Destroy() {
+func (r *device) Destroy() {
 }
 
 func parseVersionString(ver string) (major, minor, release int, vendor string) {
@@ -614,7 +614,7 @@ func glStr(s string) *int8 {
 
 // newDevice is the implementation of New.
 func newDevice(opts ...Option) (Device, error) {
-	r := &renderer{
+	r := &device{
 		BaseCanvas: &util.BaseCanvas{
 			VMSAA: true,
 		},

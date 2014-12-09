@@ -19,12 +19,12 @@ func glDebugCallback(
 	message string,
 	userParam unsafe.Pointer) {
 	// TODO(slimsag): better printing of source, type, and severity.
-	r := (*renderer)(userParam)
+	r := (*device)(userParam)
 	r.logf("OpenGL Debug (source=%d type=%d severity=%d):\n", source, gltype, severity)
 	r.logf("    %s\n", message)
 }
 
-func (r *renderer) debugInit(exts map[string]bool) {
+func (r *device) debugInit(exts map[string]bool) {
 	// If we have the GL_ARB_debug_output extension we utilize it.
 	r.glArbDebugOutput = extension("GL_ARB_debug_output", exts)
 	if r.glArbDebugOutput {
@@ -33,7 +33,7 @@ func (r *renderer) debugInit(exts map[string]bool) {
 	}
 }
 
-func (r *renderer) debugRender() {
+func (r *device) debugRender() {
 	// After each frame has been rendered we check for OpenGL errors.
 	if err := getError(); err != nil {
 		r.logf("OpenGL Error: %v\n", err)

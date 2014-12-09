@@ -18,7 +18,7 @@ import (
 type nativeShader struct {
 	program, vertex, fragment   uint32
 	attribLookup, uniformLookup map[string]int32
-	r                           *renderer
+	r                           *device
 }
 
 func finalizeShader(n *nativeShader) {
@@ -32,7 +32,7 @@ func (n *nativeShader) Destroy() {
 	finalizeShader(n)
 }
 
-func (r *renderer) freeShaders() {
+func (r *device) freeShaders() {
 	// Lock the list.
 	r.shadersToFree.Lock()
 
@@ -58,12 +58,12 @@ func (r *renderer) freeShaders() {
 }
 
 // LoadShader implements the gfx.Renderer interface.
-func (r *renderer) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
+func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 	// If we are sharing assets with another renderer, allow it to load the
 	// shader instead.
 	r.shared.RLock()
-	if r.shared.renderer != nil {
-		r.shared.renderer.LoadShader(s, done)
+	if r.shared.device != nil {
+		r.shared.device.LoadShader(s, done)
 		r.shared.RUnlock()
 		return
 	}

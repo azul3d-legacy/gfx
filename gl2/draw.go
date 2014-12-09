@@ -127,7 +127,7 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 	return n
 }
 
-func (r *renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
+func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
 	// Draw calls with empty rectangles are effectively no-op.
 	if rect.Empty() {
 		return
@@ -285,7 +285,7 @@ func (r *renderer) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera
 	}
 }
 
-func (r *renderer) findAttribLocation(native *nativeShader, name string) (uint32, bool) {
+func (r *device) findAttribLocation(native *nativeShader, name string) (uint32, bool) {
 	location, ok := native.attribLookup[name]
 	if ok {
 		return uint32(location), true
@@ -297,7 +297,7 @@ func (r *renderer) findAttribLocation(native *nativeShader, name string) (uint32
 	return uint32(location), true
 }
 
-func (r *renderer) findUniformLocation(native *nativeShader, name string) int32 {
+func (r *device) findUniformLocation(native *nativeShader, name string) int32 {
 	location, ok := native.uniformLookup[name]
 	if ok {
 		return location
@@ -313,7 +313,7 @@ func (r *renderer) findUniformLocation(native *nativeShader, name string) int32 
 
 type texSlot int32
 
-func (r *renderer) updateUniform(native *nativeShader, name string, value interface{}) {
+func (r *device) updateUniform(native *nativeShader, name string, value interface{}) {
 	location := r.findUniformLocation(native, name)
 	if location == -1 {
 		// The uniform is not used by the shader program and should just be
@@ -386,7 +386,7 @@ func (r *renderer) updateUniform(native *nativeShader, name string, value interf
 	}
 }
 
-func (r *renderer) beginQuery(o *gfx.Object, n nativeObject) nativeObject {
+func (r *device) beginQuery(o *gfx.Object, n nativeObject) nativeObject {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
 		gl.GenQueries(1, &n.pendingQuery)
 		//gl.Execute()
@@ -401,7 +401,7 @@ func (r *renderer) beginQuery(o *gfx.Object, n nativeObject) nativeObject {
 	return n
 }
 
-func (r *renderer) endQuery(o *gfx.Object, n nativeObject) nativeObject {
+func (r *device) endQuery(o *gfx.Object, n nativeObject) nativeObject {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
 		gl.EndQuery(gl.SAMPLES_PASSED)
 		//gl.Execute()
@@ -409,7 +409,7 @@ func (r *renderer) endQuery(o *gfx.Object, n nativeObject) nativeObject {
 	return n
 }
 
-func (r *renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
+func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	// Use object state.
 	r.stateColorWrite(obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha)
 	r.stateDithering(obj.Dithering)
@@ -519,7 +519,7 @@ func (r *renderer) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	obj.NativeObject = r.beginQuery(obj, nativeObj)
 }
 
-func (r *renderer) clearState(ns *nativeShader, obj *gfx.Object) {
+func (r *device) clearState(ns *nativeShader, obj *gfx.Object) {
 	// End occlusion query.
 	obj.NativeObject = r.endQuery(obj, obj.NativeObject.(nativeObject))
 
@@ -528,7 +528,7 @@ func (r *renderer) clearState(ns *nativeShader, obj *gfx.Object) {
 	gl.ActiveTexture(gl.TEXTURE0)
 }
 
-func (r *renderer) drawMesh(ns *nativeShader, m *gfx.Mesh) {
+func (r *device) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 	// Grab the native mesh.
 	native := m.NativeMesh.(*nativeMesh)
 

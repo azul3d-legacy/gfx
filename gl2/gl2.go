@@ -54,7 +54,7 @@ type Device interface {
 }
 
 // Option represents a single option function.
-type Option func(r *renderer)
+type Option func(r *device)
 
 // KeepState is an option that specifies whether or not the existing OpenGL
 // graphics state should be kept between frames.
@@ -70,7 +70,7 @@ type Option func(r *renderer)
 //
 // Do not specify this option unless you're sure that you need it.
 func KeepState() Option {
-	return func(r *renderer) {
+	return func(r *device) {
 		r.keepState = true
 	}
 }
@@ -81,8 +81,8 @@ func KeepState() Option {
 // The given other device must be from this package specifically, or else a
 // panic will occur.
 func Share(other Device) Option {
-	return func(r *renderer) {
-		r.shared.renderer = other.(*renderer)
+	return func(r *device) {
+		r.shared.device = other.(*device)
 	}
 }
 

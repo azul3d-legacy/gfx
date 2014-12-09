@@ -16,7 +16,7 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
-func (r *renderer) freeFBOs() {
+func (r *device) freeFBOs() {
 	// Lock the list.
 	r.fbosToFree.Lock()
 
@@ -34,7 +34,7 @@ func (r *renderer) freeFBOs() {
 	r.fbosToFree.Unlock()
 }
 
-func (r *renderer) freeRenderbuffers() {
+func (r *device) freeRenderbuffers() {
 	// Lock the list.
 	r.renderbuffersToFree.Lock()
 
@@ -55,7 +55,7 @@ func (r *renderer) freeRenderbuffers() {
 // rttCanvas is the gfx.Canvas returned by RenderToTexture.
 type rttCanvas struct {
 	*util.BaseCanvas
-	r   *renderer
+	r   *device
 	cfg gfx.RTTConfig
 
 	// Frame buffer ID.
@@ -242,7 +242,7 @@ func checkFramebufferError(target uint32) error {
 }
 
 // RenderToTexture implements the gfx.Renderer interface.
-func (r *renderer) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
+func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 	if !cfg.Valid() {
 		panic("RenderToTexture(): Configuration is invalid!")
 	}

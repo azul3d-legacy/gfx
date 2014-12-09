@@ -19,7 +19,7 @@ import (
 )
 
 type nativeTexture struct {
-	r              *renderer
+	r              *device
 	id             uint32
 	internalFormat int32
 	width, height  int
@@ -30,7 +30,7 @@ type nativeTexture struct {
 // Generates texture ID, binds, and sets BASE/MAX mipmap levels to zero.
 //
 // Used by both LoadTexture and RenderToTexture methods.
-func newNativeTexture(r *renderer, internalFormat int32, width, height int) *nativeTexture {
+func newNativeTexture(r *device, internalFormat int32, width, height int) *nativeTexture {
 	tex := &nativeTexture{
 		r:              r,
 		internalFormat: internalFormat,
@@ -208,12 +208,12 @@ func prepareImage(npot bool, img image.Image) *image.RGBA {
 }
 
 // Download implements the gfx.Downloadable interface.
-func (r *renderer) Download(rect image.Rectangle, complete chan image.Image) {
+func (r *device) Download(rect image.Rectangle, complete chan image.Image) {
 	r.hookedDownload(rect, complete, nil, nil)
 }
 
 // Implements gfx.Downloadable interface.
-func (r *renderer) hookedDownload(rect image.Rectangle, complete chan image.Image, pre, post func()) {
+func (r *device) hookedDownload(rect image.Rectangle, complete chan image.Image, pre, post func()) {
 	r.renderExec <- func() bool {
 		if pre != nil {
 			pre()
@@ -283,7 +283,7 @@ func convertFilter(f gfx.TexFilter) int32 {
 	panic("invalid filter.")
 }
 
-func (r *renderer) freeTextures() {
+func (r *device) freeTextures() {
 	// Lock the list.
 	r.texturesToFree.Lock()
 
@@ -347,12 +347,12 @@ func unconvertTexFormat(f int32) gfx.TexFormat {
 }
 
 // LoadTexture implements the gfx.Renderer interface.
-func (r *renderer) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
+func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	// If we are sharing assets with another renderer, allow it to load the
 	// texture instead.
 	r.shared.RLock()
-	if r.shared.renderer != nil {
-		r.shared.renderer.LoadTexture(t, done)
+	if r.shared.device != nil {
+		r.shared.device.LoadTexture(t, done)
 		r.shared.RUnlock()
 		return
 	}

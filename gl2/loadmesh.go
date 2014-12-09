@@ -27,7 +27,7 @@ type nativeMesh struct {
 	texCoords                   []uint32
 	attribs                     map[string]*nativeAttrib
 	verticesCount, indicesCount int32
-	r                           *renderer
+	r                           *device
 }
 
 func finalizeMesh(n *nativeMesh) {
@@ -41,14 +41,14 @@ func (n *nativeMesh) Destroy() {
 	finalizeMesh(n)
 }
 
-func (r *renderer) createVBO() (vboID uint32) {
+func (r *device) createVBO() (vboID uint32) {
 	// Generate new VBO.
 	gl.GenBuffers(1, &vboID)
 	//gl.Execute()
 	return
 }
 
-func (r *renderer) updateVBO(usageHint int32, dataSize uintptr, dataLength int, data unsafe.Pointer, vboID uint32) {
+func (r *device) updateVBO(usageHint int32, dataSize uintptr, dataLength int, data unsafe.Pointer, vboID uint32) {
 	// Bind the VBO now.
 	gl.BindBuffer(gl.ARRAY_BUFFER, vboID)
 
@@ -62,7 +62,7 @@ func (r *renderer) updateVBO(usageHint int32, dataSize uintptr, dataLength int, 
 	//gl.Execute()
 }
 
-func (r *renderer) deleteVBO(vboID *uint32) {
+func (r *device) deleteVBO(vboID *uint32) {
 	// Delete the VBO.
 	if *vboID == 0 {
 		return
@@ -98,7 +98,7 @@ func attribSize(x interface{}) (rows uint32, size int32, ok bool) {
 	return 0, 0, false
 }
 
-func (r *renderer) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.VertexAttrib, n *nativeAttrib) {
+func (r *device) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.VertexAttrib, n *nativeAttrib) {
 	v := reflect.ValueOf(attrib.Data)
 
 	// If it's not a slice, or it's length is zero, then it is invalid.
@@ -168,7 +168,7 @@ func (r *renderer) updateCustomAttribVBO(usageHint int32, name string, attrib gf
 	}
 }
 
-func (r *renderer) freeMeshes() {
+func (r *device) freeMeshes() {
 	// Lock the list.
 	r.meshesToFree.Lock()
 
@@ -199,12 +199,12 @@ func (r *renderer) freeMeshes() {
 }
 
 // LoadMesh implements the gfx.Renderer interface.
-func (r *renderer) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
+func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 	// If we are sharing assets with another renderer, allow it to load the
 	// mesh instead.
 	r.shared.RLock()
-	if r.shared.renderer != nil {
-		r.shared.renderer.LoadMesh(m, done)
+	if r.shared.device != nil {
+		r.shared.device.LoadMesh(m, done)
 		r.shared.RUnlock()
 		return
 	}
