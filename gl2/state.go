@@ -40,7 +40,7 @@ var defaultGraphicsState = &graphicsState{
 }
 
 // Queries the existing OpenGL graphics state and returns it.
-func queryExistingState(gpuInfo *gfx.GPUInfo, bounds image.Rectangle) *graphicsState {
+func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
 	var (
 		scissor                      [4]int32
 		clearColor, blendColor       gfx.Color
@@ -176,7 +176,7 @@ type graphicsState struct {
 // that differ between the states s and r.
 //
 // bounds is the renderer's bounds (e.g. r.Bounds()) to pass into stateScissor().
-func (s *graphicsState) load(gpuInfo *gfx.GPUInfo, bounds image.Rectangle, g *graphicsState) {
+func (s *graphicsState) load(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle, g *graphicsState) {
 	s.stateScissor(bounds, g.scissor)
 	s.stateClearColor(g.clearColor)
 	s.stateBlendColor(g.State.Blend.Color)
@@ -416,7 +416,7 @@ func (s *graphicsState) stateBlend(blend bool) {
 	}
 }
 
-func (s *graphicsState) stateAlphaToCoverage(gpuInfo *gfx.GPUInfo, alphaToCoverage bool) {
+func (s *graphicsState) stateAlphaToCoverage(gpuInfo *gfx.DeviceInfo, alphaToCoverage bool) {
 	if noStateGuard || s.alphaToCoverage != alphaToCoverage {
 		s.alphaToCoverage = alphaToCoverage
 		if gpuInfo.AlphaToCoverage {

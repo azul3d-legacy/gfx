@@ -52,7 +52,7 @@ type renderer struct {
 	clock *clock.Clock
 
 	// GPU limitations.
-	gpuInfo gfx.GPUInfo
+	gpuInfo gfx.DeviceInfo
 
 	// Whether or not certain extensions we use are present or not.
 	glArbDebugOutput, glArbMultisample, glArbFramebufferObject,
@@ -130,8 +130,8 @@ type renderer struct {
 	renderComplete chan struct{}
 }
 
-// RenderExec implements the Renderer interface.
-func (r *renderer) RenderExec() chan func() bool {
+// Exec implements the Renderer interface.
+func (r *renderer) Exec() chan func() bool {
 	return r.renderExec
 }
 
@@ -367,7 +367,7 @@ func (r *renderer) queryWait() {
 }
 
 // GPUInfo implements the gfx.Renderer interface.
-func (r *renderer) GPUInfo() gfx.GPUInfo {
+func (r *renderer) Info() gfx.DeviceInfo {
 	return r.gpuInfo
 }
 
@@ -612,8 +612,8 @@ func glStr(s string) *int8 {
 	return gl.Str(s + "\x00")
 }
 
-// newRenderer is the implementation of New.
-func newRenderer(opts ...Option) (Renderer, error) {
+// newDevice is the implementation of New.
+func newDevice(opts ...Option) (Device, error) {
 	r := &renderer{
 		BaseCanvas: &util.BaseCanvas{
 			VMSAA: true,

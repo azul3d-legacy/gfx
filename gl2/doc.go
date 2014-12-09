@@ -2,19 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package gl2 provides an OpenGL 2 based graphics renderer.
+// Package gl2 provides an OpenGL 2 based graphics device.
 //
-// The behavior of the renderer is fully defined in the gfx package, and as
-// such the following documentation only makes note of strictly OpenGL related
+// The behavior of the device is fully defined in the gfx package, and as such
+// the following documentation only makes note of strictly OpenGL related
 // caveats (like initialization, etc).
 //
 // Window Toolkit
 //
-// The renderer operates independently of the window toolkit in use. It can
-// work well with any window toolkit that provides an OpenGL 2 feature-level
-// context (GLFW, SDL, QT, etc).
+// The device operates independently of the window toolkit in use. It can work
+// well with any window toolkit that provides an OpenGL 2 feature-level context
+// (GLFW, SDL, QT, etc).
 //
-// If you just want to open a window and render graphics to it and don't care
+// If you just want to open a window and draw graphics to it and don't care
 // about the specifics, the simpler gfx/window package should be used instead:
 //
 // http://azul3d.org/gfx.v2/window
@@ -24,11 +24,10 @@
 // When performing render-to-texture (RTT), feedback loops are explicitly
 // prohibited.
 //
-// This means that the renderer will panic if you attempt to draw
-// an object to a RTT canvas when the object uses the literal RTT texture in
-// itself.
+// This means that the device will panic if you attempt to draw an object to a
+// RTT canvas when the object uses the literal RTT texture in itself.
 //
-// That is, rendering an object with a texture that of final render
+// That is, drawing an object with a texture that of the final render
 // destination will panic. Such recursive drawing is prohibited by OpenGL, and
 // as such is now allowed.
 //
@@ -36,7 +35,7 @@
 //
 // The gfx package allows turning on and off mipmapping of a loaded texture
 // dynamically by setting it's minification filter to a mipmapped or
-// non-mipmapped one. This OpenGL renderer reflects this behavior, but with a
+// non-mipmapped one. This OpenGL device reflects this behavior, but with a
 // small caveat:
 //
 // Mipmapping can only be toggled post-load in the event that the texture was
@@ -99,10 +98,10 @@
 //
 // Basic Usage
 //
-// Functions recieved over the render execution channel should be executed
-// under the presence of the OpenGL context, when a render function returns
-// true gfx.Renderer.Render has been called meaning the frame is finished and
-// the window's buffers should be swapped.
+// Functions recieved over the device's execution channel should be executed
+// under the presence of the OpenGL context, when a device function returns
+// true gfx.Device.Canvas.Render has been called meaning the frame is finished
+// and the window's buffers should be swapped.
 //
 //  func main() {
 //      // Always make proper use of LockOSThread! The OpenGL context is tied
@@ -112,21 +111,21 @@
 //      // Initialize OpenGL, through your window toolkit of choice.
 //      window.GLInit()
 //
-//      // Initialize the renderer, under the OpenGL rendering context.
-//      renderer, err := gl2.New()
+//      // Initialize the device, under the OpenGL context.
+//      d, err := gl2.New()
 //      handle(err)
 //
-//      // Main loop, execute renderer functions.
-//      renderExec := renderer.RenderExec()
+//      // Main loop, execute device functions.
+//      exec := device.Exec()
 //      for {
 //          if window.Closed() {
-//              // Cleanup the renderer.
-//              renderer.Destroy()
+//              // Cleanup the device.
+//              device.Destroy()
 //              break
 //          }
 //
-//          // Wait for a task from the renderer to execute.
-//          f := <-renderExec
+//          // Wait for a task from the device to execute.
+//          f := <-exec
 //          if f() {
 //              // A frame was rendered, swap the buffers.
 //              window.GLSwapBuffers()
@@ -136,12 +135,12 @@
 //
 // Debugging
 //
-// User applications (i.e. not this renderer itself) can be debugged using the
-// SetDebugOutput method of the Renderer interface. This has little to no
-// overhead.
+// User applications (i.e. not this device itself) can be debugged using the
+// SetDebugOutput method of the Device interface exposed by this package. This
+// has little to no overhead.
 //
 // More extensive debugging can be enabled via the "gfxdebug" build tag, which
-// enables debugging of the OpenGL renderer itself (not user code). Do not use
+// enables debugging of the OpenGL device itself (not user code). Do not use
 // this build tag except when debugging, as it's performance is purely driver
 // implementation dependant. This form of debugging should be used with a debug
 // OpenGL context.
