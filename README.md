@@ -19,6 +19,7 @@ This repository hosts packages for Azul3D's graphics core.
 * The TexWrap mode `BorderColor` is not always present, e.g. in OpenGL ES 2 (see [#56](https://github.com/azul3d/gfx/issues/56)).
 * Clarify: Some renderers, e.g. OpenGL ES, only support boolean occlusion queries (see [#57](https://github.com/azul3d/gfx/issues/57)).
 * Empty rectangles are no longer considered "the entire area" (see [#15](https://github.com/azul3d/gfx/issues/15)).
+* `Renderer` is now `Device` (See [#60](https://github.com/azul3d/gfx/issues/60)).
 
 ##### [gfx.v2/window](https://azul3d.org/gfx.v2/window) package:
 
@@ -34,6 +35,7 @@ This repository hosts packages for Azul3D's graphics core.
 * Moved to this repository as a sub-package (see [old repository](https://github.com/azul3d/gfx-gl2) and [issue 33](https://github.com/azul3d/issues/issues/33)).
 * Renderer now uses just one OpenGL context (see [#24](https://github.com/azul3d/gfx/issues/24)).
 * Improved package documentation ([view commit](https://github.com/azul3d/gfx-gl2/commit/493f72dbb36547e394f2d4995ee7d74dbf7b86d4)).
+* `gl2.Renderer` is now `gl2.Device` (See [#60](https://github.com/azul3d/gfx/issues/60)).
 * `gl2.Renderer` is now an interface (See [#52](https://github.com/azul3d/gfx/issues/52)).
 * `gl2.New` now takes option function parameters (See [#53](https://github.com/azul3d/gfx/issues/53)).
 * Documented basic usage and window toolkit independence (See [#54](https://github.com/azul3d/gfx/issues/54)).
