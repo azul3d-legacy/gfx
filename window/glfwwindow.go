@@ -40,11 +40,6 @@ func logError(err error) {
 	}
 }
 
-type notifier struct {
-	EventMask
-	ch chan<- Event
-}
-
 type glfwRenderer interface {
 	gfx.Renderer
 	RenderExec() chan func() bool
@@ -57,6 +52,7 @@ type glfwRenderer interface {
 type glfwWindow struct {
 	// The below variables are read-only after initialization of this struct,
 	// and thus do not use the RWMutex.
+	*notifier
 	mouse                                              *mouse.Watcher
 	keyboard                                           *keyboard.Watcher
 	extWGLEXTSwapControlTear, extGLXEXTSwapControlTear bool
@@ -70,7 +66,6 @@ type glfwWindow struct {
 	window                   *glfw.Window
 	monitor                  *glfw.Monitor
 	lastCursorX, lastCursorY float64
-	notifiers                []notifier
 	closed                   bool
 }
 
@@ -137,56 +132,6 @@ func (w *glfwWindow) Close() {
 
 	// Signal to the window of it's closing.
 	w.exit <- struct{}{}
-}
-
-// Implements the Window interface.
-func (w *glfwWindow) Notify(ch chan<- Event, m EventMask) {
-	w.Lock()
-	if m == NoEvents {
-		w.deleteNotifiers(ch)
-	} else {
-		w.notifiers = append(w.notifiers, notifier{m, ch})
-	}
-	w.Unlock()
-}
-
-// findNotifier searches for the event notifier associated with ch, returns
-// it's slice index or -1.
-//
-// w.Lock must be held for it to operate safely.
-func (w *glfwWindow) findNotifier(ch chan<- Event) int {
-	for index, ev := range w.notifiers {
-		if ev.ch == ch {
-			return index
-		}
-	}
-	return -1
-}
-
-// deleteNotifiers deletes all notifiers associated with ch.
-func (w *glfwWindow) deleteNotifiers(ch chan<- Event) {
-	s := w.notifiers
-	idx := w.findNotifier(ch)
-	for idx != -1 {
-		s = append(s[:idx], s[idx+1:]...)
-		idx = w.findNotifier(ch)
-	}
-	w.notifiers = s
-}
-
-// sendEvent sends the given event to all of the notifiers whose bitmask
-// matches with m.
-func (w *glfwWindow) sendEvent(ev Event, m EventMask) {
-	w.RLock()
-	for _, nf := range w.notifiers {
-		if (nf.EventMask & m) != 0 {
-			select {
-			case nf.ch <- ev:
-			default:
-			}
-		}
-	}
-	w.RUnlock()
 }
 
 // waitFor runs f on the main thread and waits for the function to complete.
@@ -706,6 +651,7 @@ func doNew(p *Props) (Window, gfx.Renderer, error) {
 
 	// Initialize window.
 	w := &glfwWindow{
+		notifier: &notifier{},
 		props:    p,
 		last:     NewProps(),
 		mouse:    mouse.NewWatcher(),
