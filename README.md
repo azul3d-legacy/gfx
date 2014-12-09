@@ -23,6 +23,7 @@ This repository hosts packages for Azul3D's graphics core.
 * `GPUInfo` is now `DeviceInfo` (See [#60](https://github.com/azul3d/gfx/issues/60)).
 * `Renderer.GPUInfo()` is now `Device.Info()` (See [#60](https://github.com/azul3d/gfx/issues/60)).
 * Split OpenGL and GLSL information out of DeviceInfo struct (See [#62](https://github.com/azul3d/gfx/issues/62)).
+* A seperate structure is used for GLSL shaders now (See [#63](https://github.com/azul3d/gfx/issues/63)).
 
 ##### [gfx.v2/window](https://azul3d.org/gfx.v2/window) package:
 
