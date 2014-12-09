@@ -209,6 +209,12 @@ func (w *glfwWindow) updateTitle() {
 	logError(w.window.SetTitle(title))
 }
 
+// useProps sets the GLFW window to reflect the given window properties. It
+// detects the properties that have not changed since the last call to
+// useProps and, if force == false, omits them for efficiency.
+//
+// It may only be called on the main thread, and it utilizes the window's write
+// lock on it's own.
 func (w *glfwWindow) useProps(p *Props, force bool) {
 	w.Lock()
 	defer w.Unlock()
