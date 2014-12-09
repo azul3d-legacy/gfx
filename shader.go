@@ -34,11 +34,14 @@ type Shader struct {
 	// log).
 	Name string
 
-	// The GLSL vertex shader source.
-	GLSLVert []byte
-
-	// The GLSL fragment shader.
-	GLSLFrag []byte
+	// GLSL represents the sources to the GLSL shader. Only OpenGL devices
+	// support GLSL, so you can check for this:
+	//
+	//  if device.Info().GLSL != nil {
+	//      // Device supports GLSL shaders.
+	//  }
+	//
+	GLSL *GLSLShader
 
 	// A map of names and values to use as inputs for the shader program while
 	// rendering. Values must be of the following data types or else they will
@@ -74,13 +77,12 @@ func (s *Shader) Copy() *Shader {
 		false, // Loaded status -- not copied.
 		s.KeepDataOnLoad,
 		s.Name,
-		make([]byte, len(s.GLSLVert)),
-		make([]byte, len(s.GLSLFrag)),
 		make(map[string]interface{}, len(s.Inputs)),
 		nil, // Error slice -- not copied.
 	}
-	copy(cpy.GLSLVert, s.GLSLVert)
-	copy(cpy.GLSLFrag, s.GLSLFrag)
+	if s.GLSL != nil {
+		cpy.GLSL = s.GLSL.Copy()
+	}
 	for name := range s.Inputs {
 		cpy.Inputs[name] = s.Inputs[name]
 	}
@@ -91,8 +93,8 @@ func (s *Shader) Copy() *Shader {
 // nil if s.KeepDataOnLoad is set to false.
 func (s *Shader) ClearData() {
 	if !s.KeepDataOnLoad {
-		s.GLSLVert = nil
-		s.GLSLFrag = nil
+		s.GLSL.Vertex = nil
+		s.GLSL.Fragment = nil
 		s.Error = nil
 	}
 }
@@ -105,8 +107,10 @@ func (s *Shader) Reset() {
 	s.Loaded = false
 	s.KeepDataOnLoad = false
 	s.Name = ""
-	s.GLSLVert = s.GLSLVert[:0]
-	s.GLSLFrag = s.GLSLFrag[:0]
+	if s.GLSL != nil {
+		s.GLSL.Vertex = s.GLSL.Vertex[:0]
+		s.GLSL.Fragment = s.GLSL.Fragment[:0]
+	}
 	for k := range s.Inputs {
 		delete(s.Inputs, k)
 	}
