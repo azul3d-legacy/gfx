@@ -77,6 +77,7 @@ func (s *Shader) Copy() *Shader {
 		false, // Loaded status -- not copied.
 		s.KeepDataOnLoad,
 		s.Name,
+		nil, // GLSL shader.
 		make(map[string]interface{}, len(s.Inputs)),
 		nil, // Error slice -- not copied.
 	}
