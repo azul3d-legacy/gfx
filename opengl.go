@@ -10,7 +10,7 @@ type GLInfo struct {
 	//
 	//  3, 0 (for OpenGL 3.0)
 	//
-	VersionMajor, VersionMinor int
+	MajorVersion, MinorVersion int
 
 	// A read-only slice of OpenGL extension strings.
 	Extensions []string
@@ -23,7 +23,7 @@ type GLSLInfo struct {
 	//
 	//  1, 30 (for GLSL 1.30)
 	//
-	VersionMajor, VersionMinor int
+	MajorVersion, MinorVersion int
 
 	// MaxVaryingFloats is the number of floating-point varying variables
 	// available inside GLSL programs.
@@ -56,7 +56,7 @@ type GLSLShader struct {
 // Copy returns a deep copy of this shader and it's source byte slices.
 func (s *GLSLShader) Copy() *GLSLShader {
 	cpy := &GLSLShader{
-		Vertex: make([]byte, len(s.Vertex)),
+		Vertex:   make([]byte, len(s.Vertex)),
 		Fragment: make([]byte, len(s.Fragment)),
 	}
 	copy(cpy.Vertex, s.Vertex)
