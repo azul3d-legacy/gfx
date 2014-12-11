@@ -694,19 +694,30 @@ func newDevice(opts ...Option) (Device, error) {
 
 	// Collect GPU information.
 	r.gpuInfo.MaxTextureSize = int(maxTextureSize)
-	r.gpuInfo.GLSLMaxVaryingFloats = int(maxVaryingFloats)
-	r.gpuInfo.GLSLMaxVertexInputs = int(maxVertexInputs)
-	r.gpuInfo.GLSLMaxFragmentInputs = int(maxFragmentInputs)
-	r.gpuInfo.GLExtensions = extsStr
 	r.gpuInfo.AlphaToCoverage = r.glArbMultisample && r.samples > 0 && r.sampleBuffers > 0
 	r.gpuInfo.Name = gl.GoStr(gl.GetString(gl.RENDERER))
 	r.gpuInfo.Vendor = gl.GoStr(gl.GetString(gl.VENDOR))
-	r.gpuInfo.GLMajor, r.gpuInfo.GLMinor, _, _ = queryVersion()
-	r.gpuInfo.GLSLMajor, r.gpuInfo.GLSLMinor, _, _ = queryShaderVersion()
 	r.gpuInfo.OcclusionQuery = r.glArbOcclusionQuery && occlusionQueryBits > 0
 	r.gpuInfo.OcclusionQueryBits = int(occlusionQueryBits)
 	r.gpuInfo.NPOT = extension("GL_ARB_texture_non_power_of_two", exts)
 	r.gpuInfo.TexWrapBorderColor = true
+
+	// OpenGL Information.
+	glInfo := &gfx.GLInfo{
+		Extensions: extsStr,
+	}
+	glInfo.MajorVersion, glInfo.MinorVersion, _, _ = queryVersion()
+	r.gpuInfo.GL = glInfo
+
+	// GLSL information.
+	glslInfo := &gfx.GLSLInfo{
+		MaxVaryingFloats:  int(maxVaryingFloats),
+		MaxVertexInputs:   int(maxVertexInputs),
+		MaxFragmentInputs: int(maxFragmentInputs),
+	}
+	glslInfo.MajorVersion, glslInfo.MinorVersion, _, _ = queryShaderVersion()
+	r.gpuInfo.GLSL = glslInfo
+
 	if r.glArbFramebufferObject {
 		// See http://www.opengl.org/wiki/Image_Format for more information.
 		//

@@ -114,7 +114,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		}
 
 		// Handle the vertex shader now.
-		if len(strings.TrimSpace(string(s.GLSLVert))) == 0 {
+		if len(strings.TrimSpace(string(s.GLSL.Vertex))) == 0 {
 			// No source code in vertex shader (some drivers will crash in
 			// this case).
 			s.Error = append(s.Error, []byte(s.Name+" | Vertex shader with no source code.\n")...)
@@ -124,8 +124,8 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		} else {
 			// Compile vertex shader.
 			native.vertex = gl.CreateShader(gl.VERTEX_SHADER)
-			lengths := int32(len(s.GLSLVert))
-			sources := &s.GLSLVert[0]
+			lengths := int32(len(s.GLSL.Vertex))
+			sources := &s.GLSL.Vertex[0]
 			gl.ShaderSource(native.vertex, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
 			gl.CompileShader(native.vertex)
 			//gl.Execute()
@@ -148,7 +148,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		}
 
 		// Handle the fragment shader now.
-		if len(strings.TrimSpace(string(s.GLSLFrag))) == 0 {
+		if len(strings.TrimSpace(string(s.GLSL.Fragment))) == 0 {
 			// No source code in fragment shader (some drivers will crash in
 			// this case).
 			s.Error = append(s.Error, []byte(s.Name+" | Fragment shader with no source code.\n")...)
@@ -158,8 +158,8 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		} else {
 			// Compile fragment shader.
 			native.fragment = gl.CreateShader(gl.FRAGMENT_SHADER)
-			lengths := int32(len(s.GLSLFrag))
-			sources := &s.GLSLFrag[0]
+			lengths := int32(len(s.GLSL.Fragment))
+			sources := &s.GLSL.Fragment[0]
 			gl.ShaderSource(native.fragment, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
 			gl.CompileShader(native.fragment)
 			//gl.Execute()
