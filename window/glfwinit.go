@@ -7,6 +7,7 @@ package window
 
 import (
 	"runtime"
+	"time"
 
 	"azul3d.org/native/glfw.v4"
 )
@@ -27,6 +28,9 @@ var (
 		// Signals shutdown to the assetLoader goroutine.
 		exit chan error
 	}
+
+	// Signals shutdown to the event poller goroutine.
+	pollerExit chan struct{}
 )
 
 // assetLoader is the goroutine responsible for running the asset device.
@@ -59,6 +63,35 @@ func assetLoader() {
 
 		case fn := <-exec:
 			fn()
+		}
+	}
+}
+
+// pollEvents submits a function to the main loop to poll for GLFW events at
+// 120hz.
+func pollEvents() {
+	// Poll for events at 120hz.
+	ticker := time.NewTicker(time.Second / 120)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+
+		// Consider exiting now.
+		select {
+		case <-pollerExit:
+			return
+		default:
+		}
+
+		// Poll for events in the main loop, or exit.
+		pollFunc := func() {
+			logError(glfw.PollEvents())
+		}
+		select {
+		case <-pollerExit:
+			return
+		case MainLoopChan <- pollFunc:
 		}
 	}
 }
@@ -98,6 +131,10 @@ func doInit() error {
 
 	go assetLoader()
 
+	// Spawn the event poller.
+	pollerExit = make(chan struct{}, 1)
+	go pollEvents()
+
 	glfwInit = true
 	return nil
 }
@@ -116,6 +153,9 @@ func doExit() error {
 	if err != nil {
 		return err
 	}
+
+	// Exit the event poller.
+	pollerExit <- struct{}{}
 
 	// Terminate GLFW now.
 	err = glfw.Terminate()

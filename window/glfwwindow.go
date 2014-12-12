@@ -565,11 +565,6 @@ func (w *glfwWindow) run() {
 			if renderedFrame := fn(); renderedFrame {
 				// Swap OpenGL buffers.
 				logError(w.window.SwapBuffers())
-
-				// Poll for events in the main loop.
-				MainLoopChan <- func() {
-					logError(glfw.PollEvents())
-				}
 			}
 		}
 	}
