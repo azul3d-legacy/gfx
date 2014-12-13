@@ -14,7 +14,7 @@
 //  http://github.com/go-gl/glow
 //
 // Generated based on the OpenGL XML specification:
-//  SVN revision 29084
+//  SVN revision 29209
 package gl
 
 // #cgo darwin  LDFLAGS: -framework OpenGL
@@ -114,9 +114,9 @@ package gl
 // typedef void (APIENTRY *GLDEBUGPROCAMD)(GLuint id,GLenum category,GLenum severity,GLsizei length,const GLchar *message,void *userParam);
 // typedef unsigned short GLhalfNV;
 // typedef GLintptr GLvdpauSurfaceNV;
-// extern void glowDebugCallback_gl21(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
+// extern void glowDebugCallback_gl20(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 // static void APIENTRY glowCDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-//   glowDebugCallback_gl21(source, type, id, severity, length, message, userParam);
+//   glowDebugCallback_gl20(source, type, id, severity, length, message, userParam);
 // }
 // typedef void  (APIENTRYP GPACTIVETEXTURE)(GLenum  texture);
 // typedef void  (APIENTRYP GPATTACHSHADER)(GLuint  program, GLuint  shader);
@@ -133,6 +133,7 @@ package gl
 // typedef void  (APIENTRYP GPCLEAR)(GLbitfield  mask);
 // typedef void  (APIENTRYP GPCLEARCOLOR)(GLfloat  red, GLfloat  green, GLfloat  blue, GLfloat  alpha);
 // typedef void  (APIENTRYP GPCLEARDEPTH)(GLdouble  depth);
+// typedef void  (APIENTRYP GPCLEARDEPTHF)(GLfloat  d);
 // typedef void  (APIENTRYP GPCLEARSTENCIL)(GLint  s);
 // typedef void  (APIENTRYP GPCOLORMASK)(GLboolean  red, GLboolean  green, GLboolean  blue, GLboolean  alpha);
 // typedef void  (APIENTRYP GPCOMPILESHADER)(GLuint  shader);
@@ -245,6 +246,9 @@ package gl
 // }
 // static void  glowClearDepth(GPCLEARDEPTH fnptr, GLdouble  depth) {
 //   (*fnptr)(depth);
+// }
+// static void  glowClearDepthf(GPCLEARDEPTHF fnptr, GLfloat  d) {
+//   (*fnptr)(d);
 // }
 // static void  glowClearStencil(GPCLEARSTENCIL fnptr, GLint  s) {
 //   (*fnptr)(s);
@@ -542,12 +546,16 @@ const (
 	LINEAR                                    = 0x2601
 	LINEAR_MIPMAP_LINEAR                      = 0x2703
 	LINEAR_MIPMAP_NEAREST                     = 0x2701
+	LINES                                     = 0x0001
 	LINK_STATUS                               = 0x8B82
 	MAX_FRAGMENT_UNIFORM_COMPONENTS           = 0x8B49
+	MAX_FRAGMENT_UNIFORM_VECTORS              = 0x8DFD
 	MAX_SAMPLES                               = 0x8D57
 	MAX_TEXTURE_SIZE                          = 0x0D33
 	MAX_VARYING_FLOATS                        = 0x8B4B
+	MAX_VARYING_VECTORS                       = 0x8DFC
 	MAX_VERTEX_UNIFORM_COMPONENTS             = 0x8B4A
+	MAX_VERTEX_UNIFORM_VECTORS                = 0x8DFB
 	MIRRORED_REPEAT                           = 0x8370
 	MULTISAMPLE                               = 0x809D
 	NEAREST                                   = 0x2600
@@ -565,6 +573,7 @@ const (
 	ONE_MINUS_SRC_ALPHA                       = 0x0303
 	ONE_MINUS_SRC_COLOR                       = 0x0301
 	OUT_OF_MEMORY                             = 0x0505
+	POINTS                                    = 0x0000
 	QUERY_COUNTER_BITS                        = 0x8864
 	QUERY_RESULT                              = 0x8866
 	QUERY_RESULT_AVAILABLE                    = 0x8867
@@ -645,6 +654,7 @@ var (
 	gpClear                          C.GPCLEAR
 	gpClearColor                     C.GPCLEARCOLOR
 	gpClearDepth                     C.GPCLEARDEPTH
+	gpClearDepthf                    C.GPCLEARDEPTHF
 	gpClearStencil                   C.GPCLEARSTENCIL
 	gpColorMask                      C.GPCOLORMASK
 	gpCompileShader                  C.GPCOMPILESHADER
@@ -797,6 +807,9 @@ func ClearColor(red float32, green float32, blue float32, alpha float32) {
 // specify the clear value for the depth buffer
 func ClearDepth(depth float64) {
 	C.glowClearDepth(gpClearDepth, (C.GLdouble)(depth))
+}
+func ClearDepthf(d float32) {
+	C.glowClearDepthf(gpClearDepthf, (C.GLfloat)(d))
 }
 
 // specify the clear value for the stencil buffer
@@ -956,6 +969,8 @@ func GenTextures(n int32, textures *uint32) {
 func GenerateMipmap(target uint32) {
 	C.glowGenerateMipmap(gpGenerateMipmap, (C.GLenum)(target))
 }
+
+// Returns the location of an attribute variable
 func GetAttribLocation(program uint32, name *int8) int32 {
 	ret := C.glowGetAttribLocation(gpGetAttribLocation, (C.GLuint)(program), (*C.GLchar)(unsafe.Pointer(name)))
 	return (int32)(ret)
@@ -1174,6 +1189,7 @@ func InitWithProcAddrFunc(getProcAddr procaddr.GetProcAddressFunc) error {
 	if gpClearDepth == nil {
 		return errors.New("glClearDepth")
 	}
+	gpClearDepthf = (C.GPCLEARDEPTHF)(getProcAddr("glClearDepthf"))
 	gpClearStencil = (C.GPCLEARSTENCIL)(getProcAddr("glClearStencil"))
 	if gpClearStencil == nil {
 		return errors.New("glClearStencil")
