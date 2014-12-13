@@ -41,7 +41,7 @@ type Shader struct {
 	//      // Device supports GLSL shaders.
 	//  }
 	//
-	GLSL *GLSLShader
+	GLSL *GLSLSources
 
 	// A map of names and values to use as inputs for the shader program while
 	// rendering. Values must be of the following data types or else they will

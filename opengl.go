@@ -44,8 +44,8 @@ type GLSLInfo struct {
 	MaxFragmentInputs int
 }
 
-// GLSLShader represents the sources to a GLSL shader program.
-type GLSLShader struct {
+// GLSLSources represents the sources to a GLSL shader program.
+type GLSLSources struct {
 	// The GLSL vertex shader source code.
 	Vertex []byte
 
@@ -54,8 +54,8 @@ type GLSLShader struct {
 }
 
 // Copy returns a deep copy of this shader and it's source byte slices.
-func (s *GLSLShader) Copy() *GLSLShader {
-	cpy := &GLSLShader{
+func (s *GLSLSources) Copy() *GLSLSources {
+	cpy := &GLSLSources{
 		Vertex:   make([]byte, len(s.Vertex)),
 		Fragment: make([]byte, len(s.Fragment)),
 	}
