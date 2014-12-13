@@ -574,6 +574,7 @@ const (
 	ONE_MINUS_SRC_COLOR                       = 0x0301
 	OUT_OF_MEMORY                             = 0x0505
 	POINTS                                    = 0x0000
+	PROGRAM_POINT_SIZE_EXT                    = 0x8642
 	QUERY_COUNTER_BITS                        = 0x8864
 	QUERY_RESULT                              = 0x8866
 	QUERY_RESULT_AVAILABLE                    = 0x8867
