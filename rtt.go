@@ -13,25 +13,6 @@ import (
 // DSFormat specifies a single depth or stencil buffer storage format.
 type DSFormat uint8
 
-// String returns a string name for this depth/stencil buffer format. For
-// example:
-//  Depth24AndStencil8 -> "Depth24AndStencil8"
-func (f DSFormat) String() string {
-	switch f {
-	case ZeroDSFormat:
-		return "ZeroDSFormat"
-	case Depth16:
-		return "Depth16"
-	case Depth24:
-		return "Depth24"
-	case Depth32:
-		return "Depth32"
-	case Depth24AndStencil8:
-		return "Depth24AndStencil8"
-	}
-	return fmt.Sprintf("DSFormat(%d)", f)
-}
-
 // IsDepth tells if f is a valid depth buffer format. It must be one of the
 // following:
 //  Depth16

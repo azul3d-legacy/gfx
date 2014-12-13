@@ -4,23 +4,9 @@
 
 package gfx
 
-import "fmt"
-
 // TexFilter represents a single texture filter to be used for minification or
 // magnification of a texture during drawing.
 type TexFilter uint8
-
-// String returns a string representation of this TexFilter.
-// e.g. Nearest -> "Nearest"
-func (t TexFilter) String() string {
-	switch t {
-	case Nearest:
-		return "Nearest"
-	case Linear:
-		return "Linear"
-	}
-	return fmt.Sprintf("TexFilter(%d)", t)
-}
 
 // Mipmapped tells if the texture filter is a mipmapped one, that is one of:
 //  NearestMipmapNearest

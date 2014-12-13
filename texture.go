@@ -5,35 +5,12 @@
 package gfx
 
 import (
-	"fmt"
 	"image"
 	"sync"
 )
 
 // TexFormat specifies a single texture storage format.
 type TexFormat uint8
-
-// String returns a string name for this texture format. For example:
-//  RGBA -> "RGBA"
-func (t TexFormat) String() string {
-	switch t {
-	case ZeroTexFormat:
-		return "ZeroTexFormat"
-	case RGB:
-		return "RGB"
-	case RGBA:
-		return "RGBA"
-	case DXT1:
-		return "DXT1"
-	case DXT1RGBA:
-		return "DXT1RGBA"
-	case DXT3:
-		return "DXT3"
-	case DXT5:
-		return "DXT5"
-	}
-	return fmt.Sprintf("TexFormat(%d)", t)
-}
 
 // Bits returns the number of bits per color component in this texture format.
 // For example:

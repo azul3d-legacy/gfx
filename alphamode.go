@@ -4,27 +4,9 @@
 
 package gfx
 
-import "fmt"
-
 // AlphaMode describes a single alpha transparency mode that can be used for
 // drawing transparent parts of objects.
 type AlphaMode uint8
-
-// String returns a string representation of this alpha transparency mode.
-// e.g. NoAlpha -> "NoAlpha"
-func (m AlphaMode) String() string {
-	switch m {
-	case NoAlpha:
-		return "NoAlpha"
-	case AlphaBlend:
-		return "AlphaBlend"
-	case BinaryAlpha:
-		return "BinaryAlpha"
-	case AlphaToCoverage:
-		return "AlphaToCoverage"
-	}
-	return fmt.Sprintf("AlphaMode(%d)", m)
-}
 
 const (
 	// NoAlpha means the object should be drawn without transparency. Parts
