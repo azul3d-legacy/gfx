@@ -172,6 +172,10 @@ type Mesh struct {
 	// Weather or not this mesh is currently loaded or not.
 	Loaded bool
 
+	// The primitive type of this mesh. The zero-value (i.e. default value) is
+	// Triangles.
+	Primitive
+
 	// If true then when this mesh is loaded the sources of it will be kept
 	// instead of being set to nil (which allows them to be garbage collected).
 	KeepDataOnLoad bool
@@ -278,6 +282,7 @@ func (m *Mesh) Copy() *Mesh {
 		sync.RWMutex{},
 		nil,   // Native mesh -- not copied.
 		false, // Loaded status -- not copied.
+		m.Primitive,
 		m.KeepDataOnLoad,
 		m.Dynamic,
 		m.AABB,
@@ -579,6 +584,7 @@ func (m *Mesh) ClearData() {
 func (m *Mesh) Reset() {
 	m.NativeMesh = nil
 	m.Loaded = false
+	m.Primitive = Triangles
 	m.KeepDataOnLoad = false
 	m.Dynamic = false
 	m.AABB = lmath.Rect3Zero
