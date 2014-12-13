@@ -9,6 +9,18 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 )
 
+func convertPrimitive(p gfx.Primitive) uint32 {
+	switch p {
+	case gfx.Triangles:
+		return gl.TRIANGLES
+	case gfx.Points:
+		return gl.POINTS
+	case gfx.Lines:
+		return gl.LINES
+	}
+	panic("failed to convert")
+}
+
 func unconvertFaceCull(fc int32) gfx.FaceCullMode {
 	switch fc {
 	case gl.FRONT:

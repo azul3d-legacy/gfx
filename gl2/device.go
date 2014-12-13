@@ -440,6 +440,9 @@ func (r *device) setGlobalState() {
 		// Enable scissor testing.
 		gl.Enable(gl.SCISSOR_TEST)
 
+		// Enable setting point size in shader programs.
+		gl.Enable(gl.PROGRAM_POINT_SIZE_EXT)
+
 		// Enable multisampling, if available and wanted.
 		if r.glArbMultisample {
 			if r.BaseCanvas.MSAA() {
@@ -468,6 +471,9 @@ func (r *device) clearGlobalState() {
 
 		// Disable scissor testing.
 		gl.Disable(gl.SCISSOR_TEST)
+
+		// Disable setting point size in shader programs.
+		gl.Disable(gl.PROGRAM_POINT_SIZE_EXT)
 
 		// Disable multisampling, if available.
 		if r.glArbMultisample {

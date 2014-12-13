@@ -582,10 +582,10 @@ func (r *device) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 	if native.indicesCount > 0 {
 		// Draw indexed mesh.
 		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, native.indices)
-		gl.DrawElements(gl.TRIANGLES, native.indicesCount, gl.UNSIGNED_INT, nil)
+		gl.DrawElements(convertPrimitive(m.Primitive), native.indicesCount, gl.UNSIGNED_INT, nil)
 	} else {
 		// Draw regular mesh.
-		gl.DrawArrays(gl.TRIANGLES, 0, native.verticesCount)
+		gl.DrawArrays(convertPrimitive(m.Primitive), 0, native.verticesCount)
 	}
 
 	// Unbind buffer to avoid carrying OpenGL state.
