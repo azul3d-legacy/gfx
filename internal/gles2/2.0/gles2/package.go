@@ -14,7 +14,7 @@
 //  http://github.com/go-gl/glow
 //
 // Generated based on the OpenGL XML specification:
-//  SVN revision 29085
+//  SVN revision 29209
 package gles2
 
 // #cgo darwin  LDFLAGS: -framework OpenGL
@@ -459,6 +459,7 @@ const (
 	LINEAR                                    = 0x2601
 	LINEAR_MIPMAP_LINEAR                      = 0x2703
 	LINEAR_MIPMAP_NEAREST                     = 0x2701
+	LINES                                     = 0x0001
 	LINK_STATUS                               = 0x8B82
 	MAX_FRAGMENT_UNIFORM_VECTORS              = 0x8DFD
 	MAX_SAMPLES                               = 0x8D57
@@ -481,6 +482,7 @@ const (
 	ONE_MINUS_SRC_ALPHA                       = 0x0303
 	ONE_MINUS_SRC_COLOR                       = 0x0301
 	OUT_OF_MEMORY                             = 0x0505
+	POINTS                                    = 0x0000
 	RED_BITS                                  = 0x0D52
 	RENDERBUFFER                              = 0x8D41
 	RENDERER                                  = 0x1F01
