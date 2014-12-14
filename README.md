@@ -4,9 +4,9 @@ This repository hosts packages for Azul3D's graphics core.
 
 | Package | Description |
 |---------|-------------|
-| [azul3d.org/gfx.v2](https://azul3d.org/gfx.v2) | *Generic Go interface to GPU rendering techniques.* |
-| [azul3d.org/gfx.v2/window](https://azul3d.org/gfx.v2/window) | *Easiest way to create a window and render graphics to it.* |
-| [azul3d.org/gfx.v2/gl2](https://azul3d.org/gfx.v2/gl2) | *OpenGL 2 based graphics renderer.* |
+| [azul3d.org/gfx.v2](https://azul3d.org/gfx.v2) | *A Go interface to modern GPU rendering API's.* |
+| [azul3d.org/gfx.v2/window](https://azul3d.org/gfx.v2/window) | *Cross-platform window and graphics device management.* |
+| [azul3d.org/gfx.v2/gl2](https://azul3d.org/gfx.v2/gl2) | *A OpenGL 2 based graphics device.* |
 
 ## Version 2
 
