@@ -18,8 +18,11 @@ import (
 // object or else doing so will be left up to a runtime Finalizer.
 type Destroyable interface {
 	// Destroy destroys this object. Once destroyed the object can still be
-	// used but doing so is not advised for performance reasons (e.g. requires
-	// reloading the entire object).
+	// used but doing so is not advised for performance reasons (e.g. it
+	// requires reloading the entire object).
+	//
+	// Destroy can be called any number of times and safely from multiple
+	// goroutines concurrently.
 	Destroy()
 }
 
