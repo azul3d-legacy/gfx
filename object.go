@@ -20,8 +20,6 @@ type Destroyable interface {
 	// Destroy destroys this object. Once destroyed the object can still be
 	// used but doing so is not advised for performance reasons (e.g. requires
 	// reloading the entire object).
-	//
-	// This method is safe to invoke from multiple goroutines concurrently.
 	Destroy()
 }
 
@@ -35,8 +33,6 @@ type NativeObject interface {
 	// will return the number of samples that passed the depth and stencil
 	// testing phases the last time the object was drawn. If occlusion queries
 	// are not supported then -1 will be returned.
-	//
-	// This method is safe to invoke from multiple goroutines concurrently.
 	SampleCount() int
 }
 
