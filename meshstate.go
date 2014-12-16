@@ -30,7 +30,6 @@ func intMin(a, b int) int {
 // A mesh state can be used to determine what the difference is between two
 // meshes:
 //
-//  // TODO(reader): properly RLock/RUnlock the two meshes.
 //  var stateA, stateB gfx.MeshState
 //  meshA.State(&stateA) // Query mesh A's state.
 //  meshB.State(&stateB) // Query mesh B's state.
@@ -54,13 +53,12 @@ func intMin(a, b int) int {
 // It can also be used to directly tell if two meshes could be appended
 // together without losing any data from either mesh:
 //
-//  // TODO(reader): properly RLock/RUnlock the two meshes.
 //  var stateA, stateB gfx.MeshState
 //  meshA.State(&stateA) // Query mesh A's state.
 //  meshB.State(&stateB) // Query mesh B's state.
 //
 //  // Check the two states for equality.
-//  if meshA.State().Equals(meshB.State()) {
+//  if stateA.Equals(stateB) {
 //      // The meshes can be appended together with no loss of information.
 //  }
 //
@@ -218,7 +216,6 @@ func (s *MeshState) Diff(a, b *MeshState) bool {
 //  var state = &MeshState{}
 //  mesh.State(&state) // Fill the state structure with the mesh's state.
 //
-// The read lock of the mesh must be held for this method to operate safely.
 func (m *Mesh) State(s *MeshState) {
 	s.Indices = len(m.Indices) > 0
 	s.Vertices = len(m.Vertices) > 0
