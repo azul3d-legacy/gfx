@@ -12,11 +12,9 @@ type NativeShader Destroyable
 
 // Shader represents a single shader program.
 //
-// Clients are responsible for utilizing the RWMutex of the shader when using
-// it or invoking methods.
+// A shader and it's methods are not safe for access from multiple goroutines
+// concurrently.
 type Shader struct {
-	sync.RWMutex
-
 	// The native object of this shader. Once loaded (if no compiler error
 	// occured) then the device using this shader must assign a value to this
 	// field. Typically clients should not assign values to this field at all.
@@ -72,7 +70,6 @@ type Shader struct {
 // native shader, the OnLoad slice, the Loaded status, and error log slice.
 func (s *Shader) Copy() *Shader {
 	cpy := &Shader{
-		sync.RWMutex{},
 		nil,   // Native shader -- not copied.
 		false, // Loaded status -- not copied.
 		s.KeepDataOnLoad,
@@ -101,8 +98,6 @@ func (s *Shader) ClearData() {
 }
 
 // Reset resets this shader to it's default (NewShader) state.
-//
-// The shader's write lock must be held for this method to operate safely.
 func (s *Shader) Reset() {
 	s.NativeShader = nil
 	s.Loaded = false
@@ -121,8 +116,6 @@ func (s *Shader) Reset() {
 // Destroy destroys this shader for use by other callees to NewShader. You must
 // not use it after calling this method. This makes an implicit call to
 // s.NativeShader.Destroy.
-//
-// The shader's write lock must be held for this method to operate safely.
 func (s *Shader) Destroy() {
 	if s.NativeShader != nil {
 		s.NativeShader.Destroy()
