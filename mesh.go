@@ -163,9 +163,9 @@ type NativeMesh Destroyable
 // A mesh and it's methods are not safe for access from multiple goroutines
 // concurrently.
 type Mesh struct {
-	// The native object of this mesh. Once loaded the device using this mesh
-	// must assign a value to this field. Typically clients should not assign
-	// values to this field at all.
+	// The native object of this mesh. Once the mesh is loaded by a device this
+	// field will be initialized by the device. Only device implementations
+	// should assign values to this field.
 	NativeMesh
 
 	// Weather or not this mesh is currently loaded or not.
