@@ -89,9 +89,7 @@ func (n *nilDevice) ClearDepth(r image.Rectangle, depth float64) {}
 func (n *nilDevice) ClearStencil(r image.Rectangle, stencil int) {}
 func (n *nilDevice) Draw(r image.Rectangle, o *Object, c *Camera) {
 	o.Bounds()
-	o.Lock()
 	o.NativeObject = nilNativeObject{}
-	o.Unlock()
 }
 func (n *nilDevice) QueryWait() {}
 func (n *nilDevice) Render() {
@@ -99,35 +97,29 @@ func (n *nilDevice) Render() {
 }
 
 func (n *nilDevice) LoadMesh(m *Mesh, done chan *Mesh) {
-	m.Lock()
 	m.Loaded = true
 	m.ClearData()
 	m.NativeMesh = nilNativeMesh{}
-	m.Unlock()
 	select {
 	case done <- m:
 	default:
 	}
 }
 func (n *nilDevice) LoadTexture(t *Texture, done chan *Texture) {
-	t.Lock()
 	t.Loaded = true
 	t.ClearData()
 	t.NativeTexture = nilNativeTexture{
 		t.Format,
 	}
-	t.Unlock()
 	select {
 	case done <- t:
 	default:
 	}
 }
 func (n *nilDevice) LoadShader(s *Shader, done chan *Shader) {
-	s.Lock()
 	s.Loaded = true
 	s.ClearData()
 	s.NativeShader = nilNativeShader{}
-	s.Unlock()
 	select {
 	case done <- s:
 	default:
