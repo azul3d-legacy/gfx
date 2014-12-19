@@ -32,7 +32,7 @@ func (c *Clock) FrameRate() float64 {
 }
 
 // FrameRateDeviation returns the standard deviation of the frame times that
-// have occured over the last AverageFrameRateSamples() frames.
+// have occured over the last AverageFrameRateSamples frames.
 func (c *Clock) FrameRateDeviation() float64 {
 	c.access.RLock()
 	defer c.access.RUnlock()
@@ -41,7 +41,7 @@ func (c *Clock) FrameRateDeviation() float64 {
 }
 
 // AverageFrameRate returns the average number of frames per second that have
-// occured over the last Clock.AverageFrameRateSamples() frames.
+// occured over the last AverageFrameRateSamples frames.
 func (c *Clock) AverageFrameRate() float64 {
 	c.access.RLock()
 	defer c.access.RUnlock()
@@ -84,7 +84,7 @@ func (c *Clock) ResetFrameCount() {
 	c.SetFrameCount(0)
 }
 
-// FrameCount returns the number of frames that have rendered.
+// FrameCount returns the number of frames that have rendered in total.
 func (c *Clock) FrameCount() uint64 {
 	c.access.RLock()
 	defer c.access.RUnlock()
@@ -92,10 +92,9 @@ func (c *Clock) FrameCount() uint64 {
 	return c.frameCount
 }
 
-// SetMaxDelta specifies an duration which will serve as the maximum duration
-// returned by Clock.Delta().
-//
-// Zero is considered "no maximum delta".
+// SetMaxDelta specifies a duration which will serve as the maximum duration
+// returned by the Delta method. Zero implies that there should be no maximum
+// delta duration.
 func (c *Clock) SetMaxDelta(max time.Duration) {
 	c.access.Lock()
 	defer c.access.Unlock()
@@ -104,9 +103,7 @@ func (c *Clock) SetMaxDelta(max time.Duration) {
 }
 
 // MaxDelta returns the duration which serves as the maximum duration returned
-// by Clock.Delta()
-//
-// Zero is considered "no maximum delta".
+// by the Delta method. Zero implies that there is no maximum delta duration.
 func (c *Clock) MaxDelta() time.Duration {
 	c.access.RLock()
 	defer c.access.RUnlock()
@@ -114,11 +111,10 @@ func (c *Clock) MaxDelta() time.Duration {
 	return c.maxDelta
 }
 
-// SetMaxFrameRate specifies an maximum frame rate, calls to Clock.Tick() will
-// block for whatever time is significant enough to ensure that the frame rate
-// is at max this number.
-//
-// If max is zero, it is considered "no maximum frame rate".
+// SetMaxFrameRate specifies an maximum frame rate. Calls to the Tick method
+// will block for whatever time is significant enough to ensure that the frame
+// rate is at max this number. Zero implies that there is no maximum frame
+// rate.
 //
 // If max is less than zero, an panic occurs.
 func (c *Clock) SetMaxFrameRate(max float64) {
@@ -132,7 +128,7 @@ func (c *Clock) SetMaxFrameRate(max float64) {
 }
 
 // MaxFrameRate returns the maximum frame rate of this Clock, as it was set
-// previously by Clock.SetMaxFrameRate().
+// previously by a call to the SetMaxFrameRate method.
 func (c *Clock) MaxFrameRate() float64 {
 	c.access.RLock()
 	defer c.access.RUnlock()
@@ -140,8 +136,8 @@ func (c *Clock) MaxFrameRate() float64 {
 	return c.maxFrameRate
 }
 
-// SetFixedDelta specifies an duration to be handed out via Clock.Delta()
-// instead of the actual calculated delta.
+// SetFixedDelta specifies an explicit duration to be handed out via calls to
+// the Delta method instead of the actual calculated delta.
 func (c *Clock) SetFixedDelta(delta time.Duration) {
 	c.access.Lock()
 	defer c.access.Unlock()
@@ -149,8 +145,8 @@ func (c *Clock) SetFixedDelta(delta time.Duration) {
 	c.fixedDelta = delta
 }
 
-// FixedDelta returns the duration which is to be handed out via Clock.Delta()
-// instead of the actual calculated delta.
+// FixedDelta returns the duration which is to be handed out via calls to the
+// Delta method instead of the actual calculated delta.
 //
 // If time.Duration(0) is returned, then there is no fixed delta specified
 // currently.
@@ -162,16 +158,13 @@ func (c *Clock) FixedDelta() time.Duration {
 }
 
 // Delta returns the time between the start of the current frame and the start
-// of the last frame.
+// of the last frame. If the clock is using a fixed delta value then that value
+// is returned instead.
 //
-// If Clock.FixedDelta() returns non-zero, then this function returns that
-// value instead.
+// The value returned will be clamped to MaxDelta.
 //
-// The value returned will be clamped to clock.MaxDelta(), regardless if the
-// value returned would otherwise be larger.
-//
-// The duration returned will never be less than zero as long as clock.Tick()
-// has been called at least once previously.
+// The duration returned will never be less than zero as long as Tick has been
+// called at least once.
 func (c *Clock) Delta() time.Duration {
 	c.access.RLock()
 	defer c.access.RUnlock()
@@ -306,17 +299,14 @@ func (c *Clock) Reset() {
 	c.startTime = getTime()
 }
 
-// New returns an new *Clock, with:
+// New initializes and returns a new Clock. The returned clock has it's start
+// time set to the current time, has it's maximum frame rate set to 75, and
+// it's number of average frame rate samples set to 120.
 //
-// It's start time set to the current time (via Clock.Reset).
-//
-// It's maximum frame rate set to 75 (Note: This is good practice because not
-// all computers have working support for high resolution clocks, by setting an
-// maximum frame rate, you ensure that you will never get Clock.Delta() values
-// equal to zero).
-//
-// It's number of average frame rate samples set to 120 (via
-// Clock.SetAverageFrameRateSamples).
+// A maximum frame rate of 75 is a good choice because it is slightly above the
+// refresh rate of most screens, and not all hardware supports high resolution
+// clocks so the limit also ensures that Delta never returns values equal to
+// zero.
 func New() *Clock {
 	c := new(Clock)
 	c.Reset()
