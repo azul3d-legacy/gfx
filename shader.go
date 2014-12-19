@@ -15,9 +15,9 @@ type NativeShader Destroyable
 // A shader and it's methods are not safe for access from multiple goroutines
 // concurrently.
 type Shader struct {
-	// The native object of this shader. Once loaded (if no compiler error
-	// occured) then the device using this shader must assign a value to this
-	// field. Typically clients should not assign values to this field at all.
+	// The native object of this shader. Once the shader is loaded (if no
+	// compiler error occured) then this field will be initialized by the
+	// device. Only device implementations should assign values to this field.
 	NativeShader
 
 	// Weather or not this shader is currently loaded or not.
