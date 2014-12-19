@@ -47,8 +47,8 @@ type NativeObject interface {
 // goroutines concurrently.
 type Object struct {
 	// The native object of this graphics object. The device using this
-	// graphics object will assign a value to this field after a call to
-	// Draw has finished.
+	// graphics object will assign a value to this field once ownership of the
+	// object has been passed back to the caller of Draw.
 	NativeObject
 
 	// Whether or not this object should be occlusion tested. See also the
