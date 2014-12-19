@@ -308,9 +308,9 @@ func (c *Clock) Reset() {
 // clocks so the limit also ensures that Delta never returns values equal to
 // zero.
 func New() *Clock {
-	c := new(Clock)
-	c.Reset()
-	c.SetMaxFrameRate(75)
-	c.SetAverageFrameRateSamples(120)
-	return c
+	return &Clock{
+		startTime: getTime(),
+		maxFrameRate: 75,
+		averageFrameSamples: make([]float64, 120),
+	}
 }
