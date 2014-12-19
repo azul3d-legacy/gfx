@@ -145,4 +145,4 @@
 // implementation dependant. This form of debugging should be used with a debug
 // OpenGL context.
 //
-package gl2
+package gl2 // import "azul3d.org/gfx.v2-dev/gl2"

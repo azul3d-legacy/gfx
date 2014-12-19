@@ -13,4 +13,4 @@
 //
 // Texture coordinates do not follow OpenGL convention but rather Go convention
 // where theorigin (0, 0) is the top-left corner of the texture.
-package gfx
+package gfx // import "azul3d.org/gfx.v2-dev"

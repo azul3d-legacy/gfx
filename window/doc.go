@@ -192,4 +192,4 @@
 // useful for testing how your application might run under more constrained
 // OpenGL ES 2 devices (i.e. mobile devices).
 //
-package window
+package window // import "azul3d.org/gfx.v2-dev/window"
