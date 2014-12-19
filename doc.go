@@ -13,4 +13,12 @@
 //
 // Texture coordinates do not follow OpenGL convention but rather Go convention
 // where theorigin (0, 0) is the top-left corner of the texture.
+//
+// Examples
+//
+// The examples repository contains several examples which utilize the gfx core
+// packages. Please see:
+//
+// https://azul3d.org/examples.v1
+//
 package gfx // import "azul3d.org/gfx.v2-dev"

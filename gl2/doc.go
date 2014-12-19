@@ -145,4 +145,11 @@
 // implementation dependant. This form of debugging should be used with a debug
 // OpenGL context.
 //
+// Examples
+//
+// The examples repository contains several examples which utilize the gfx core
+// packages. Please see:
+//
+// https://azul3d.org/examples.v1
+//
 package gl2 // import "azul3d.org/gfx.v2-dev/gl2"

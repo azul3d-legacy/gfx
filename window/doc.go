@@ -178,18 +178,18 @@
 // Because a channel is used, the main loop is said to be communicative rather
 // than employing a busy-waiting scheme.
 //
-// Examples
-//
-// The examples subdirectory of the gfx package contains several examples
-// which utilize this package. Please see:
-//
-// https://azul3d.org/gfx.v2#hdr-Examples
-//
 // Build Tags
 //
 // The build tag "gles2" is accepted on 386 and amd64 architectures to choose
 // to utilize a OpenGL ES 2 based device instead of the OpenGL 2 one. This is
 // useful for testing how your application might run under more constrained
 // OpenGL ES 2 devices (i.e. mobile devices).
+//
+// Examples
+//
+// The examples repository contains several examples which utilize the gfx core
+// packages. Please see:
+//
+// https://azul3d.org/examples.v1
 //
 package window // import "azul3d.org/gfx.v2-dev/window"
