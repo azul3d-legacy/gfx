@@ -618,6 +618,10 @@ func glStr(s string) *int8 {
 	return gl.Str(s + "\x00")
 }
 
+// Initialization of OpenGL in two seperate thread at the same time is racy
+// because it is storing information on the OpenGL function pointers.
+var initLock sync.Mutex
+
 // newDevice is the implementation of New.
 func newDevice(opts ...Option) (Device, error) {
 	r := &device{
@@ -634,10 +638,12 @@ func newDevice(opts ...Option) (Device, error) {
 	}
 
 	// Initialize OpenGL.
+	initLock.Lock()
 	err := gl.Init()
 	if err != nil {
 		return nil, fmt.Errorf("OpenGL Error: %v", err)
 	}
+	initLock.Unlock()
 
 	// Note: we don't need r.gl.Lock() here because no other goroutines
 	// can be using r.ctx yet since we haven't returned from New().
