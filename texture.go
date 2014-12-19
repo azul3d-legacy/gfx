@@ -116,9 +116,9 @@ type NativeTexture interface {
 // A texture and it's methods are not safe for access from multiple goroutines
 // concurrently.
 type Texture struct {
-	// The native object of this texture. Once loaded the device using this
-	// texture must assign a value to this field. Typically clients should not
-	// assign values to this field at all.
+	// The native object of this texture. Once the texture is loaded by a
+	// device this field will be initialized by the device. Only device
+	// implementations should assign values to this field.
 	NativeTexture
 
 	// Weather or not this texture is currently loaded or not.
