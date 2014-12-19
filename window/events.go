@@ -9,6 +9,43 @@ import (
 	"time"
 )
 
+// Poll calls the given function for each pending event in the given channel.
+//
+// It operates identically to traditional non-blocking event polling, and is
+// useful in situations where one wants to poll for events inside of e.g. the
+// render loop. For example:
+//
+// for{
+//     window.Poll(events, func(e window.Event) {
+//         fmt.Println("event", e)
+//     })
+//
+//     fmt.Println("render!")
+// }
+//
+// Is equivilent to writing:
+//
+// for{
+//     l := len(events)
+//     for i := 0; i < l; i++ {
+//         e := <-events
+//         fmt.Println("event", e)
+//     }
+//
+//     fmt.Println("render!")
+// }
+//
+// The declaration of the variable l outside of the foor loop is critical:
+// event channels are streams of events and there is no guarantee that there
+// will be a pause in them, writing the loop any other way would block
+// rendering.
+func Poll(events <-chan Event, f func(e Event)) {
+	l := len(events)
+	for i := 0; i < l; i++ {
+		f(<-events)
+	}
+}
+
 // Event represents an event of some sort. The only requirement is that the
 // event specify the point in time at which it happened.
 //

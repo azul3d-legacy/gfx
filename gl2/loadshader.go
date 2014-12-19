@@ -69,12 +69,9 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 	}
 	r.shared.RUnlock()
 
-	// Lock the shader until we are done loading it.
-	s.Lock()
 	if s.Loaded || len(s.Error) > 0 {
 		// Shader is already loaded or there was an error loading, signal
-		// completion if needed and return after unlocking.
-		s.Unlock()
+		// completion if needed and return.
 		select {
 		case done <- s:
 		default:
@@ -241,8 +238,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		gl.Flush()
 		//gl.Execute()
 
-		// Unlock, signal completion, and return.
-		s.Unlock()
+		// Signal completion and return.
 		select {
 		case done <- s:
 		default:

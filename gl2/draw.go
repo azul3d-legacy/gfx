@@ -138,23 +138,6 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 	// are set to nil.
 	o.Bounds()
 
-	lock := func() {
-		o.Lock()
-		if c != nil {
-			c.Lock()
-		}
-	}
-
-	unlock := func() {
-		o.Unlock()
-		if c != nil {
-			c.Unlock()
-		}
-	}
-
-	// Lock the object until we are completely done drawing it.
-	lock()
-
 	var (
 		shaderLoaded   chan *gfx.Shader
 		meshesLoaded   []chan *gfx.Mesh
@@ -164,17 +147,13 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 	// Begin loading shader.
 	if o.Shader == nil {
 		// Can't draw.
-		unlock()
 		r.logf("Draw(): object has a nil shader\n")
 		return
 	}
-	o.Shader.RLock()
 	shaderNeedLoad := !o.Shader.Loaded
 	shaderHasError := len(o.Shader.Error) > 0
-	o.Shader.RUnlock()
 	if shaderHasError {
 		// Can't draw.
-		unlock()
 		return
 	}
 	if shaderNeedLoad {
@@ -185,19 +164,15 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 	// Begin loading meshes.
 	if len(o.Meshes) == 0 {
 		// Can't draw.
-		unlock()
 		r.logf("Draw(): object has no meshes\n")
 		return
 	}
 
 	for _, m := range o.Meshes {
-		m.RLock()
 		meshNeedLoad := !m.Loaded || m.HasChanged()
 		meshEmpty := !m.Loaded && len(m.Vertices) == 0
-		m.RUnlock()
 		if meshEmpty {
 			// Can't draw.
-			unlock()
 			r.logf("Draw(): mesh is not loaded and has no vertices\n")
 			return
 		}
@@ -210,9 +185,7 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 
 	// Begin loading textures.
 	for _, t := range o.Textures {
-		t.RLock()
 		texNeedLoad := !t.Loaded
-		t.RUnlock()
 		if texNeedLoad {
 			ch := make(chan *gfx.Texture, 1)
 			r.LoadTexture(t, ch)
@@ -232,20 +205,17 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 	}
 
 	// Check if the now-loaded shader might have errors.
-	o.Shader.RLock()
 	shaderHasError = len(o.Shader.Error) > 0
-	o.Shader.RUnlock()
 	if shaderHasError {
 		// Can't draw.
-		unlock()
 		return
 	}
 
-	// Must set at least an empty native object before Draw() returns.
-	o.NativeObject = nativeObject{}
-
 	// Ask the render loop to perform drawing.
 	r.renderExec <- func() bool {
+		// Give the object a native object.
+		o.NativeObject = nativeObject{}
+
 		if pre != nil {
 			pre()
 		}
@@ -271,9 +241,6 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 
 		// Clear the object's state.
 		r.clearState(ns, o)
-
-		// Unlock the object now that we are done drawing it.
-		unlock()
 
 		// Yield for occlusion query results, if any are available.
 		r.queryYield()

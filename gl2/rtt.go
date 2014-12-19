@@ -267,17 +267,6 @@ func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		return nil
 	}
 
-	// Lock textures.
-	if cfg.Color != nil {
-		cfg.Color.Lock()
-	}
-	if cfg.Depth != nil {
-		cfg.Depth.Lock()
-	}
-	if cfg.Stencil != nil {
-		cfg.Stencil.Lock()
-	}
-
 	// Create the RTT canvas.
 	cr, cg, cb, ca := cfg.ColorFormat.Bits()
 	canvas := &rttCanvas{
@@ -381,9 +370,6 @@ func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		if fbError == errFramebufferUnsupported {
 			// Ideally this shouldn't happen, but it could under e.g. strange
 			// drivers not supporting a combination of 'supported' formats.
-			cfg.Color.Unlock()
-			cfg.Depth.Unlock()
-			cfg.Stencil.Unlock()
 			return nil
 		}
 		panic(fbError)
@@ -395,7 +381,6 @@ func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 			return
 		}
 		if native == nil {
-			t.Unlock()
 			return
 		}
 		canvas.textureCount.count++
@@ -407,7 +392,6 @@ func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		t.Bounds = cfg.Bounds
 		t.Loaded = true
 		t.ClearData()
-		t.Unlock()
 	}
 	finishTexture(cfg.Color, nil, nTexColor)
 	finishTexture(cfg.Depth, &cfg.DepthFormat, nTexDepth)

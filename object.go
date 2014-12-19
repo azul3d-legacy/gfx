@@ -18,10 +18,11 @@ import (
 // object or else doing so will be left up to a runtime Finalizer.
 type Destroyable interface {
 	// Destroy destroys this object. Once destroyed the object can still be
-	// used but doing so is not advised for performance reasons (e.g. requires
-	// reloading the entire object).
+	// used but doing so is not advised for performance reasons (e.g. it
+	// requires reloading the entire object).
 	//
-	// This method is safe to invoke from multiple goroutines concurrently.
+	// Destroy can be called any number of times and safely from multiple
+	// goroutines concurrently.
 	Destroy()
 }
 
@@ -35,8 +36,6 @@ type NativeObject interface {
 	// will return the number of samples that passed the depth and stencil
 	// testing phases the last time the object was drawn. If occlusion queries
 	// are not supported then -1 will be returned.
-	//
-	// This method is safe to invoke from multiple goroutines concurrently.
 	SampleCount() int
 }
 
@@ -44,14 +43,12 @@ type NativeObject interface {
 // transformation matrix which is applied to each vertex of each mesh, it
 // has a shader program, meshes, and textures used for drawing the object.
 //
-// Clients are responsible for utilizing the RWMutex of the object when using
-// it or invoking methods.
+// A graphics object and it's methods are not safe for access from multiple
+// goroutines concurrently.
 type Object struct {
-	sync.RWMutex
-
 	// The native object of this graphics object. The device using this
-	// graphics object must assign a value to this field after a call to
-	// Draw() has finished before unlocking the object.
+	// graphics object will assign a value to this field once ownership of the
+	// object has been passed back to the caller of Draw.
 	NativeObject
 
 	// Whether or not this object should be occlusion tested. See also the
@@ -90,9 +87,7 @@ type Object struct {
 	// not reflect this automatically. Instead, you must clear the cached
 	// bounds explicitly:
 	//
-	//  o.Lock()
 	//  o.CachedBounds = nil
-	//  o.Unlock()
 	//
 	// And then simply invoke o.Bounds() again to calculate the bounds again.
 	CachedBounds *lmath.Rect3
@@ -105,17 +100,13 @@ type Object struct {
 // this method are fast. If you make changes to the vertices, or add/remove
 // meshes from this object you need to explicitly clear the cached bounds so
 // that the next call to Bounds() will calculate the bounding box again:
-//  o.Lock()
+//
 //  o.CachedBounds = nil
-//  o.Unlock()
 //
 // You do not need to clear the cached bounds if the transform of the object
 // has changed (as it is applied after calculation of the bounding box).
-//
-// This method properly write-locks the object.
 func (o *Object) Bounds() lmath.Rect3 {
 	var b lmath.Rect3
-	o.Lock()
 	// Do we have a cached bounding box? If so, use it.
 	if o.CachedBounds != nil {
 		b = *o.CachedBounds
@@ -141,15 +132,12 @@ func (o *Object) Bounds() lmath.Rect3 {
 		b.Max = o.Transform.ConvertPos(b.Max, LocalToWorld)
 		b = b.Union(b)
 	}
-	o.Unlock()
 	return b
 }
 
 // Compare compares this object's state (including shader and textures) against
 // the other one and determines if it should sort before the other one for
 // state sorting purposes.
-//
-// The object's read lock must be held for this method to operate safely.
 func (o *Object) Compare(other *Object) bool {
 	if o == other {
 		return true
@@ -174,8 +162,6 @@ func (o *Object) Compare(other *Object) bool {
 // Copy returns a new copy of this Object. Explicitily not copied is the native
 // object. The transform is copied via it's Copy() method. The shader is only
 // copied by pointer.
-//
-// The object's read lock must be held for this method to operate safely.
 func (o *Object) Copy() *Object {
 	cpyCachedBounds := *o.CachedBounds
 	cpy := &Object{
@@ -193,8 +179,6 @@ func (o *Object) Copy() *Object {
 }
 
 // Reset resets this object to it's default (NewObject) state.
-//
-// The object's write lock must be held for this method to operate safely.
 func (o *Object) Reset() {
 	o.NativeObject = nil
 	o.OcclusionTest = false
@@ -219,8 +203,6 @@ func (o *Object) Reset() {
 // Destroy destroys this object for use by other callees to NewObject. You must
 // not use it after calling this method. This makes an implicit call to
 // o.NativeObject.Destroy.
-//
-// The object's write lock must be held for this method to operate safely.
 func (o *Object) Destroy() {
 	if o.NativeObject != nil {
 		o.NativeObject.Destroy()

@@ -34,7 +34,7 @@ type Precision struct {
 // Canvas defines a canvas that can be drawn to (i.e. a window that the user
 // will visibly see, or a texture that will store the results for later use).
 //
-// All methods must be safe to call from multiple goroutines.
+// A canvases method's are safe to call from multiple goroutines concurrently.
 type Canvas interface {
 	Downloadable
 
@@ -56,8 +56,8 @@ type Canvas interface {
 	// methods of this canvas that take rectangles as parameters will be
 	// clamped to these bounds.
 	//
-	// The bounds returned by this method may change at any given time (e.g.
-	// when a user resizes the window).
+	// The bounds that this method returns may change over time (e.g. when a
+	// user resizes the window).
 	Bounds() image.Rectangle
 
 	// Clear submits a clear operation to the canvas. It will clear the given
@@ -84,8 +84,12 @@ type Canvas interface {
 	// Draw submits a draw operation to the canvas. It will draw the given
 	// graphics object onto the specified rectangle of the canvas.
 	//
-	// The canvas will lock the object and camera object and they may stay
-	// locked until some point in the future when the draw operation completes.
+	// Upon calling this method, ownership of the graphics object is given to
+	// the canvas itself and you may no longer access it safely until the
+	// canvas gives ownership of the object back to you.
+	//
+	// The canvas returns owernship of the object via the channel, if done !=
+	// nil, or more effectively after Render has returned.
 	//
 	// If not nil, then the object is drawn according to how it is seen by the
 	// given camera object (taking into account the camera object's
@@ -103,6 +107,7 @@ type Canvas interface {
 	// bounding box.
 	//
 	// The object will not be drawn if any of the following cases are true:
+	//
 	//  o.Shader == nil
 	//  len(o.Shader.Error) > 0
 	//  len(o.Meshes) == 0
@@ -215,13 +220,16 @@ type DeviceInfo struct {
 // textures, and shaders. A device itself has a base canvas which can be drawn
 // to (typically a window on the screen, for instance).
 //
-// All methods must be safe to call from multiple goroutines.
+// A devices method's are safe to call from multiple goroutines concurrently.
 type Device interface {
+	// The base canvas of the device (typically the window on the screen). The
+	// canvas, like all other canvases, must not be accessed from multiple
+	// goroutines concurrently.
 	Canvas
 
 	// Clock should return the graphics clock object which monitors the time
 	// between frames, etc. The device is responsible for ticking it every
-	// time a frame is device.
+	// time a frame is rendered.
 	Clock() *clock.Clock
 
 	// Info should return information about the graphics hardware.
@@ -232,10 +240,13 @@ type Device interface {
 	// Additionally, the device will set m.Loaded to true, and then invoke
 	// m.ClearData(), thus allowing the data slices to be garbage collected).
 	//
-	// The device will lock the mesh and it may stay locked until sometime in
-	// the future when the load operation completes. The mesh will be sent over
-	// the done channel once the load operation has completed if the channel is
-	// not nil and sending would not block.
+	// When the mesh is fully loaded, it is sent to the done channel if != nil,
+	// and as long as sending would not block (i.e. ensure a buffer size of at
+	// least one).
+	//
+	// Upon calling this method, ownership of the mesh is transferred to the
+	// device itself and you may no longer access it safely until the device
+	// passes ownership back to you over the done channel.
 	LoadMesh(m *Mesh, done chan *Mesh)
 
 	// LoadTexture should begin loading the specified texture asynchronously.
@@ -243,10 +254,13 @@ type Device interface {
 	// Additionally, the device will set t.Loaded to true, and then invoke
 	// t.ClearData(), thus allowing the source image to be garbage collected.
 	//
-	// The device will lock the texture and it may stay locked until sometime
-	// in the future when the load operation completes. The texture will be
-	// sent over the done channel once the load operation has completed if the
-	// channel is not nil and sending would not block.
+	// When the texture is fully loaded, it is sent to the done channel
+	// if != nil, and as long as sending would not block (i.e. ensure a buffer
+	// size of at least one).
+	//
+	// Upon calling this method, ownership of the mesh is transferred to the
+	// device itself and you may no longer access it safely until the device
+	// passes ownership back to you over the done channel.
 	LoadTexture(t *Texture, done chan *Texture)
 
 	// LoadShader should begin loading the specified shader asynchronously.
@@ -256,10 +270,13 @@ type Device interface {
 	// s.ClearData(), thus allowing the source data slices to be garbage
 	// collected.
 	//
-	// The device will lock the shader and it may stay locked until sometime
-	// in the future when the load operation completes. The shader will be sent
-	// over the done channel once the load operation has completed if the
-	// channel is not nil and sending would not block.
+	// When the shader is fully loaded (or has an error), it is sent to the
+	// done channel if != nil, and as long as sending would not block (i.e.
+	// ensure a buffer size of at least one).
+	//
+	// Upon calling this method, ownership of the shader is transferred to the
+	// device itself and you may no longer access it safely until the device
+	// passes ownership back to you over the done channel.
 	LoadShader(s *Shader, done chan *Shader)
 
 	// RenderToTexture creates and returns a canvas that when drawn to, stores

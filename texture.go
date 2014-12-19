@@ -113,14 +113,12 @@ type NativeTexture interface {
 // Texture represents a single 2D texture that may be applied to a mesh for
 // drawing.
 //
-// Clients are responsible for utilizing the RWMutex of the texture when using
-// it or invoking methods.
+// A texture and it's methods are not safe for access from multiple goroutines
+// concurrently.
 type Texture struct {
-	sync.RWMutex
-
-	// The native object of this texture. Once loaded the device using this
-	// texture must assign a value to this field. Typically clients should not
-	// assign values to this field at all.
+	// The native object of this texture. Once the texture is loaded by a
+	// device this field will be initialized by the device. Only device
+	// implementations should assign values to this field.
 	NativeTexture
 
 	// Weather or not this texture is currently loaded or not.
@@ -163,11 +161,8 @@ type Texture struct {
 // native texture, the OnLoad slice, the Loaded status, and the source image
 // (because the image type is not strictly known). Because the texture's source
 // image is not copied over, you may want to copy it directly over yourself.
-//
-// The texture's read lock must be held for this method to operate safely.
 func (t *Texture) Copy() *Texture {
 	return &Texture{
-		sync.RWMutex{},
 		nil,   // Native texture -- not copied.
 		false, // Loaded status -- not copied.
 		t.KeepDataOnLoad,
@@ -184,8 +179,6 @@ func (t *Texture) Copy() *Texture {
 
 // ClearData sets the data source image, t.Source, of this texture to nil if
 // t.KeepDataOnLoad is set to false.
-//
-// The texture's write lock must be held for this method to operate safely.
 func (t *Texture) ClearData() {
 	if !t.KeepDataOnLoad {
 		t.Source = nil
@@ -193,8 +186,6 @@ func (t *Texture) ClearData() {
 }
 
 // Reset resets this texture to it's default (NewTexture) state.
-//
-// The textures's write lock must be held for this method to operate safely.
 func (t *Texture) Reset() {
 	t.NativeTexture = nil
 	t.Loaded = false
@@ -212,8 +203,6 @@ func (t *Texture) Reset() {
 // Destroy destroys this texture for use by other callees to NewTexture. You
 // must not use it after calling this method. This makes an implicit call to
 // t.NativeTexture.Destroy.
-//
-// The texture's write lock must be held for this method to operate safely.
 func (t *Texture) Destroy() {
 	if t.NativeTexture != nil {
 		t.NativeTexture.Destroy()

@@ -154,19 +154,18 @@ type NativeMesh Destroyable
 // Mesh represents a single mesh made up of several components. A mesh may or
 // may not be made up of indexed vertices, etc, depending on whether or not
 // len(m.Indices) == 0 holds true.
+//
 // In the event that a mesh is indexed, m.Indices holds the indices and it can
 // be expected that each other slice (Vertices for instance) will hold at least
 // enough elements (or be nil) such that the each index will not be out of
 // bounds.
 //
-// Clients are responsible for utilizing the RWMutex of the mesh when using it
-// or invoking methods.
+// A mesh and it's methods are not safe for access from multiple goroutines
+// concurrently.
 type Mesh struct {
-	sync.RWMutex
-
-	// The native object of this mesh. Once loaded the device using this mesh
-	// must assign a value to this field. Typically clients should not assign
-	// values to this field at all.
+	// The native object of this mesh. Once the mesh is loaded by a device this
+	// field will be initialized by the device. Only device implementations
+	// should assign values to this field.
 	NativeMesh
 
 	// Weather or not this mesh is currently loaded or not.
@@ -275,11 +274,8 @@ type Mesh struct {
 // this may be an expensive operation. Explicitly not copied over is the native
 // mesh, the OnLoad slice, and the loaded and changed statuses (Loaded,
 // IndicesChanged, VerticesChanged, etc).
-//
-// The mesh's read lock must be held for this method to operate safely.
 func (m *Mesh) Copy() *Mesh {
 	cpy := &Mesh{
-		sync.RWMutex{},
 		nil,   // Native mesh -- not copied.
 		false, // Loaded status -- not copied.
 		m.Primitive,
@@ -318,22 +314,17 @@ func (m *Mesh) Copy() *Mesh {
 	return cpy
 }
 
-// Bounds implements the Boundable interface. It is thread-safe and performs
-// locking automatically. If the AABB of this mesh is empty then the bounds are
-// calculated.
+// Bounds implements the Boundable interface. If the AABB of this mesh is empty
+// then the bounds are calculated.
 func (m *Mesh) Bounds() lmath.Rect3 {
-	m.Lock()
 	if m.AABB.Empty() {
 		m.CalculateBounds()
 	}
 	bounds := m.AABB
-	m.Unlock()
 	return bounds
 }
 
 // GenerateBary generates the barycentric coordinates for this mesh.
-//
-// The mesh's write lock must be held for this method to operate safely.
 func (m *Mesh) GenerateBary() {
 	var (
 		bci = -1
@@ -355,8 +346,6 @@ func (m *Mesh) GenerateBary() {
 }
 
 // CalculateBounds calculates a new axis aligned bounding box for this mesh.
-//
-// The mesh's write lock must be held for this method to operate safely.
 func (m *Mesh) CalculateBounds() {
 	var bb lmath.Rect3
 	if len(m.Vertices) > 0 {
@@ -371,8 +360,6 @@ func (m *Mesh) CalculateBounds() {
 
 // HasChanged tells if any of the data slices of the mesh are marked as having
 // changed.
-//
-// The mesh's read lock must be held for this method to operate safely.
 func (m *Mesh) HasChanged() bool {
 	if m.IndicesChanged || m.VerticesChanged || m.ColorsChanged || m.NormalsChanged || m.BaryChanged {
 		return true
@@ -436,9 +423,6 @@ func fastAppendSlice(a, b interface{}) interface{} {
 // mesh has vertex colors, the mesh (m) will have it's vertex colors set to
 // nil. You can check which data slices are in common by comparing the states
 // of both meshes (see the MeshState documentation).
-//
-// m's write lock and other's read lock must be held for this method to operate
-// safely.
 func (m *Mesh) Append(other *Mesh) {
 	if len(other.Vertices) == 0 {
 		// No vertices: nothing to do.
@@ -564,8 +548,6 @@ func (m *Mesh) Append(other *Mesh) {
 
 // ClearData sets the data slices of this mesh to nil if m.KeepDataOnLoad is
 // set to false.
-//
-// The mesh's write lock must be held for this method to operate safely.
 func (m *Mesh) ClearData() {
 	if !m.KeepDataOnLoad {
 		m.Indices = nil
@@ -579,8 +561,6 @@ func (m *Mesh) ClearData() {
 }
 
 // Reset resets this mesh to it's default (NewMesh) state.
-//
-// The mesh's write lock must be held for this method to operate safely.
 func (m *Mesh) Reset() {
 	m.NativeMesh = nil
 	m.Loaded = false
@@ -609,8 +589,6 @@ func (m *Mesh) Reset() {
 // Destroy destroys this mesh for use by other callees to NewMesh. You must not
 // use it after calling this method. This makes an implicit call to
 // m.NativeMesh.Destroy.
-//
-// The mesh's write lock must be held for this method to operate safely.
 func (m *Mesh) Destroy() {
 	if m.NativeMesh != nil {
 		m.NativeMesh.Destroy()

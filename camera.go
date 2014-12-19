@@ -20,6 +20,9 @@ var (
 // objects transform and the viewing frustum controls how the camera views
 // things. Since a camera is in itself also an object it may also have visible
 // meshes attatched to it, etc.
+//
+// A camera and it's methods are not safe for access from multiple goroutines
+// concurrently.
 type Camera struct {
 	*Object
 
@@ -39,8 +42,6 @@ type Camera struct {
 // Clients who need advanced control over how the orthographic viewing frustum
 // is set up may use this method's source as a reference (e.g. to change the
 // center point, which this method sets at the bottom-left).
-//
-// The camera's write lock must be held for this method to operate safely.
 func (c *Camera) SetOrtho(view image.Rectangle, near, far float64) {
 	w := float64(view.Dx())
 	w = float64(int((w / 2.0)) * 2)
@@ -64,8 +65,6 @@ func (c *Camera) SetOrtho(view image.Rectangle, near, far float64) {
 // Clients who need advanced control over how the perspective viewing frustum
 // is set up may use this method's source as a reference (e.g. to change the
 // center point, which this method sets at the center).
-//
-// The camera's write lock must be held for this method to operate safely.
 func (c *Camera) SetPersp(view image.Rectangle, fov, near, far float64) {
 	aspectRatio := float64(view.Dx()) / float64(view.Dy())
 	m := lmath.Mat4Perspective(fov, aspectRatio, near, far)
@@ -77,8 +76,6 @@ func (c *Camera) SetPersp(view image.Rectangle, fov, near, far float64) {
 //
 // If ok=false is returned then the point is outside of the camera's view and
 // the returned point may not be meaningful.
-//
-// The camera's read lock must be held for this method to operate safely.
 func (c *Camera) Project(p3 lmath.Vec3) (p2 lmath.Vec2, ok bool) {
 	cameraInv, _ := c.Object.Transform.Mat4().Inverse()
 	cameraInv = cameraInv.Mul(zUpRightToYUpRight)
@@ -91,8 +88,6 @@ func (c *Camera) Project(p3 lmath.Vec3) (p2 lmath.Vec2, ok bool) {
 }
 
 // Copy returns a new copy of this Camera.
-//
-// The camera's read lock must be held for this method to operate safely.
 func (c *Camera) Copy() *Camera {
 	return &Camera{
 		Object:     c.Object.Copy(),
@@ -101,8 +96,6 @@ func (c *Camera) Copy() *Camera {
 }
 
 // Reset resets this camera to it's default (NewCamera) state.
-//
-// The camera's write lock must be held for this method to operate safely.
 func (c *Camera) Reset() {
 	c.Object.Reset()
 	c.Projection = ConvertMat4(lmath.Mat4Identity)
@@ -111,8 +104,6 @@ func (c *Camera) Reset() {
 // Destroy destroys this camera for use by other callees to NewCamera. You must
 // not use it after calling this method. This makes an implicit call to
 // c.Object.Destroy.
-//
-// The camera's write lock must be held for this method to operate safely.
 func (c *Camera) Destroy() {
 	c.Object.Destroy()
 	c.Reset()

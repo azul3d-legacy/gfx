@@ -358,15 +358,11 @@ func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	}
 	r.shared.RUnlock()
 
-	// Lock the texture until we are done loading it.
-	t.Lock()
 	if !t.Loaded && t.Source == nil {
 		panic("LoadTexture(): Texture has a nil source!")
 	}
 	if t.Loaded {
-		// Texture is already loaded, signal completion if needed and return
-		// after unlocking.
-		t.Unlock()
+		// Texture is already loaded, signal completion if needed and return.
 		select {
 		case done <- t:
 		default:
@@ -432,8 +428,7 @@ func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		// Attach a finalizer to the texture that will later free it.
 		runtime.SetFinalizer(native, finalizeTexture)
 
-		// Unlock, signal completion, and return.
-		t.Unlock()
+		// Signal completion and return.
 		select {
 		case done <- t:
 		default:

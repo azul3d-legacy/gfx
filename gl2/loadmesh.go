@@ -211,11 +211,9 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 	r.shared.RUnlock()
 
 	// Lock the mesh until we are done loading it.
-	m.Lock()
 	if m.Loaded && !m.HasChanged() {
 		// Mesh is already loaded and has not changed, signal completion and
-		// return after unlocking.
-		m.Unlock()
+		// return.
 		select {
 		case done <- m:
 		default:
@@ -224,7 +222,7 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 	}
 
 	f := func() bool {
-		// Find the native mesh, creating a new one if none exists.
+		// Find the native mesh, creating a new one if the mesh is not loaded.
 		var native *nativeMesh
 		if !m.Loaded {
 			native = &nativeMesh{
@@ -407,7 +405,7 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		gl.Flush()
 		//gl.Execute()
 
-		// If the mesh is not loaded, then we need to assign the native mesh
+		// If the mesh was not loaded, then we need to assign the native mesh
 		// and create a finalizer to free the native mesh later.
 		if !m.Loaded {
 			// Assign the native mesh.
@@ -417,12 +415,11 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 			runtime.SetFinalizer(native, finalizeMesh)
 		}
 
-		// Set the mesh to loaded, clear any data slices if they are not wanted.
+		// Mark the mesh as loaded, and clear data slices of needed.
 		m.Loaded = true
 		m.ClearData()
 
-		// Unlock, signal completion, and return.
-		m.Unlock()
+		// Signal completion and return.
 		select {
 		case done <- m:
 		default:

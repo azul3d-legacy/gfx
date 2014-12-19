@@ -238,10 +238,8 @@ func BenchmarkMeshStateEqual(b *testing.B) {
 	)
 
 	// Load the mesh's state into aState and bState.
-	a.RLock()
 	a.State(aState)
 	a.State(bState)
-	a.RUnlock()
 
 	for n := 0; n < b.N; n++ {
 		aState.Equals(bState)
@@ -259,10 +257,8 @@ func BenchmarkMeshStateDiff(b *testing.B) {
 	)
 
 	// Load the mesh's state into aState and bState.
-	a.RLock()
 	a.State(aState)
 	a.State(bState)
-	a.RUnlock()
 
 	for n := 0; n < b.N; n++ {
 		anyDiff = diffState.Diff(aState, bState)
