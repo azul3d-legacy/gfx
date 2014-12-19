@@ -11,11 +11,6 @@
 // The coordinate system used by this package is the right-handed Z up
 // coordinate system unless explicitly specified otherwise.
 //
-// Texture coordinates do not follow OpenGL convention where the origin (0, 0)
-// is the bottom-left, instead the origin (0, 0) is the top-left because:
-//  1. Go's image package uses top-left as the origin.
-//
-//  2. If we followed OpenGL convention we would have to flip the image or
-//     texture coordinates on the CPU before upload to the GPU or in each
-//     shader.
+// Texture coordinates do not follow OpenGL convention but rather Go convention
+// where theorigin (0, 0) is the top-left corner of the texture.
 package gfx
