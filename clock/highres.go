@@ -24,7 +24,7 @@ var (
 // Since this relies on system time and the user might change their time
 // resulting in a negative time occuring, we enforce a positive delta duration
 // of at least 100us.
-func Time() time.Duration {
+func getTime() time.Duration {
 	s := time.Since(programStart)
 	if s < minDelta {
 		s = minDelta

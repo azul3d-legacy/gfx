@@ -88,8 +88,8 @@ func init() {
 	freqNs = float64(freq) / 1e9
 }
 
-// Time returns the number of milliseconds that have elapsed since the program started
-func Time() time.Duration {
+// getTime returns the number of milliseconds that have elapsed since the program started
+func getTime() time.Duration {
 	if doFallback {
 		return highResTimeFallback()
 	}

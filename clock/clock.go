@@ -201,7 +201,7 @@ func (c *Clock) LastFrame() time.Duration {
 // ResetLastFrame resets this Clock's last frame time to the current real time, as if the frame had
 // just begun.
 func (c *Clock) ResetLastFrame() {
-	c.lastFrameTime = Time()
+	c.lastFrameTime = getTime()
 }
 
 // Tick signals to this Clock that an new frame has just begun
@@ -215,14 +215,12 @@ func (c *Clock) Tick() {
 		c.frameCount = 1
 	}
 
-	frameStartTime := Time()
+	frameStartTime := getTime()
 
 	// Frames per second
 	calcFrameRate := func() {
-		//fmt.Println("***", frameStartTime, Time())
-
 		// Calculate time difference between this frame and the last frame
-		c.delta = Time() - c.lastFrameTime
+		c.delta = getTime() - c.lastFrameTime
 		if c.delta > 0 {
 			c.frameRate = float64(time.Second / c.delta)
 		}
@@ -289,12 +287,12 @@ func (c *Clock) Time() time.Duration {
 	c.access.RLock()
 	defer c.access.RUnlock()
 
-	return Time() - c.startTime
+	return getTime() - c.startTime
 }
 
 // Reset resets this clock's starting time, as if it had just been created.
 func (c *Clock) Reset() {
-	c.startTime = Time()
+	c.startTime = getTime()
 }
 
 // New returns an new *Clock, with:

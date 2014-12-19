@@ -11,18 +11,18 @@ import (
 
 func TestHighResolutionTime(t *testing.T) {
 	lrStart := time.Now()
-	hrStart := Time()
+	hrStart := getTime()
 
 	var diffTotal time.Duration
 	for i := 0; i < 10; i++ {
 		lrDiff := time.Since(lrStart)
-		hrDiff := Time() - hrStart
+		hrDiff := getTime() - hrStart
 
 		diffTotal += hrDiff
-		t.Logf("%d.\ttime.Since()=%d\tclock.Time()=%d", i, lrDiff, hrDiff)
+		t.Logf("%d.\ttime.Since()=%d\tgetTime()=%d", i, lrDiff, hrDiff)
 
 		lrStart = time.Now()
-		hrStart = Time()
+		hrStart = getTime()
 	}
 
 	if diffTotal <= 0 {
