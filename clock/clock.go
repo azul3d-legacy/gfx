@@ -281,7 +281,7 @@ func (c *Clock) Tick() {
 	c.lastFrameTime = frameStartTime
 
 	if !firstFrame {
-		c.frameCount += 1
+		c.frameCount++
 	}
 }
 
