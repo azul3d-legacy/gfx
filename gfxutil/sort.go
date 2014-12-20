@@ -18,8 +18,6 @@ import (
 //
 // Using sort.Reverse this doubles as front-to-back sorting (which is useful
 // for drawing opaque objects efficiently due to depth testing).
-//
-// The Less() method properly read-locks the objects when required.
 type ByDist struct {
 	// The list of objects to sort.
 	Objects []*gfx.Object
@@ -30,36 +28,24 @@ type ByDist struct {
 	Target lmath.Vec3
 }
 
-// Implements sort.Interface.
+// Len implements the sort interface.
 func (b ByDist) Len() int {
 	return len(b.Objects)
 }
 
-// Implements sort.Interface.
+// Swap implements the sort interface.
 func (b ByDist) Swap(i, j int) {
 	b.Objects[i], b.Objects[j] = b.Objects[j], b.Objects[i]
 }
 
-// Implements sort.Interface.
+// Less implements the sort interface.
 func (b ByDist) Less(ii, jj int) bool {
-	i := b.Objects[ii]
-	j := b.Objects[jj]
-
-	// Lock both objects for reading.
-	i.RLock()
-	j.RLock()
-
-	// Grab their transforms.
-	iTransform := i.Transform
-	jTransform := j.Transform
-
-	// Unlock the objects.
-	i.RUnlock()
-	j.RUnlock()
+	i := b.Objects[ii].Transform
+	j := b.Objects[jj].Transform
 
 	// Convert each position to world space.
-	iPos := iTransform.ConvertPos(iTransform.Pos(), gfx.ParentToWorld)
-	jPos := jTransform.ConvertPos(jTransform.Pos(), gfx.ParentToWorld)
+	iPos := i.ConvertPos(i.Pos(), gfx.ParentToWorld)
+	jPos := j.ConvertPos(j.Pos(), gfx.ParentToWorld)
 
 	// Calculate the distance from each object to the target position.
 	iDist := iPos.Sub(b.Target).LengthSq()
@@ -70,8 +56,8 @@ func (b ByDist) Less(ii, jj int) bool {
 }
 
 // InsertionSort performs a simple insertion sort on the sort interface. In the
-// case of ByDist it performs generally as fast as sort.Sort() except that it
-// can exploit temporal coherence improving performance dramatically when the
+// case of ByDist it performs generally as fast as sort.Sort except that it can
+// exploit temporal coherence improving performance dramatically when the
 // objects have not moved much.
 func InsertionSort(data sort.Interface) {
 	for i := 0; i < data.Len(); i++ {
@@ -85,34 +71,19 @@ func InsertionSort(data sort.Interface) {
 // graphics state in order to reduce graphics state changes and increase the
 // overall throughput when rendering several objects whose graphics state
 // differ.
-//
-// The Less() method properly read-locks the objects when required.
 type ByState []*gfx.Object
 
-// Implements sort.Interface.
+// Len implements the sort interface.
 func (b ByState) Len() int {
 	return len(b)
 }
 
-// Implements sort.Interface.
+// Swap implements the sort interface.
 func (b ByState) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
 }
 
-// Implements sort.Interface.
+// Less implements the sort interface.
 func (b ByState) Less(i, j int) bool {
-	k := b[i]
-	v := b[j]
-
-	// Lock both objects for reading.
-	k.RLock()
-	v.RLock()
-
-	// Grab state comparison.
-	less := k.Compare(v)
-
-	// Unlock the objects.
-	v.RUnlock()
-	k.RUnlock()
-	return less
+	return b[i].Compare(b[j])
 }
