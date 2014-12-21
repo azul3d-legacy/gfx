@@ -31,6 +31,6 @@ func getError() error {
 	case gl.STACK_OVERFLOW:
 		return errors.New("GL_STACK_OVERFLOW")
 	default:
-		return errors.New(fmt.Sprintf("Unknown Error: %v\n", err))
+		return fmt.Errorf("Unknown Error: %v\n", err)
 	}
 }
