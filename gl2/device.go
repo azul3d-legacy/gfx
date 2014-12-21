@@ -13,8 +13,8 @@ import (
 	"strings"
 	"sync"
 
-	"azul3d.org/clock.v1"
 	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-dev/clock"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/util"

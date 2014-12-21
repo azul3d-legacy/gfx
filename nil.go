@@ -8,7 +8,7 @@ import (
 	"image"
 	"sync"
 
-	"azul3d.org/clock.v1"
+	"azul3d.org/gfx.v2-dev/clock"
 )
 
 type nilNativeObject struct{}
