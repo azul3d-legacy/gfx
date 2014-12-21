@@ -11,6 +11,8 @@ import (
 	"azul3d.org/gfx.v2-dev"
 )
 
+var shaders = make(map[string]*gfx.Shader, 32)
+
 // OpenShader opens the GLSL shader files specified by the given base path. For
 // example:
 //
@@ -24,8 +26,17 @@ import (
 // The filename (e.g. "basic") will be the name of the shader (which is used
 // for debug output only).
 //
-// If a error is returned it is an IO error and a nil shader is also returned.
+// If a error is returned it is an IO error and a nil shader is returned.
+//
+// Multiple consecutive calls to OpenShader with the same exact base path will
+// yield the same exact shader pointer as a result (they are cached).
 func OpenShader(basePath string) (*gfx.Shader, error) {
+	// If the shader is in the cache already, return that one.
+	shader, ok := shaders[basePath]
+	if ok {
+		return shader, nil
+	}
+
 	// Load the GLSL vertex and fragment shader source files.
 	vert, err := ioutil.ReadFile(basePath + ".vert")
 	if err != nil {
@@ -37,10 +48,13 @@ func OpenShader(basePath string) (*gfx.Shader, error) {
 	}
 
 	// Create the new GLSL shader with the filename as the shader name.
-	shader := gfx.NewShader(filepath.Base(basePath))
+	shader = gfx.NewShader(filepath.Base(basePath))
 	shader.GLSL = &gfx.GLSLSources{
 		Vertex:   vert,
 		Fragment: frag,
 	}
+
+	// Store the shader in the cache for later calls to OpenShader.
+	shaders[basePath] = shader
 	return shader, nil
 }
