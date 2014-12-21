@@ -201,13 +201,14 @@ func (c *Clock) Dt() float64 {
 func (c *Clock) LastFrame() time.Duration {
 	c.access.RLock()
 	defer c.access.RUnlock()
-
 	return c.lastFrameTime
 }
 
 // ResetLastFrame resets this Clock's last frame time to the current real time,
 // as if the frame had just begun.
 func (c *Clock) ResetLastFrame() {
+	c.access.Lock()
+	defer c.access.Unlock()
 	c.lastFrameTime = getTime()
 }
 
@@ -306,6 +307,8 @@ func (c *Clock) Time() time.Duration {
 
 // Reset resets this clock's starting time, as if it had just been created.
 func (c *Clock) Reset() {
+	c.access.Lock()
+	defer c.access.Unlock()
 	c.startTime = getTime()
 }
 
