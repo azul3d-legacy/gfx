@@ -45,3 +45,30 @@ func TestFrameRateLimit(t *testing.T) {
 		t.Fatal("expected avg near", 100)
 	}
 }
+
+func TestFrameRateStall(t *testing.T) {
+	c := New()
+	c.SetMaxFrameRate(100)
+	c.SetAverageFrameRateSamples(100)
+	stop := time.After(1 * time.Second)
+	for {
+		c.Tick()
+		select {
+		case <-stop:
+			if c.FrameRate() < 50 {
+				t.Log("before stall", c.FrameRate())
+				t.Fatal("expected > 50")
+			}
+
+			// Stall for an entire second.
+			time.Sleep(1 * time.Second)
+
+			if c.FrameRate() != 0 {
+				t.Log("after stall", c.FrameRate())
+				t.Fatal("expected 0")
+			}
+			return
+		default:
+		}
+	}
+}

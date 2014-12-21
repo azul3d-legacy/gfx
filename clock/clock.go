@@ -27,6 +27,13 @@ func (c *Clock) FrameRate() float64 {
 	c.access.RLock()
 	defer c.access.RUnlock()
 
+	// If the application stalled and stopped calling Tick as it should, we
+	// should report near-zero FPS. To do this we consider the fact that more
+	// than one second has passed and recalculate the FPS right now if so.
+	delta := getTime() - c.lastFrameTime
+	if delta > time.Second {
+		return float64(time.Second / delta)
+	}
 	return c.frameRate
 }
 
