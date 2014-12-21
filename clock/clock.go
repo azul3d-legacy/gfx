@@ -5,7 +5,6 @@
 package clock
 
 import (
-	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -233,17 +232,21 @@ func (c *Clock) Tick() {
 	calcFrameRate()
 
 	if c.maxFrameRate > 0 {
-		if false {
-			fmt.Println(c.frameRate, c.maxFrameRate, c.delta)
-		}
 		if c.frameRate > c.maxFrameRate {
 			// Sleep long enough that we stay under the max frame rate.
 			timeToSleep := time.Duration(float64(time.Second)/c.maxFrameRate) - c.delta
-			time.Sleep(timeToSleep)
 
-			// Calculate frame rate now that we're done using time.Sleep() for
-			// sure.
-			calcFrameRate()
+			// Sleep in small increments to get near-perfect.
+			inc := 128
+			for i := 0; i < inc; i++ {
+				// Sleep for one increment and then recheck the frame-rate to
+				// determine if more sleeping is needed.
+				time.Sleep(timeToSleep / time.Duration(inc))
+				calcFrameRate()
+				if c.frameRate <= c.maxFrameRate {
+					break
+				}
+			}
 		}
 	}
 

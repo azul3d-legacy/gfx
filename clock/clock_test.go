@@ -7,6 +7,8 @@ package clock
 import (
 	"testing"
 	"time"
+
+	"azul3d.org/lmath.v1"
 )
 
 func TestHighResolutionTime(t *testing.T) {
@@ -27,5 +29,19 @@ func TestHighResolutionTime(t *testing.T) {
 
 	if diffTotal <= 0 {
 		t.Fail()
+	}
+}
+
+func TestFrameRateLimit(t *testing.T) {
+	c := New()
+	c.SetMaxFrameRate(100)
+	c.SetAverageFrameRateSamples(100)
+	for i := 0; i < c.AverageFrameRateSamples(); i++ {
+		c.Tick()
+	}
+	avg := c.AverageFrameRate()
+	if !lmath.AlmostEqual(avg, 100, 0.05) {
+		t.Log("got avg", avg)
+		t.Fatal("expected avg near", 100)
 	}
 }
