@@ -35,11 +35,11 @@ func TestHighResolutionTime(t *testing.T) {
 func TestFrameRateLimit(t *testing.T) {
 	c := New()
 	c.SetMaxFrameRate(100)
-	c.SetAverageFrameRateSamples(100)
-	for i := 0; i < c.AverageFrameRateSamples(); i++ {
+	c.SetAvgSamples(100)
+	for i := 0; i < c.AvgSamples(); i++ {
 		c.Tick()
 	}
-	avg := c.AverageFrameRate()
+	avg := c.AvgFrameRate()
 	if !lmath.AlmostEqual(avg, 100, 0.05) {
 		t.Log("got avg", avg)
 		t.Fatal("expected avg near", 100)
@@ -49,7 +49,7 @@ func TestFrameRateLimit(t *testing.T) {
 func TestFrameRateStall(t *testing.T) {
 	c := New()
 	c.SetMaxFrameRate(100)
-	c.SetAverageFrameRateSamples(100)
+	c.SetAvgSamples(100)
 	stop := time.After(1 * time.Second)
 	for {
 		c.Tick()

@@ -18,8 +18,8 @@ type Clock struct {
 	delta, maxDelta, fixedDelta, startTime, lastFrameTime, maxFrameRateSleep time.Duration
 	frameCount, frameRateFrames                                              uint64
 
-	averageFrameSamples                                           []float64
-	frameRate, maxFrameRate, averageFrameRate, frameRateDeviation float64
+	avgSamples                                                []float64
+	frameRate, maxFrameRate, avgFrameRate, frameRateDeviation float64
 }
 
 // FrameRate returns the number of frames per second according to this Clock.
@@ -38,7 +38,7 @@ func (c *Clock) FrameRate() float64 {
 }
 
 // FrameRateDeviation returns the standard deviation of the frame times that
-// have occured over the last AverageFrameRateSamples frames.
+// have occured over the last AvgSamples frames.
 func (c *Clock) FrameRateDeviation() float64 {
 	c.access.RLock()
 	defer c.access.RUnlock()
@@ -46,33 +46,33 @@ func (c *Clock) FrameRateDeviation() float64 {
 	return c.frameRateDeviation
 }
 
-// AverageFrameRate returns the average number of frames per second that have
-// occured over the last AverageFrameRateSamples frames.
-func (c *Clock) AverageFrameRate() float64 {
+// AvgFrameRate returns the average number of frames per second that have
+// occured over the last AvgSamples frames.
+func (c *Clock) AvgFrameRate() float64 {
 	c.access.RLock()
 	defer c.access.RUnlock()
 
-	return c.averageFrameRate
+	return c.avgFrameRate
 }
 
-// SetAverageFrameRateSamples specifies the number of previous frames to sample
-// each frame to determine the average frame rate.
+// SetAvgSamples specifies the number of previous frames to sample each frame
+// to determine the average frame rate.
 //
 // Note: This means allocating an []float64 of size n, so be thoughtful.
-func (c *Clock) SetAverageFrameRateSamples(n int) {
+func (c *Clock) SetAvgSamples(n int) {
 	c.access.Lock()
 	defer c.access.Unlock()
 
-	c.averageFrameSamples = make([]float64, n)
+	c.avgSamples = make([]float64, n)
 }
 
-// AverageFrameRateSamples returns the number of previous frames that are
-// sampled each frame to determine the average frame rate.
-func (c *Clock) AverageFrameRateSamples() int {
+// AvgSamples returns the number of previous frames that are samples each frame
+// to determine the average frame rate.
+func (c *Clock) AvgSamples() int {
 	c.access.RLock()
 	defer c.access.RUnlock()
 
-	return len(c.averageFrameSamples)
+	return len(c.avgSamples)
 }
 
 // SetFrameCount specifies the current number of frames that have rendered.
@@ -259,35 +259,35 @@ func (c *Clock) Tick() {
 	}
 
 	// Update the average samples
-	for i, sample := range c.averageFrameSamples {
+	for i, sample := range c.avgSamples {
 		if i-1 >= 0 {
-			c.averageFrameSamples[i-1] = sample
+			c.avgSamples[i-1] = sample
 		}
 	}
-	c.averageFrameSamples[len(c.averageFrameSamples)-1] = c.delta.Seconds()
+	c.avgSamples[len(c.avgSamples)-1] = c.delta.Seconds()
 
 	// Calculate the average frame rate.
-	c.averageFrameRate = 0
-	for _, sample := range c.averageFrameSamples {
-		c.averageFrameRate += sample
+	c.avgFrameRate = 0
+	for _, sample := range c.avgSamples {
+		c.avgFrameRate += sample
 	}
-	c.averageFrameRate /= float64(len(c.averageFrameSamples))
+	c.avgFrameRate /= float64(len(c.avgSamples))
 
 	// Store for calculation deviation further down
-	averageFrameRateDelta := c.averageFrameRate
+	avgFrameRateDelta := c.avgFrameRate
 
 	// Convert to frames per second
-	c.averageFrameRate = 1.0 / c.averageFrameRate
+	c.avgFrameRate = 1.0 / c.avgFrameRate
 
 	// Calculate the standard deviation of frame times
 	variance := 0.0
-	for i, sample := range c.averageFrameSamples {
-		if i < len(c.averageFrameSamples)-1 {
-			diff := sample - averageFrameRateDelta
+	for i, sample := range c.avgSamples {
+		if i < len(c.avgSamples)-1 {
+			diff := sample - avgFrameRateDelta
 			variance += (diff * diff)
 		}
 	}
-	c.frameRateDeviation = math.Sqrt(variance / float64(len(c.averageFrameSamples)))
+	c.frameRateDeviation = math.Sqrt(variance / float64(len(c.avgSamples)))
 
 	c.lastFrameTime = frameStartTime
 
@@ -322,8 +322,8 @@ func (c *Clock) Reset() {
 // zero.
 func New() *Clock {
 	return &Clock{
-		startTime:           getTime(),
-		maxFrameRate:        75,
-		averageFrameSamples: make([]float64, 120),
+		startTime:    getTime(),
+		maxFrameRate: 75,
+		avgSamples:   make([]float64, 120),
 	}
 }
