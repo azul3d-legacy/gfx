@@ -309,8 +309,8 @@ func (c *Clock) Reset() {
 // zero.
 func New() *Clock {
 	return &Clock{
-		startTime: getTime(),
-		maxFrameRate: 75,
+		startTime:           getTime(),
+		maxFrameRate:        75,
 		averageFrameSamples: make([]float64, 120),
 	}
 }
