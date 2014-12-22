@@ -624,7 +624,10 @@ func doNew(p *Props) (Window, gfx.Device, error) {
 
 	// Create the window.
 	width, height := p.Size()
+	asset.withoutContext <- nil // Ask to disable the asset context.
+	<-asset.withoutContext      // Wait for disable to complete.
 	window, err := glfw.CreateWindow(width, height, p.Title(), targetMonitor, asset.Window)
+	asset.withoutContext <- nil // Give back the asset context.
 	if err != nil {
 		return nil, nil, err
 	}

@@ -25,6 +25,9 @@ var (
 		// The device of the hidden window, again just used to store assets.
 		glfwDevice
 
+		// Channel for executing functions without the context active.
+		withoutContext chan func()
+
 		// Signals shutdown to the assetLoader goroutine.
 		exit chan error
 	}
@@ -45,6 +48,15 @@ func assetLoader() {
 
 	for {
 		select {
+		case <-asset.withoutContext:
+			// Drop the context, signal back.
+			glfw.DetachCurrentContext()
+			asset.withoutContext <- nil
+
+			// Grab the context and continue.
+			<-asset.withoutContext
+			asset.Window.MakeContextCurrent()
+
 		case <-asset.exit:
 			// Destroy the device while the window is alive and OpenGL context
 			// is active.
@@ -122,6 +134,7 @@ func doInit() error {
 
 	// Create the asset device.
 	asset.exit = make(chan error)
+	asset.withoutContext = make(chan func())
 	asset.Window.MakeContextCurrent()
 	asset.glfwDevice, err = glfwNewDevice()
 	if err != nil {
