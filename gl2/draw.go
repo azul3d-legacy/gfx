@@ -7,6 +7,7 @@ package gl2
 import (
 	"fmt"
 	"image"
+	"reflect"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
@@ -349,6 +350,7 @@ func (r *device) updateUniform(native *nativeShader, name string, value interfac
 		}
 
 	default:
+		r.logf("Shader input %q uses an invalid shader input data type %q, ignoring.\n", name, reflect.TypeOf(value))
 		// We don't know of the type at all, ignore it.
 	}
 }
