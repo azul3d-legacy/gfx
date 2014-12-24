@@ -6,6 +6,7 @@
 package window
 
 import (
+	"os"
 	"runtime"
 	"time"
 
@@ -140,6 +141,9 @@ func doInit() error {
 	if err != nil {
 		return err
 	}
+
+	// Write device debug output (shader errors, etc) to stderr.
+	asset.glfwDevice.SetDebugOutput(os.Stderr)
 	glfw.DetachCurrentContext()
 
 	go assetLoader()

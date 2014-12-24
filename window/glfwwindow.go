@@ -644,7 +644,7 @@ func doNew(p *Props) (Window, gfx.Device, error) {
 		return nil, nil, err
 	}
 
-	// Write device debug output (shader errors, etc) to stdout.
+	// Write device debug output (shader errors, etc) to stderr.
 	r.SetDebugOutput(os.Stderr)
 
 	// Initialize window.
