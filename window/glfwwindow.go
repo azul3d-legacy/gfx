@@ -18,8 +18,8 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
-	"azul3d.org/keyboard.v1"
-	"azul3d.org/mouse.v1"
+	"azul3d.org/keyboard.v2-dev"
+	"azul3d.org/mouse.v2-dev"
 	"azul3d.org/native/glfw.v4"
 )
 
