@@ -8,11 +8,16 @@ import "math"
 
 // EventMask is a bitmask of event types. They can be combined, for instance:
 //
-//  mask := GenericEvents
-//  mask |= MouseEvents
-//  mask |= KeyboardEvents
+//  mask := window.CloseEvents
+//  mask |= window.MinimizedEvents
+//  mask |= window.LostFocusEvents
 //
-// would select generic, mouse, and keyboard events.
+// would select events of the following types:
+//
+//  window.Close
+//  window.Minimized
+//  window.LostFocus
+//
 type EventMask uint32
 
 const (
@@ -74,4 +79,3 @@ const (
 	// AllEvents is a event mask matching all possible events.
 	AllEvents = EventMask(math.MaxUint32)
 )
-
