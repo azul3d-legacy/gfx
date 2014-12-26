@@ -64,18 +64,42 @@ const (
 	// ItemsDroppedEvents is a event mask matching window.ItemsDropped events.
 	ItemsDroppedEvents EventMask = 1 << 12
 
-	// MouseEvents is a event mask matching mouse.Event events.
-	MouseEvents EventMask = 1 << 13
+	// MouseButtonEvents is a event mask matching mouse.ButtonEvent's.
+	MouseButtonEvents EventMask = 1 << 13
 
 	// MouseScrolledEvents is a event mask matching mouse.Scrolled events.
 	MouseScrolledEvents EventMask = 1 << 14
 
-	// KeyboardTypedEvents is a event mask matching keyboard.TypedEvent events.
+	// KeyboardTypedEvents is a event mask matching keyboard.Typed events.
 	KeyboardTypedEvents EventMask = 1 << 15
 
-	// KeyboardStateEvents is a event mask matching keyboard.StateEvent events.
-	KeyboardStateEvents EventMask = 1 << 16
+	// KeyboardButtonEvents is a event mask matching keyboard.ButtonEvent's.
+	KeyboardButtonEvents EventMask = 1 << 16
 
 	// AllEvents is a event mask matching all possible events.
 	AllEvents = EventMask(math.MaxUint32)
+)
+
+const (
+	// CursorEvents is an event mask that selects all cursor events:
+	//
+	//  window.CursorMoved
+	//  window.CursorEnter
+	//  window.CursorExit
+	//
+	CursorEvents EventMask = CursorMovedEvents | CursorEnterEvents | CursorExitEvents
+
+	// MouseEvents is an event mask that selects all mouse events:
+	//
+	//  mouse.ButtonEvent
+	//  mouse.Scrolled
+	//
+	MouseEvents EventMask = MouseButtonEvents | MouseScrolledEvents
+
+	// KeyboardEvents is an event mask that selects all keyboard events:
+	//
+	//  keyboard.ButtonEvent
+	//  keyboard.Typed
+	//
+	KeyboardEvents EventMask = KeyboardButtonEvents | KeyboardTypedEvents
 )

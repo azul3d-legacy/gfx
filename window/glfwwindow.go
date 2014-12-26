@@ -451,12 +451,12 @@ func (w *glfwWindow) initCallbacks() {
 		w.sendEvent(CursorExit{T: time.Now()}, CursorExitEvents)
 	})
 
-	// keyboard.TypedEvent
+	// keyboard.Typed
 	w.window.SetCharacterCallback(func(gw *glfw.Window, r rune) {
-		w.sendEvent(keyboard.TypedEvent{Rune: r, T: time.Now()}, KeyboardTypedEvents)
+		w.sendEvent(keyboard.Typed{S: string(r), T: time.Now()}, KeyboardTypedEvents)
 	})
 
-	// keyboard.StateEvent
+	// keyboard.ButtonEvent
 	w.window.SetKeyCallback(func(gw *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 		if action == glfw.Repeat {
 			return
@@ -472,15 +472,15 @@ func (w *glfwWindow) initCallbacks() {
 		w.keyboard.SetRawState(r, s)
 
 		// Send the event.
-		w.sendEvent(keyboard.StateEvent{
+		w.sendEvent(keyboard.ButtonEvent{
 			T:     time.Now(),
 			Key:   convertKey(key),
 			State: convertKeyAction(action),
 			Raw:   uint64(scancode),
-		}, KeyboardStateEvents)
+		}, KeyboardButtonEvents)
 	})
 
-	// mouse.Event
+	// mouse.ButtonEvent
 	w.window.SetMouseButtonCallback(func(gw *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 		// Convert GLFW event.
 		b := convertMouseButton(button)
@@ -490,7 +490,7 @@ func (w *glfwWindow) initCallbacks() {
 		w.mouse.SetState(b, s)
 
 		// Send the event.
-		w.sendEvent(mouse.Event{
+		w.sendEvent(mouse.ButtonEvent{
 			T:      time.Now(),
 			Button: b,
 			State:  s,
