@@ -18,12 +18,11 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
+	"azul3d.org/gfx.v2-dev/internal/util"
 	"azul3d.org/keyboard.v2-dev"
 	"azul3d.org/mouse.v2-dev"
 	"azul3d.org/native/glfw.v4"
 )
-
-// TODO(slimsag): rebuild window when fullscreen/precision changes.
 
 // intBool returns 0 or 1 depending on b.
 func intBool(b bool) int {
@@ -56,15 +55,17 @@ type glfwWindow struct {
 	mouse                                              *mouse.Watcher
 	keyboard                                           *keyboard.Watcher
 	extWGLEXTSwapControlTear, extGLXEXTSwapControlTear bool
-	exit                                               chan struct{}
+	exit, rebuild                                      chan struct{}
 
 	// The below variables are read-write after initialization of this struct,
 	// and as such must only be modified under the RWMutex.
 	sync.RWMutex
+	swapper                  *util.Swapper
 	props, last              *Props
 	device                   glfwDevice
 	window                   *glfw.Window
 	monitor                  *glfw.Monitor
+	beforeFullscreen         [2]int // Window size before fullscreen.
 	lastCursorX, lastCursorY float64
 	closed                   bool
 }
@@ -80,7 +81,9 @@ func (w *glfwWindow) Props() *Props {
 // Request implements the Window interface.
 func (w *glfwWindow) Request(p *Props) {
 	MainLoopChan <- func() {
+		w.Lock()
 		w.useProps(p, false)
+		w.Unlock()
 	}
 }
 
@@ -158,11 +161,9 @@ func (w *glfwWindow) updateTitle() {
 // detects the properties that have not changed since the last call to
 // useProps and, if force == false, omits them for efficiency.
 //
-// It may only be called on the main thread, and it utilizes the window's write
-// lock on it's own.
+// It may only be called on the main thread, and under the presence of the
+// window's write lock.
 func (w *glfwWindow) useProps(p *Props, force bool) {
-	w.Lock()
-	defer w.Unlock()
 	w.props = p
 
 	// Runs f without the currently held lock. Because some functions cause an
@@ -174,6 +175,30 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	}
 	win := w.window
 
+	// GLFW doesn't yet support switching at runtime between fullscreen and
+	// windowed mode. We employ a more traditional workaround here which is
+	// destroying and rebuilding the window and it's associated device (i.e.
+	// OpenGL context). It is hence important that this be the first operation.
+	//
+	// We can do this without losing time, as assets are stored in the shared
+	// asset context -- not in this window's context.
+	fullscreen := w.props.Fullscreen()
+	lastFullscreen := w.last.Fullscreen()
+	if fullscreen != lastFullscreen {
+		w.last.SetFullscreen(fullscreen)
+
+		// If we're not switching to fullscreen, restore the window size from
+		// before we entered fullscreen.
+		if !fullscreen {
+			w.props.SetSize(w.beforeFullscreen[0], w.beforeFullscreen[1])
+		}
+
+		// Signal to the window goroutine that we need a window rebuild now, it
+		// will call useProps on it's own to initialize the new window.
+		w.rebuild <- struct{}{}
+		return
+	}
+
 	// Set each property, only if it differs from the last known value for that
 	// property.
 
@@ -183,6 +208,12 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	width, height := w.props.Size()
 	lastWidth, lastHeight := w.last.Size()
 	if force || width != lastWidth || height != lastHeight {
+		// If we're not switching to fullscreen, save the window size as it was
+		// for restoration after we've exited fullscreen later.
+		if !fullscreen {
+			w.beforeFullscreen = [2]int{width, height}
+		}
+
 		w.last.SetSize(width, height)
 		withoutLock(func() {
 			logError(win.SetSize(width, height))
@@ -192,7 +223,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	// Window Position.
 	x, y := w.props.Pos()
 	lastX, lastY := w.last.Pos()
-	if force || x != lastX || y != lastY {
+	if (force || x != lastX || y != lastY) && !fullscreen {
 		w.last.SetPos(x, y)
 		if x == -1 && y == -1 {
 			vm, err := w.monitor.GetVideoMode()
@@ -269,13 +300,11 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	// The following cannot be changed via GLFW post window creation -- and
 	// they are not deemed significant enough to warrant rebuilding the window.
 	//
-	// TODO(slimsag): consider these when rebuilding the window for Fullscreen
-	// or Precision switches.
-	//
 	//  Focused
 	//  Resizable
 	//  Decorated
 	//  AlwaysOnTop (via GLFW_FLOATING)
+	//
 
 	// Cursor Mode.
 	grabbed := w.props.CursorGrabbed()
@@ -358,6 +387,11 @@ func (w *glfwWindow) initCallbacks() {
 		// Store the position state.
 		w.RLock()
 		w.last.SetPos(x, y)
+		if w.last.Fullscreen() {
+			// If we're in fullscreen, we don't expose the window position.
+			w.RUnlock()
+			return
+		}
 		w.props.SetPos(x, y)
 		w.RUnlock()
 		w.sendEvent(Moved{X: x, Y: y, T: time.Now()}, MovedEvents)
@@ -366,10 +400,15 @@ func (w *glfwWindow) initCallbacks() {
 	// Resized event.
 	w.window.SetSizeCallback(func(gw *glfw.Window, width, height int) {
 		// Store the size state.
-		w.RLock()
+		w.Lock()
+		if !w.last.Fullscreen() {
+			// If we're not currently in fullscreen, save the window size as it
+			// was for restoration after we've exited fullscreen later.
+			w.beforeFullscreen = [2]int{width, height}
+		}
 		w.last.SetSize(width, height)
 		w.props.SetSize(width, height)
-		w.RUnlock()
+		w.Unlock()
 		w.sendEvent(Resized{
 			Width:  width,
 			Height: height,
@@ -521,19 +560,23 @@ func (w *glfwWindow) run() {
 	// Make the window's context the current one.
 	w.window.MakeContextCurrent()
 
+	cleanup := func() {
+		// Destroy the device.
+		w.device.Destroy()
+
+		// Release the context.
+		logError(glfw.DetachCurrentContext())
+
+		// Destroy the window on the main thread.
+		MainLoopChan <- func() {
+			logError(w.window.Destroy())
+		}
+	}
+
 	for {
 		select {
 		case <-w.exit:
-			// Destroy the device.
-			w.device.Destroy()
-
-			// Release the context.
-			logError(glfw.DetachCurrentContext())
-
-			// Destroy the window on the main thread.
-			MainLoopChan <- func() {
-				logError(w.window.Destroy())
-			}
+			cleanup()
 
 			// Decrement the number of open windows by one.
 			windowCount := Num(-1)
@@ -551,6 +594,48 @@ func (w *glfwWindow) run() {
 				}
 			}
 			return
+
+		case <-w.rebuild:
+			// We need to rebuild the window and it's context. Signal to the
+			// swapper that it should yield when it can.
+			w.swapper.Yield <- struct{}{}
+
+			// Execute functions on the existing window until the swapper
+			// yields for us.
+		sr:
+			for {
+				select {
+				case fn := <-exec:
+					// Execute the device's render function.
+					if renderedFrame := fn(); renderedFrame {
+						// Swap OpenGL buffers.
+						logError(w.window.SwapBuffers())
+					}
+
+				case <-w.swapper.Swap:
+					// The swapper has yielded for us. Cleanup the device,
+					// window, and OpenGL context.
+					w.Lock()
+					cleanup()
+
+					// Rebuild the window in the main thread.
+					w.waitFor(func() {
+						logError(w.build())
+					})
+
+					// Make the new window's context the active one.
+					w.window.MakeContextCurrent()
+
+					// Rebind the exec variable that we use, unlock the window.
+					exec = w.device.Exec()
+					w.Unlock()
+
+					// Perform the swap of the underlying device and break exit
+					// the rebuild loop.
+					w.swapper.Swap <- w.device
+					break sr
+				}
+			}
 
 		case <-updateFPS.C:
 			// Update title with FPS.
@@ -578,9 +663,10 @@ func (w *glfwWindow) run() {
 // window's write lock.
 func (w *glfwWindow) build() error {
 	var (
-		targetMonitor *glfw.Monitor
-		err           error
-		p             = w.props
+		dstMonitor          *glfw.Monitor
+		err                 error
+		p                   = w.props
+		dstWidth, dstHeight = p.Size()
 	)
 
 	// Specify the primary monitor if we want fullscreen, store the monitor
@@ -590,7 +676,20 @@ func (w *glfwWindow) build() error {
 		return err
 	}
 	if p.Fullscreen() {
-		targetMonitor = w.monitor
+		dstMonitor = w.monitor
+		w.beforeFullscreen = [2]int{dstWidth, dstHeight}
+
+		// TODO(slimsag): publish a way to get valid video modes instead of
+		// assuming the monitor's one.
+		vm, err := w.monitor.GetVideoMode()
+		if err != nil {
+			return err
+		}
+		dstWidth, dstHeight = vm.Width, vm.Height
+		w.props.SetSize(dstWidth, dstHeight)
+		w.last.SetSize(dstWidth, dstHeight)
+	} else {
+		w.beforeFullscreen = [2]int{dstWidth, dstHeight}
 	}
 
 	// Hint standard properties (note visibility is always false, we show the
@@ -626,10 +725,9 @@ func (w *glfwWindow) build() error {
 	}
 
 	// Create the window.
-	width, height := p.Size()
 	asset.withoutContext <- nil // Ask to disable the asset context.
 	<-asset.withoutContext      // Wait for disable to complete.
-	w.window, err = glfw.CreateWindow(width, height, p.Title(), targetMonitor, asset.Window)
+	w.window, err = glfw.CreateWindow(dstWidth, dstHeight, p.Title(), dstMonitor, asset.Window)
 	asset.withoutContext <- nil // Give back the asset context.
 	if err != nil {
 		return err
@@ -683,15 +781,20 @@ func doNew(p *Props) (Window, gfx.Device, error) {
 		mouse:    mouse.NewWatcher(),
 		keyboard: keyboard.NewWatcher(),
 		exit:     make(chan struct{}, 1),
+		rebuild:  make(chan struct{}),
 	}
 
 	// Build the actual GLFW window.
+	w.Lock()
 	if err := w.build(); err != nil {
 		return nil, nil, err
 	}
+	w.Unlock()
+
+	w.swapper = util.NewSwapper(w.device)
 
 	// Spawn the goroutine responsible for running the window.
 	go w.run()
 
-	return w, w.device, nil
+	return w, w.swapper, nil
 }
