@@ -474,9 +474,9 @@ func (w *glfwWindow) initCallbacks() {
 		// Send the event.
 		w.sendEvent(keyboard.ButtonEvent{
 			T:     time.Now(),
-			Key:   convertKey(key),
-			State: convertKeyAction(action),
-			Raw:   uint64(scancode),
+			Key:   k,
+			State: s,
+			Raw:   r,
 		}, KeyboardButtonEvents)
 	})
 
