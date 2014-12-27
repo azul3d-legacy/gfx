@@ -570,24 +570,27 @@ func (w *glfwWindow) run() {
 	}
 }
 
-func doNew(p *Props) (Window, gfx.Device, error) {
+// build builds the underlying GLFW window. It is used both at window init time
+// (see doNew) and when rebuilding the window for fullscreen switching (which
+// GLFW doesn't yet support itself).
+//
+// It may only be called on the main thread, and under the presence of the
+// window's write lock.
+func (w *glfwWindow) build() error {
 	var (
-		targetMonitor, monitor *glfw.Monitor
-		err                    error
+		targetMonitor *glfw.Monitor
+		err           error
+		p             = w.props
 	)
-
-	if err := doInit(); err != nil {
-		return nil, nil, err
-	}
 
 	// Specify the primary monitor if we want fullscreen, store the monitor
 	// regardless for centering the window.
-	monitor, err = glfw.GetPrimaryMonitor()
+	w.monitor, err = glfw.GetPrimaryMonitor()
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 	if p.Fullscreen() {
-		targetMonitor = monitor
+		targetMonitor = w.monitor
 	}
 
 	// Hint standard properties (note visibility is always false, we show the
@@ -618,7 +621,7 @@ func doNew(p *Props) (Window, gfx.Device, error) {
 	for hint, value := range hints {
 		err = glfw.WindowHint(hint, value)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 	}
 
@@ -626,26 +629,51 @@ func doNew(p *Props) (Window, gfx.Device, error) {
 	width, height := p.Size()
 	asset.withoutContext <- nil // Ask to disable the asset context.
 	<-asset.withoutContext      // Wait for disable to complete.
-	window, err := glfw.CreateWindow(width, height, p.Title(), targetMonitor, asset.Window)
+	w.window, err = glfw.CreateWindow(width, height, p.Title(), targetMonitor, asset.Window)
 	asset.withoutContext <- nil // Give back the asset context.
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
 	// OpenGL context must be active.
-	err = window.MakeContextCurrent()
+	err = w.window.MakeContextCurrent()
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
 	// Create the device.
-	r, err := glfwNewDevice(keepState(), share(asset.glfwDevice))
+	d, err := glfwNewDevice(keepState(), share(asset.glfwDevice))
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
+	w.device = d
 
 	// Write device debug output (shader errors, etc) to stderr.
-	r.SetDebugOutput(os.Stderr)
+	d.SetDebugOutput(os.Stderr)
+
+	// Test for adaptive vsync extensions.
+	w.extWGLEXTSwapControlTear, err = glfw.ExtensionSupported("WGL_EXT_swap_control_tear")
+	if err != nil {
+		return err
+	}
+	w.extGLXEXTSwapControlTear, err = glfw.ExtensionSupported("GLX_EXT_swap_control_tear")
+	if err != nil {
+		return err
+	}
+
+	// Setup callbacks and the window.
+	w.initCallbacks()
+	w.useProps(p, true)
+
+	// Done with OpenGL things on this window, for now.
+	return glfw.DetachCurrentContext()
+}
+
+func doNew(p *Props) (Window, gfx.Device, error) {
+	// Initialize the hidden asset window if needed.
+	if err := doInit(); err != nil {
+		return nil, nil, err
+	}
 
 	// Initialize window.
 	w := &glfwWindow{
@@ -654,33 +682,16 @@ func doNew(p *Props) (Window, gfx.Device, error) {
 		last:     NewProps(),
 		mouse:    mouse.NewWatcher(),
 		keyboard: keyboard.NewWatcher(),
-		device:   r,
-		window:   window,
-		monitor:  monitor,
 		exit:     make(chan struct{}, 1),
 	}
 
-	// Test for adaptive vsync extensions.
-	w.extWGLEXTSwapControlTear, err = glfw.ExtensionSupported("WGL_EXT_swap_control_tear")
-	if err != nil {
-		return nil, nil, err
-	}
-	w.extGLXEXTSwapControlTear, err = glfw.ExtensionSupported("GLX_EXT_swap_control_tear")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Setup callbacks and the window.
-	w.initCallbacks()
-	w.useProps(p, true)
-
-	// Done with OpenGL things on this window, for now.
-	err = glfw.DetachCurrentContext()
-	if err != nil {
+	// Build the actual GLFW window.
+	if err := w.build(); err != nil {
 		return nil, nil, err
 	}
 
 	// Spawn the goroutine responsible for running the window.
 	go w.run()
-	return w, r, nil
+
+	return w, w.device, nil
 }
