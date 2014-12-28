@@ -179,9 +179,9 @@ type Mesh struct {
 	// instead of being set to nil (which allows them to be garbage collected).
 	KeepDataOnLoad bool
 
-	// Weather or not the mesh will be dynamically updated. Only used as a hint
-	// to increase performence of dynamically updated meshes, does not actually
-	// control whether or not a mesh may be dynamically updated.
+	// Dynamic is a hint (it does not restrict how the mesh may be used) to the
+	// graphics device on how this mesh might be used. If you intend to update
+	// mesh data often (i.e. it's not static) then set this to true.
 	Dynamic bool
 
 	// AABB is the axis aligned bounding box of this mesh. There may not be one
