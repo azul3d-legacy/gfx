@@ -33,6 +33,10 @@ type State struct {
 	// Whether or not dithering should be used when drawing the object.
 	Dithering bool
 
+	// DepthClamp when enabled effectively disables the near and far clipping
+	// planes when drawing the object.
+	DepthClamp bool
+
 	// Whether or not depth testing and depth writing should be enabled when
 	// drawing the object.
 	DepthTest, DepthWrite bool
@@ -68,27 +72,6 @@ func (s State) Compare(other State) bool {
 	if s.Blend != other.Blend {
 		return s.Blend.Compare(other.Blend)
 	}
-	if s.DepthTest != other.DepthTest {
-		return s.DepthTest == DefaultState.DepthTest
-	}
-	if s.StencilTest != other.StencilTest {
-		return s.StencilTest == DefaultState.StencilTest
-	}
-	if s.StencilFront != other.StencilFront {
-		return s.StencilFront.Compare(other.StencilFront)
-	}
-	if s.StencilBack != other.StencilBack {
-		return s.StencilBack.Compare(other.StencilBack)
-	}
-	if s.DepthWrite != other.DepthWrite {
-		return s.DepthWrite == DefaultState.DepthWrite
-	}
-	if s.DepthCmp != other.DepthCmp {
-		return s.DepthCmp == DefaultState.DepthCmp
-	}
-	if s.FaceCulling != other.FaceCulling {
-		return s.FaceCulling == DefaultState.FaceCulling
-	}
 	if s.WriteRed != other.WriteRed {
 		return s.WriteRed == DefaultState.WriteRed
 	}
@@ -104,6 +87,30 @@ func (s State) Compare(other State) bool {
 	if s.Dithering != other.Dithering {
 		return s.Dithering == DefaultState.Dithering
 	}
+	if s.DepthClamp != other.DepthClamp {
+		return s.DepthClamp == DefaultState.DepthClamp
+	}
+	if s.DepthTest != other.DepthTest {
+		return s.DepthTest == DefaultState.DepthTest
+	}
+	if s.DepthWrite != other.DepthWrite {
+		return s.DepthWrite == DefaultState.DepthWrite
+	}
+	if s.DepthCmp != other.DepthCmp {
+		return s.DepthCmp == DefaultState.DepthCmp
+	}
+	if s.StencilTest != other.StencilTest {
+		return s.StencilTest == DefaultState.StencilTest
+	}
+	if s.FaceCulling != other.FaceCulling {
+		return s.FaceCulling == DefaultState.FaceCulling
+	}
+	if s.StencilFront != other.StencilFront {
+		return s.StencilFront.Compare(other.StencilFront)
+	}
+	if s.StencilBack != other.StencilBack {
+		return s.StencilBack.Compare(other.StencilBack)
+	}
 	return true
 }
 
@@ -116,6 +123,7 @@ var DefaultState = State{
 	WriteBlue:    true,
 	WriteAlpha:   true,
 	Dithering:    true,
+	DepthClamp:   false,
 	DepthTest:    true,
 	DepthWrite:   true,
 	DepthCmp:     Less,

@@ -165,6 +165,10 @@ type DeviceInfo struct {
 	// then BinaryAlpha will automatically be used as a fallback).
 	AlphaToCoverage bool
 
+	// Whether or not rendering objects with the DepthClamp state enabled is
+	// supported.
+	DepthClamp bool
+
 	// Whether or not occlusion queries are supported or not.
 	OcclusionQuery bool
 
