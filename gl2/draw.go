@@ -113,6 +113,12 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 		texturesLoaded []chan *gfx.Texture
 	)
 
+	if o.State == nil {
+		// Can't draw.
+		r.logf("Draw(): object has a nil state\n")
+		return
+	}
+
 	// Begin loading shader.
 	if o.Shader == nil {
 		// Can't draw.
