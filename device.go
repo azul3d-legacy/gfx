@@ -108,6 +108,7 @@ type Canvas interface {
 	//
 	// The object will not be drawn if any of the following cases are true:
 	//
+	//  o.State == nil
 	//  o.Shader == nil
 	//  len(o.Shader.Error) > 0
 	//  len(o.Meshes) == 0

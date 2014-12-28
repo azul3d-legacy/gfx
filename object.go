@@ -56,7 +56,7 @@ type Object struct {
 	OcclusionTest bool
 
 	// The render state of this object.
-	State
+	*State
 
 	// The transformation of the object.
 	*Transform
@@ -155,13 +155,15 @@ func (o *Object) Compare(other *Object) bool {
 		}
 	}
 
-	// Compare state then.
+	// Compare states.
 	return o.State.Compare(other.State)
 }
 
 // Copy returns a new copy of this Object. Explicitily not copied is the native
-// object. The transform is copied via it's Copy() method. The shader is only
-// copied by pointer.
+// object. The transform is copied via it's Copy() method.
+//
+// The state, shader, meshes, and textures are all shallow copies only (i.e.
+// only the pointer values are copied).
 func (o *Object) Copy() *Object {
 	cpyCachedBounds := *o.CachedBounds
 	cpy := &Object{
@@ -182,7 +184,7 @@ func (o *Object) Copy() *Object {
 func (o *Object) Reset() {
 	o.NativeObject = nil
 	o.OcclusionTest = false
-	o.State = DefaultState
+	o.State = nil
 	o.Transform = NewTransform()
 	o.Shader = nil
 	o.CachedBounds = nil
@@ -214,15 +216,15 @@ func (o *Object) Destroy() {
 var objPool = sync.Pool{
 	New: func() interface{} {
 		return &Object{
-			State:     DefaultState,
 			Transform: NewTransform(),
 		}
 	},
 }
 
 // NewObject creates and returns a new object with:
-//  o.State == DefaultState
-//  o.Transform == DefaultTransform
+//
+//  o.Transform == NewTransform()
+//
 func NewObject() *Object {
 	return objPool.Get().(*Object)
 }
