@@ -167,14 +167,14 @@ func TestSortByState(t *testing.T) {
 
 	for i := 0; i < 8; i++ {
 		s := l[i].State
-		if !s.Dithering || !s.DepthTest || !s.DepthWrite {
+		if s.Dithering || !s.DepthTest || s.DepthWrite {
 			t.Fail()
 		}
 	}
 
 	for i := 8; i < 16; i++ {
 		s := l[i].State
-		if s.Dithering || !s.DepthTest || s.DepthWrite {
+		if !s.Dithering || !s.DepthTest || !s.DepthWrite {
 			t.Fail()
 		}
 	}
