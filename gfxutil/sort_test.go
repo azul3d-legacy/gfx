@@ -145,6 +145,7 @@ func BenchmarkDistSortStd5k(b *testing.B) {
 
 func TestSortByState(t *testing.T) {
 	a := gfx.NewObject()
+	a.State = gfx.NewState()
 	a.State.Dithering = true
 	a.State.DepthTest = true
 	a.State.DepthWrite = true
@@ -154,6 +155,7 @@ func TestSortByState(t *testing.T) {
 	a.State.WriteAlpha = true
 
 	b := gfx.NewObject()
+	b.State = gfx.NewState()
 	b.State.Dithering = false
 	b.State.DepthTest = true
 	b.State.DepthWrite = false
@@ -192,7 +194,7 @@ func sortByState(amount int, b *testing.B) {
 	}
 
 	for _, o := range objs {
-		o.State = gfx.State{
+		o.State = &gfx.State{
 			WriteRed:    randBool(),
 			WriteGreen:  randBool(),
 			WriteBlue:   randBool(),
