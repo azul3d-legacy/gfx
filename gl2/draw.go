@@ -10,13 +10,9 @@ import (
 	"reflect"
 
 	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-dev/internal/glutil"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/lmath.v1"
-)
-
-var (
-	// Get an matrix which will translate our matrix from ZUpRight to YUpRight
-	zUpRightToYUpRight = lmath.CoordSysZUpRight.ConvertMat4(lmath.CoordSysYUpRight)
 )
 
 var (
@@ -105,7 +101,7 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 
 	// The "View" matrix is the coordinate system conversion, multiplied
 	// against the camera object's transformation matrix
-	view := zUpRightToYUpRight
+	view := glutil.CoordSys
 	if c != nil {
 		// Apply inverse of camera object transformation.
 		camInverse, _ := c.Object.Transform.Mat4().Inverse()
