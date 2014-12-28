@@ -11,4 +11,3 @@ var (
 	// up coordinate system to a right-handed Y up coordinate system.
 	CoordSys = lmath.CoordSysZUpRight.ConvertMat4(lmath.CoordSysYUpRight)
 )
-
