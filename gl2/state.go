@@ -47,6 +47,7 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 		clearDepth                   float64
 		clearStencil                 int32
 		colorWrite                   [4]bool
+		depthClamp                   bool
 		depthFunc                    int32
 		blendDstRGB, blendSrcRGB     int32
 		blendDstAlpha, blendSrcAlpha int32
@@ -97,6 +98,9 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	gl.GetIntegerv(gl.STENCIL_BACK_FUNC, &stencilBackCmp)
 
 	gl.GetBooleanv(gl.DITHER, &dithering)
+	if gpuInfo.DepthClamp {
+		gl.GetBooleanv(gl.DEPTH_CLAMP, &depthClamp)
+	}
 	gl.GetBooleanv(gl.DEPTH_TEST, &depthTest)
 	gl.GetBooleanv(gl.DEPTH_WRITEMASK, &depthWrite)
 	gl.GetBooleanv(gl.STENCIL_TEST, &stencilTest)
@@ -144,6 +148,7 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 			WriteBlue:   colorWrite[2],
 			WriteAlpha:  colorWrite[3],
 			Dithering:   dithering,
+			DepthClamp:  depthClamp,
 			DepthTest:   depthTest,
 			DepthWrite:  depthWrite,
 			StencilTest: stencilTest,
@@ -183,6 +188,7 @@ func (s *graphicsState) load(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle, g 
 	s.stateClearDepth(g.clearDepth)
 	s.stateClearStencil(g.clearStencil)
 	s.stateColorWrite(g.State.WriteRed, g.State.WriteGreen, g.State.WriteBlue, g.State.WriteAlpha)
+	s.stateDepthClamp(gpuInfo, g.State.DepthClamp)
 	s.stateDepthFunc(g.State.DepthCmp)
 	s.stateBlendFuncSeparate(g.State.Blend)
 	s.stateBlendEquationSeparate(g.State.Blend)
@@ -423,6 +429,16 @@ func (s *graphicsState) stateAlphaToCoverage(gpuInfo *gfx.DeviceInfo, alphaToCov
 			glFeature(gl.SAMPLE_ALPHA_TO_COVERAGE, alphaToCoverage)
 		}
 	}
+}
+
+func (s *graphicsState) stateDepthClamp(gpuInfo *gfx.DeviceInfo, clamp bool) {
+	if noStateGuard || s.State.DepthClamp != clamp {
+		s.State.DepthClamp = clamp
+		if gpuInfo.DepthClamp {
+			glFeature(gl.DEPTH_CLAMP, clamp)
+		}
+	}
+	glFeature(gl.DEPTH_CLAMP, true)
 }
 
 func (s *graphicsState) stateFaceCulling(m gfx.FaceCullMode) {

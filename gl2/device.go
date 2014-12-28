@@ -705,6 +705,7 @@ func newDevice(opts ...Option) (Device, error) {
 	//gl.Execute()
 
 	// Collect GPU information.
+	r.gpuInfo.DepthClamp = extension("GL_ARB_depth_clamp", exts)
 	r.gpuInfo.MaxTextureSize = int(maxTextureSize)
 	r.gpuInfo.AlphaToCoverage = r.glArbMultisample && r.samples > 0 && r.sampleBuffers > 0
 	r.gpuInfo.Name = gl.GoStr(gl.GetString(gl.RENDERER))

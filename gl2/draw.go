@@ -386,6 +386,7 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	r.stateStencilOp(obj.StencilFront, obj.StencilBack)
 	r.stateStencilFunc(obj.StencilFront, obj.StencilBack)
 	r.stateStencilMask(obj.StencilFront.WriteMask, obj.StencilBack.WriteMask)
+	r.stateDepthClamp(&r.gpuInfo, obj.DepthClamp)
 	r.stateDepthFunc(obj.DepthCmp)
 	r.stateDepthTest(obj.DepthTest)
 	r.stateDepthWrite(obj.DepthWrite)

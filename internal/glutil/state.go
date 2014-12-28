@@ -39,6 +39,7 @@ var DefaultState = &gfx.State{
 	true,                // WriteBlue
 	true,                // WriteAlpha
 	true,                // Dithering
+	false,               // DepthClamp
 	false,               // DepthTest
 	true,                // DepthWrite
 	gfx.Less,            // DepthCmp
