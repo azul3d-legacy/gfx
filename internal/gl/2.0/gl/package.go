@@ -497,6 +497,7 @@ const (
 	DEPTH_ATTACHMENT                          = 0x8D00
 	DEPTH_BITS                                = 0x0D56
 	DEPTH_BUFFER_BIT                          = 0x00000100
+	DEPTH_CLAMP                               = 0x864F
 	DEPTH_CLEAR_VALUE                         = 0x0B73
 	DEPTH_COMPONENT                           = 0x1902
 	DEPTH_COMPONENT16                         = 0x81A5
