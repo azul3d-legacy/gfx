@@ -10,43 +10,15 @@ import (
 	"reflect"
 
 	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/internal/glutil"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glutil"
 	"azul3d.org/lmath.v1"
 )
 
 var (
-	textureNames  = make([]string, 32)
-	texCoordNames = make([]string, 32)
+	textureIndex  = glutil.NewIndexStr("Texture")
+	texCoordIndex = glutil.NewIndexStr("TexCoord")
 )
-
-func init() {
-	for i := 0; i < len(textureNames); i++ {
-		textureNames[i] = fmt.Sprintf("Texture%d", i)
-	}
-
-	for i := 0; i < len(texCoordNames); i++ {
-		texCoordNames[i] = fmt.Sprintf("TexCoord%d", i)
-	}
-}
-
-func textureName(i int) string {
-	if i < len(textureNames) {
-		return textureNames[i]
-	}
-	n := fmt.Sprintf("Texture%d", i)
-	textureNames = append(textureNames, n)
-	return n
-}
-
-func texCoordName(i int) string {
-	if i < len(texCoordNames) {
-		return texCoordNames[i]
-	}
-	n := fmt.Sprintf("TexCoord%d", i)
-	texCoordNames = append(texCoordNames, n)
-	return n
-}
 
 // Used as the *gfx.Object.NativeObject interface value.
 type nativeObject struct {
@@ -478,7 +450,7 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 		}
 
 		// Add uniform input.
-		r.updateUniform(ns, textureName(i), texSlot(i))
+		r.updateUniform(ns, textureIndex.Name(i), texSlot(i))
 	}
 
 	// Begin occlusion query.
@@ -509,8 +481,7 @@ func (r *device) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 
 	// Use each texture coordinate set data.
 	for index, texCoords := range native.texCoords {
-		name := texCoordName(index)
-		location, ok = r.findAttribLocation(ns, name)
+		location, ok = r.findAttribLocation(ns, texCoordIndex.Name(index))
 		if ok {
 			gl.BindBuffer(gl.ARRAY_BUFFER, texCoords)
 			gl.EnableVertexAttribArray(location)
