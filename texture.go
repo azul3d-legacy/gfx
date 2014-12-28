@@ -121,7 +121,9 @@ type Texture struct {
 	// implementations should assign values to this field.
 	NativeTexture
 
-	// Weather or not this texture is currently loaded or not.
+	// Weather or not this texture is currently loaded or not. If Loaded is set
+	// false on a already-loaded texture, it will cause the device to reload
+	// the texture.
 	Loaded bool
 
 	// If true then when this texture is loaded the data image source of it
