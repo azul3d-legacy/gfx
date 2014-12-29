@@ -119,7 +119,7 @@ type RTTConfig struct {
 	//
 	// Specify nil for any you do not intend to use as a texture (e.g. if you
 	// want a 16-bit depth buffer but do not intend to use it as a texture, you
-	// could set Depth == nil and DepthFormat == Depth16).
+	// should set Depth == nil and DepthFormat == Depth16).
 	Color, Depth, Stencil *Texture
 
 	// Color format to use for the color buffer, it should be one listed in the
