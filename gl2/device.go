@@ -15,7 +15,7 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/clock"
-	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
+	"azul3d.org/gfx.v2-dev/internal/tag"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
@@ -287,7 +287,7 @@ func (r *device) hookedRender(pre, post func()) {
 			post()
 		}
 
-		if gfxdebug.Flag {
+		if tag.Gfxdebug {
 			r.debugRender()
 		}
 
@@ -673,7 +673,7 @@ func newDevice(opts ...Option) (Device, error) {
 		ei++
 	}
 
-	if gfxdebug.Flag {
+	if tag.Gfxdebug {
 		r.debugInit(exts)
 	}
 

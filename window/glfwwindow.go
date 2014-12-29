@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/internal/gfxdebug"
+	"azul3d.org/gfx.v2-dev/internal/tag"
 	"azul3d.org/gfx.v2-dev/internal/util"
 	"azul3d.org/keyboard.v2-dev"
 	"azul3d.org/mouse.v2-dev"
@@ -712,7 +712,7 @@ func (w *glfwWindow) build() error {
 		glfw.StencilBits:         int(prec.StencilBits),
 		glfw.Samples:             prec.Samples,
 		glfw.SRGBCapable:         1,
-		glfw.OpenGLDebugContext:  intBool(gfxdebug.Flag),
+		glfw.OpenGLDebugContext:  intBool(tag.Gfxdebug),
 		glfw.ContextVersionMajor: glfwContextVersionMajor,
 		glfw.ContextVersionMinor: glfwContextVersionMinor,
 		glfw.ClientAPI:           glfwClientAPI,
