@@ -490,6 +490,7 @@ const (
 	CONSTANT_COLOR                            = 0x8001
 	CULL_FACE                                 = 0x0B44
 	CULL_FACE_MODE                            = 0x0B45
+	CURRENT_PROGRAM                           = 0x8B8D
 	DEBUG_OUTPUT_SYNCHRONOUS_ARB              = 0x8242
 	DECR                                      = 0x1E03
 	DECR_WRAP                                 = 0x8508
