@@ -12,6 +12,7 @@ import (
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/glutil"
+	"azul3d.org/gfx.v2-dev/internal/util"
 	"azul3d.org/lmath.v1"
 )
 
@@ -97,92 +98,12 @@ func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
 }
 
 func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
-	// Draw calls with empty rectangles are effectively no-op.
-	if rect.Empty() {
+	doDraw, err := util.PreDraw(r, rect, o, c)
+	if err != nil {
+		r.logf("%v\n", err)
 		return
 	}
-
-	// Make the implicit o.Bounds() call required by gfx.Canvas so that the
-	// object has a chance to calculate a bounding box before it's data slices
-	// are set to nil.
-	o.Bounds()
-
-	var (
-		shaderLoaded   chan *gfx.Shader
-		meshesLoaded   []chan *gfx.Mesh
-		texturesLoaded []chan *gfx.Texture
-	)
-
-	if o.State == nil {
-		// Can't draw.
-		r.logf("Draw(): object has a nil state\n")
-		return
-	}
-
-	// Begin loading shader.
-	if o.Shader == nil {
-		// Can't draw.
-		r.logf("Draw(): object has a nil shader\n")
-		return
-	}
-	shaderNeedLoad := !o.Shader.Loaded
-	shaderHasError := len(o.Shader.Error) > 0
-	if shaderHasError {
-		// Can't draw.
-		return
-	}
-	if shaderNeedLoad {
-		shaderLoaded = make(chan *gfx.Shader, 1)
-		r.LoadShader(o.Shader, shaderLoaded)
-	}
-
-	// Begin loading meshes.
-	if len(o.Meshes) == 0 {
-		// Can't draw.
-		r.logf("Draw(): object has no meshes\n")
-		return
-	}
-
-	for _, m := range o.Meshes {
-		meshNeedLoad := !m.Loaded || m.HasChanged()
-		meshEmpty := !m.Loaded && len(m.Vertices) == 0
-		if meshEmpty {
-			// Can't draw.
-			r.logf("Draw(): mesh is not loaded and has no vertices\n")
-			return
-		}
-		if meshNeedLoad {
-			ch := make(chan *gfx.Mesh, 1)
-			r.LoadMesh(m, ch)
-			meshesLoaded = append(meshesLoaded, ch)
-		}
-	}
-
-	// Begin loading textures.
-	for _, t := range o.Textures {
-		texNeedLoad := !t.Loaded
-		if texNeedLoad {
-			ch := make(chan *gfx.Texture, 1)
-			r.LoadTexture(t, ch)
-			texturesLoaded = append(texturesLoaded, ch)
-		}
-	}
-
-	// Wait for shader, meshes, and textures to finish loading.
-	if shaderLoaded != nil {
-		<-shaderLoaded
-	}
-	for _, load := range meshesLoaded {
-		<-load
-	}
-	for _, load := range texturesLoaded {
-		<-load
-	}
-
-	// Check if the now-loaded shader might have errors.
-	shaderHasError = len(o.Shader.Error) > 0
-	if shaderHasError {
-		// Can't draw.
+	if !doDraw {
 		return
 	}
 
