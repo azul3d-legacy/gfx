@@ -133,7 +133,8 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 		depthFunc    int32
 		dithering, depthTest, depthWrite, stencilTest, blend,
 		alphaToCoverage bool
-		faceCullMode int32
+		faceCullMode  int32
+		shaderProgram int32
 	)
 	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
 	gl.GetFloatv(gl.COLOR_CLEAR_VALUE, &clearColor.R)
@@ -153,7 +154,7 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	if gpuInfo.AlphaToCoverage {
 		gl.GetBooleanv(gl.SAMPLE_ALPHA_TO_COVERAGE, &alphaToCoverage)
 	}
-
+	gl.GetIntegerv(gl.CURRENT_PROGRAM, &shaderProgram)
 	gl.GetIntegerv(gl.CULL_FACE_MODE, &faceCullMode)
 	//gl.Execute()
 
@@ -164,7 +165,7 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 			clearDepth,
 			int(clearStencil),
 			blend,
-			0, // TODO: use program
+			uint32(shaderProgram),
 		},
 		&gfx.State{
 			FaceCulling:  unconvertFaceCull(faceCullMode),
