@@ -131,6 +131,11 @@ type Texture struct {
 	// collected).
 	KeepDataOnLoad bool
 
+	// Dynamic is a hint (it does not restrict how the texture may be used) to
+	// the graphics device on how this texture might be used. If you intend to
+	// update texture data often (i.e. it's not static) then set this to true.
+	Dynamic bool
+
 	// The bounds of the texture, in the case of a texture loaded from a image
 	// this should be set to the image's bounds. In the case of rendering to a
 	// texture this should be set to the desired canvas resolution.
@@ -168,6 +173,7 @@ func (t *Texture) Copy() *Texture {
 		nil,   // Native texture -- not copied.
 		false, // Loaded status -- not copied.
 		t.KeepDataOnLoad,
+		t.Dynamic,
 		t.Bounds,
 		nil, // Source image -- not copied.
 		t.Format,
@@ -192,6 +198,7 @@ func (t *Texture) Reset() {
 	t.NativeTexture = nil
 	t.Loaded = false
 	t.KeepDataOnLoad = false
+	t.Dynamic = false
 	t.Bounds = image.Rectangle{}
 	t.Source = nil
 	t.Format = RGBA
@@ -215,9 +222,9 @@ func (t *Texture) Destroy() {
 
 var texturePool = sync.Pool{
 	New: func() interface{} {
-		return &Texture{
-			Format: RGBA,
-		}
+		t := &Texture{}
+		t.Reset()
+		return t
 	},
 }
 
