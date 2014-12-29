@@ -30,14 +30,9 @@ func glFeature(feature uint32, enabled bool) {
 // Please ensure these values match the default OpenGL state values listed in
 // the OpenGL documentation.
 var defaultGraphicsState = &graphicsState{
+	glutil.DefaultCommonState,
 	glutil.DefaultState,
-	image.Rect(0, 0, 0, 0),                    // scissor - Whole screen
-	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
-	1.0,   // clear depth
-	0,     // clear stencil
-	false, // blend
 	false, // alpha to coverage
-	0,     // program
 }
 
 // Queries the existing front-face stencil graphics state from OpenGL and
@@ -163,6 +158,14 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	//gl.Execute()
 
 	return &graphicsState{
+		&glutil.CommonState{
+			glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
+			clearColor,
+			clearDepth,
+			int(clearStencil),
+			blend,
+			0, // TODO: use program
+		},
 		&gfx.State{
 			FaceCulling:  unconvertFaceCull(faceCullMode),
 			Blend:        queryBlendState(),
@@ -179,13 +182,7 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 			DepthWrite:   depthWrite,
 			StencilTest:  stencilTest,
 		},
-		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
-		clearColor,
-		clearDepth,
-		int(clearStencil),
-		blend,
 		alphaToCoverage,
-		0, // TODO: use program
 	}
 }
 
@@ -193,14 +190,9 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 // setting OpenGL state twice and keeping state between frames if needed for
 // interoperability with, e.g. QT5's renderer.
 type graphicsState struct {
+	*glutil.CommonState
 	*gfx.State
-
-	scissor                image.Rectangle
-	clearColor             gfx.Color
-	clearDepth             float64
-	clearStencil           int
-	blend, alphaToCoverage bool
-	program                uint32
+	alphaToCoverage bool
 }
 
 // loads the graphics state, g, making OpenGL calls as neccesarry to components
@@ -208,11 +200,11 @@ type graphicsState struct {
 //
 // bounds is the renderer's bounds (e.g. r.Bounds()) to pass into stateScissor().
 func (s *graphicsState) load(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle, g *graphicsState) {
-	s.stateScissor(bounds, g.scissor)
-	s.stateClearColor(g.clearColor)
+	s.stateScissor(bounds, g.CommonState.Scissor)
+	s.stateClearColor(g.CommonState.ClearColor)
 	s.stateBlendColor(g.State.Blend.Color)
-	s.stateClearDepth(g.clearDepth)
-	s.stateClearStencil(g.clearStencil)
+	s.stateClearDepth(g.CommonState.ClearDepth)
+	s.stateClearStencil(g.CommonState.ClearStencil)
 	s.stateColorWrite(g.State.WriteRed, g.State.WriteGreen, g.State.WriteBlue, g.State.WriteAlpha)
 	s.stateDepthClamp(gpuInfo, g.State.DepthClamp)
 	s.stateDepthFunc(g.State.DepthCmp)
@@ -225,10 +217,10 @@ func (s *graphicsState) load(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle, g 
 	s.stateDepthTest(g.State.DepthTest)
 	s.stateDepthWrite(g.State.DepthWrite)
 	s.stateStencilTest(g.State.StencilTest)
-	s.stateBlend(g.blend)
+	s.stateBlend(g.CommonState.Blend)
 	s.stateAlphaToCoverage(gpuInfo, g.alphaToCoverage)
 	s.stateFaceCulling(g.State.FaceCulling)
-	s.stateProgram(g.program)
+	s.stateProgram(g.CommonState.ShaderProgram)
 }
 
 // bounds is the renderer's bounds (e.g. r.Bounds()).
@@ -237,17 +229,17 @@ func (s *graphicsState) stateScissor(bounds, rect image.Rectangle) {
 	// the OpenGL call.
 	rect = bounds.Intersect(rect)
 
-	if noStateGuard || s.scissor != rect {
+	if noStateGuard || s.CommonState.Scissor != rect {
 		// Store the new scissor rectangle.
-		s.scissor = rect
+		s.CommonState.Scissor = rect
 		x, y, width, height := glutil.ConvertRect(rect, bounds)
 		gl.Scissor(x, y, width, height)
 	}
 }
 
 func (s *graphicsState) stateClearColor(color gfx.Color) {
-	if noStateGuard || s.clearColor != color {
-		s.clearColor = color
+	if noStateGuard || s.CommonState.ClearColor != color {
+		s.CommonState.ClearColor = color
 		gl.ClearColor(color.R, color.G, color.B, color.A)
 	}
 }
@@ -260,15 +252,15 @@ func (s *graphicsState) stateBlendColor(c gfx.Color) {
 }
 
 func (s *graphicsState) stateClearDepth(depth float64) {
-	if noStateGuard || s.clearDepth != depth {
-		s.clearDepth = depth
+	if noStateGuard || s.CommonState.ClearDepth != depth {
+		s.CommonState.ClearDepth = depth
 		gl.ClearDepth(depth)
 	}
 }
 
 func (s *graphicsState) stateClearStencil(stencil int) {
-	if noStateGuard || s.clearStencil != stencil {
-		s.clearStencil = stencil
+	if noStateGuard || s.CommonState.ClearStencil != stencil {
+		s.CommonState.ClearStencil = stencil
 		gl.ClearStencil(int32(stencil))
 	}
 }
@@ -442,8 +434,8 @@ func (s *graphicsState) stateStencilTest(stencilTest bool) {
 }
 
 func (s *graphicsState) stateBlend(blend bool) {
-	if noStateGuard || s.blend != blend {
-		s.blend = blend
+	if noStateGuard || s.CommonState.Blend != blend {
+		s.CommonState.Blend = blend
 		glFeature(gl.BLEND, blend)
 	}
 }
@@ -484,8 +476,8 @@ func (s *graphicsState) stateFaceCulling(m gfx.FaceCullMode) {
 }
 
 func (s *graphicsState) stateProgram(p uint32) {
-	if noStateGuard || s.program != p {
-		s.program = p
+	if noStateGuard || s.CommonState.ShaderProgram != p {
+		s.CommonState.ShaderProgram = p
 		gl.UseProgram(p)
 	}
 }
