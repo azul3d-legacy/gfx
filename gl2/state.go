@@ -196,10 +196,10 @@ type graphicsState struct {
 	alphaToCoverage bool
 }
 
-// loads the graphics state, g, making OpenGL calls as neccesarry to components
+// loads the graphics state, g, making OpenGL calls as necessary to components
 // that differ between the states s and r.
 //
-// bounds is the renderer's bounds (e.g. r.Bounds()) to pass into stateScissor().
+// bounds is the renderer's bounds (e.g. r.Bounds) to pass into stateScissor.
 func (s *graphicsState) load(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle, g *graphicsState) {
 	s.stateScissor(bounds, g.CommonState.Scissor)
 	s.stateClearColor(g.CommonState.ClearColor)
