@@ -8,9 +8,9 @@ import (
 	"image"
 
 	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/internal/tag"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/glutil"
+	"azul3d.org/gfx.v2-dev/internal/tag"
 )
 
 // Set this to true to disable state guarding (i.e. avoiding useless OpenGL
