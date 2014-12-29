@@ -101,7 +101,6 @@ type device struct {
 
 	*graphicsState
 	prevGraphicsState *graphicsState
-	lastShader        *gfx.Shader
 
 	// Structure used to manage the debug output stream.
 	debug struct {
@@ -465,9 +464,6 @@ func (r *device) clearGlobalState() {
 			oldState = r.prevGraphicsState
 		}
 		r.graphicsState.load(&r.gpuInfo, r.Bounds(), oldState)
-
-		// Reset last shader so that uniforms are loaded again next frame.
-		r.lastShader = nil
 
 		// Disable scissor testing.
 		gl.Disable(gl.SCISSOR_TEST)

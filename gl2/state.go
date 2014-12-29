@@ -476,9 +476,11 @@ func (s *graphicsState) stateFaceCulling(m gfx.FaceCullMode) {
 	}
 }
 
-func (s *graphicsState) stateProgram(p uint32) {
+func (s *graphicsState) stateProgram(p uint32) bool {
 	if noStateGuard || s.CommonState.ShaderProgram != p {
 		s.CommonState.ShaderProgram = p
 		gl.UseProgram(p)
+		return true
 	}
+	return false
 }

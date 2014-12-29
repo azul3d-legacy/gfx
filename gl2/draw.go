@@ -289,11 +289,7 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 
 	// Begin using the shader.
 	shader := obj.Shader
-	if r.lastShader != shader {
-		r.lastShader = shader
-
-		r.stateProgram(ns.program)
-
+	if r.stateProgram(ns.program) {
 		// Update shader inputs.
 		for name := range shader.Inputs {
 			value := shader.Inputs[name]
