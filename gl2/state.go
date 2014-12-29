@@ -39,47 +39,14 @@ var defaultGraphicsState = &graphicsState{
 	0,     // program
 }
 
-// Queries the existing OpenGL graphics state and returns it.
-func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+// Queries the existing front-face stencil graphics state from OpenGL and
+// returns it.
+func queryStencilFrontState() gfx.StencilState {
 	var (
-		scissor                      [4]int32
-		clearColor, blendColor       gfx.Color
-		clearDepth                   float64
-		clearStencil                 int32
-		colorWrite                   [4]bool
-		depthClamp                   bool
-		depthFunc                    int32
-		blendDstRGB, blendSrcRGB     int32
-		blendDstAlpha, blendSrcAlpha int32
-		blendEqRGB, blendEqAlpha     int32
-
 		stencilFrontWriteMask, stencilFrontReadMask, stencilFrontRef,
 		stencilFrontOpFail, stencilFrontOpDepthFail, stencilFrontOpDepthPass,
 		stencilFrontCmp int32
-
-		stencilBackWriteMask, stencilBackReadMask, stencilBackRef,
-		stencilBackOpFail, stencilBackOpDepthFail, stencilBackOpDepthPass,
-		stencilBackCmp int32
-
-		dithering, depthTest, depthWrite, stencilTest, blend,
-		alphaToCoverage bool
-		faceCullMode int32
 	)
-	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
-	gl.GetFloatv(gl.COLOR_CLEAR_VALUE, &clearColor.R)
-	gl.GetFloatv(gl.BLEND_COLOR, &blendColor.R)
-	gl.GetDoublev(gl.DEPTH_CLEAR_VALUE, &clearDepth)
-	gl.GetIntegerv(gl.STENCIL_CLEAR_VALUE, &clearStencil)
-	gl.GetBooleanv(gl.COLOR_WRITEMASK, &colorWrite[0])
-	gl.GetIntegerv(gl.DEPTH_FUNC, &depthFunc)
-	gl.GetIntegerv(gl.BLEND_DST_RGB, &blendDstRGB)
-	gl.GetIntegerv(gl.BLEND_SRC_RGB, &blendSrcRGB)
-	gl.GetIntegerv(gl.BLEND_DST_ALPHA, &blendDstAlpha)
-	gl.GetIntegerv(gl.BLEND_SRC_ALPHA, &blendSrcAlpha)
-	gl.GetIntegerv(gl.BLEND_EQUATION_RGB, &blendEqRGB)
-	gl.GetIntegerv(gl.BLEND_EQUATION_ALPHA, &blendEqAlpha)
-	gl.GetIntegerv(gl.BLEND_EQUATION_RGB, &blendEqRGB)
-	gl.GetIntegerv(gl.BLEND_EQUATION_ALPHA, &blendEqAlpha)
 
 	gl.GetIntegerv(gl.STENCIL_FAIL, &stencilFrontOpFail)
 	gl.GetIntegerv(gl.STENCIL_PASS_DEPTH_FAIL, &stencilFrontOpDepthFail)
@@ -89,6 +56,26 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	gl.GetIntegerv(gl.STENCIL_REF, &stencilFrontRef)
 	gl.GetIntegerv(gl.STENCIL_FUNC, &stencilFrontCmp)
 
+	return gfx.StencilState{
+		uint(stencilFrontWriteMask),
+		uint(stencilFrontReadMask),
+		uint(stencilFrontRef),
+		unconvertStencilOp(stencilFrontOpFail),
+		unconvertStencilOp(stencilFrontOpDepthFail),
+		unconvertStencilOp(stencilFrontOpDepthPass),
+		unconvertCmp(stencilFrontCmp),
+	}
+}
+
+// Queries the existing back-face stencil graphics state from OpenGL and
+// returns it.
+func queryStencilBackState() gfx.StencilState {
+	var (
+		stencilBackWriteMask, stencilBackReadMask, stencilBackRef,
+		stencilBackOpFail, stencilBackOpDepthFail, stencilBackOpDepthPass,
+		stencilBackCmp int32
+	)
+
 	gl.GetIntegerv(gl.STENCIL_BACK_FAIL, &stencilBackOpFail)
 	gl.GetIntegerv(gl.STENCIL_BACK_PASS_DEPTH_FAIL, &stencilBackOpDepthFail)
 	gl.GetIntegerv(gl.STENCIL_BACK_PASS_DEPTH_PASS, &stencilBackOpDepthPass)
@@ -96,6 +83,68 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	gl.GetIntegerv(gl.STENCIL_BACK_VALUE_MASK, &stencilBackReadMask)
 	gl.GetIntegerv(gl.STENCIL_BACK_REF, &stencilBackRef)
 	gl.GetIntegerv(gl.STENCIL_BACK_FUNC, &stencilBackCmp)
+
+	return gfx.StencilState{
+		uint(stencilBackWriteMask),
+		uint(stencilBackReadMask),
+		uint(stencilBackRef),
+		unconvertStencilOp(stencilBackOpFail),
+		unconvertStencilOp(stencilBackOpDepthFail),
+		unconvertStencilOp(stencilBackOpDepthPass),
+		unconvertCmp(stencilBackCmp),
+	}
+}
+
+// Queries the existing blend graphics state from OpenGL and returns it.
+func queryBlendState() gfx.BlendState {
+	var (
+		blendColor                   gfx.Color
+		blendDstRGB, blendSrcRGB     int32
+		blendDstAlpha, blendSrcAlpha int32
+		blendEqRGB, blendEqAlpha     int32
+	)
+
+	gl.GetFloatv(gl.BLEND_COLOR, &blendColor.R)
+	gl.GetIntegerv(gl.BLEND_DST_RGB, &blendDstRGB)
+	gl.GetIntegerv(gl.BLEND_SRC_RGB, &blendSrcRGB)
+	gl.GetIntegerv(gl.BLEND_DST_ALPHA, &blendDstAlpha)
+	gl.GetIntegerv(gl.BLEND_SRC_ALPHA, &blendSrcAlpha)
+	gl.GetIntegerv(gl.BLEND_EQUATION_RGB, &blendEqRGB)
+	gl.GetIntegerv(gl.BLEND_EQUATION_ALPHA, &blendEqAlpha)
+	gl.GetIntegerv(gl.BLEND_EQUATION_RGB, &blendEqRGB)
+	gl.GetIntegerv(gl.BLEND_EQUATION_ALPHA, &blendEqAlpha)
+
+	return gfx.BlendState{
+		blendColor,
+		unconvertBlendOp(blendSrcRGB),
+		unconvertBlendOp(blendDstRGB),
+		unconvertBlendOp(blendSrcAlpha),
+		unconvertBlendOp(blendDstAlpha),
+		unconvertBlendEq(blendEqRGB),
+		unconvertBlendEq(blendEqAlpha),
+	}
+}
+
+// Queries the existing OpenGL graphics state and returns it.
+func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+	var (
+		scissor      [4]int32
+		clearColor   gfx.Color
+		clearDepth   float64
+		clearStencil int32
+		colorWrite   [4]bool
+		depthClamp   bool
+		depthFunc    int32
+		dithering, depthTest, depthWrite, stencilTest, blend,
+		alphaToCoverage bool
+		faceCullMode int32
+	)
+	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
+	gl.GetFloatv(gl.COLOR_CLEAR_VALUE, &clearColor.R)
+	gl.GetDoublev(gl.DEPTH_CLEAR_VALUE, &clearDepth)
+	gl.GetIntegerv(gl.STENCIL_CLEAR_VALUE, &clearStencil)
+	gl.GetBooleanv(gl.COLOR_WRITEMASK, &colorWrite[0])
+	gl.GetIntegerv(gl.DEPTH_FUNC, &depthFunc)
 
 	gl.GetBooleanv(gl.DITHER, &dithering)
 	if gpuInfo.DepthClamp {
@@ -114,44 +163,20 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 
 	return &graphicsState{
 		&gfx.State{
-			FaceCulling: unconvertFaceCull(faceCullMode),
-			Blend: gfx.BlendState{
-				blendColor,
-				unconvertBlendOp(blendSrcRGB),
-				unconvertBlendOp(blendDstRGB),
-				unconvertBlendOp(blendSrcAlpha),
-				unconvertBlendOp(blendDstAlpha),
-				unconvertBlendEq(blendEqRGB),
-				unconvertBlendEq(blendEqAlpha),
-			},
-			StencilFront: gfx.StencilState{
-				uint(stencilFrontWriteMask),
-				uint(stencilFrontReadMask),
-				uint(stencilFrontRef),
-				unconvertStencilOp(stencilFrontOpFail),
-				unconvertStencilOp(stencilFrontOpDepthFail),
-				unconvertStencilOp(stencilFrontOpDepthPass),
-				unconvertCmp(stencilFrontCmp),
-			},
-			StencilBack: gfx.StencilState{
-				uint(stencilBackWriteMask),
-				uint(stencilBackReadMask),
-				uint(stencilBackRef),
-				unconvertStencilOp(stencilBackOpFail),
-				unconvertStencilOp(stencilBackOpDepthFail),
-				unconvertStencilOp(stencilBackOpDepthPass),
-				unconvertCmp(stencilBackCmp),
-			},
-			DepthCmp:    unconvertCmp(depthFunc),
-			WriteRed:    colorWrite[0],
-			WriteGreen:  colorWrite[1],
-			WriteBlue:   colorWrite[2],
-			WriteAlpha:  colorWrite[3],
-			Dithering:   dithering,
-			DepthClamp:  depthClamp,
-			DepthTest:   depthTest,
-			DepthWrite:  depthWrite,
-			StencilTest: stencilTest,
+			FaceCulling:  unconvertFaceCull(faceCullMode),
+			Blend:        queryBlendState(),
+			StencilFront: queryStencilFrontState(),
+			StencilBack:  queryStencilBackState(),
+			DepthCmp:     unconvertCmp(depthFunc),
+			WriteRed:     colorWrite[0],
+			WriteGreen:   colorWrite[1],
+			WriteBlue:    colorWrite[2],
+			WriteAlpha:   colorWrite[3],
+			Dithering:    dithering,
+			DepthClamp:   depthClamp,
+			DepthTest:    depthTest,
+			DepthWrite:   depthWrite,
+			StencilTest:  stencilTest,
 		},
 		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
 		clearColor,
