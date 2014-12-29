@@ -13,6 +13,10 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/tag"
 )
 
+// TODO(slimsag): implement GL_SCISSOR_TEST
+// TODO(slimsag): implement GL_PROGRAM_POINT_SIZE_EXT
+// TODO(slimsag): implement GL_MULTISAMPLE
+
 // Set this to true to disable state guarding (i.e. avoiding useless OpenGL
 // state calls). This is useful for debugging the state guard code.
 const noStateGuard = tag.Gsgdebug
