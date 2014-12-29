@@ -113,6 +113,7 @@ type Canvas interface {
 	//  len(o.Shader.Error) > 0
 	//  len(o.Meshes) == 0
 	//  !o.Meshes[N].Loaded && len(o.Meshes[N].Vertices) == 0
+	//  !o.Textures[n].Loaded && o.Textures[N].Source == nil
 	//
 	// If the rectangle is empty this function is no-op.
 	Draw(r image.Rectangle, o *Object, c *Camera)
