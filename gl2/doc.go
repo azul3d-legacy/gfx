@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package gl2 provides an OpenGL 2 based graphics device.
+// Package gl2 provides a OpenGL 2 based graphics device.
 //
 // The behavior of the device is fully defined in the gfx package, and as such
 // the following documentation only makes note of strictly OpenGL related
