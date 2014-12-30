@@ -35,8 +35,8 @@ var defaultGraphicsState = &graphicsState{
 	false, // alpha to coverage
 }
 
-// Queries the existing front-face stencil graphics state from OpenGL and
-// returns it.
+// queryStencilFrontState queries the existing front-face stencil graphics
+// state from OpenGL and returns it.
 func queryStencilFrontState() gfx.StencilState {
 	var (
 		stencilFrontWriteMask, stencilFrontReadMask, stencilFrontRef,
@@ -63,8 +63,8 @@ func queryStencilFrontState() gfx.StencilState {
 	}
 }
 
-// Queries the existing back-face stencil graphics state from OpenGL and
-// returns it.
+// queryStencilBackState queries the existing back-face stencil graphics state
+// from OpenGL and returns it.
 func queryStencilBackState() gfx.StencilState {
 	var (
 		stencilBackWriteMask, stencilBackReadMask, stencilBackRef,
@@ -91,7 +91,8 @@ func queryStencilBackState() gfx.StencilState {
 	}
 }
 
-// Queries the existing blend graphics state from OpenGL and returns it.
+// queryBlendState queries the existing blend graphics state from OpenGL and
+// returns it.
 func queryBlendState() gfx.BlendState {
 	var (
 		blendColor                   gfx.Color
@@ -121,8 +122,9 @@ func queryBlendState() gfx.BlendState {
 	}
 }
 
-// Queries the existing OpenGL graphics state and returns it.
-func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+// queryGraphicsState queries the existing OpenGL graphics state and returns
+// it.
+func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
 	var (
 		scissor                                                           [4]int32
 		clearColor                                                        gfx.Color
