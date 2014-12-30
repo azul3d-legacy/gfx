@@ -122,26 +122,15 @@ func queryBlendState() gfx.BlendState {
 	}
 }
 
-// queryGraphicsState queries the existing OpenGL graphics state and returns
-// it.
-func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+// queryState queries the existing OpenGL gfx.State and returns it.
+func queryState(gpuInfo *gfx.DeviceInfo) *gfx.State {
 	var (
-		scissor                                                           [4]int32
-		clearColor                                                        gfx.Color
-		clearDepth                                                        float64
-		clearStencil                                                      int32
-		colorWrite                                                        [4]bool
-		depthClamp                                                        bool
-		depthFunc                                                         int32
-		dithering, depthTest, depthWrite, stencilTest, scissorTest, blend bool
-		multisample, programPointSizeExt, alphaToCoverage                 bool
-		faceCullMode                                                      int32
-		shaderProgram                                                     int32
+		colorWrite                                    [4]bool
+		depthClamp                                    bool
+		depthFunc                                     int32
+		dithering, depthTest, depthWrite, stencilTest bool
+		faceCullMode                                  int32
 	)
-	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
-	gl.GetFloatv(gl.COLOR_CLEAR_VALUE, &clearColor.R)
-	gl.GetDoublev(gl.DEPTH_CLEAR_VALUE, &clearDepth)
-	gl.GetIntegerv(gl.STENCIL_CLEAR_VALUE, &clearStencil)
 	gl.GetBooleanv(gl.COLOR_WRITEMASK, &colorWrite[0])
 	gl.GetIntegerv(gl.DEPTH_FUNC, &depthFunc)
 
@@ -152,6 +141,44 @@ func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	gl.GetBooleanv(gl.DEPTH_TEST, &depthTest)
 	gl.GetBooleanv(gl.DEPTH_WRITEMASK, &depthWrite)
 	gl.GetBooleanv(gl.STENCIL_TEST, &stencilTest)
+	gl.GetIntegerv(gl.CULL_FACE_MODE, &faceCullMode)
+	//gl.Execute()
+
+	return &gfx.State{
+		FaceCulling:  unconvertFaceCull(faceCullMode),
+		Blend:        queryBlendState(),
+		StencilFront: queryStencilFrontState(),
+		StencilBack:  queryStencilBackState(),
+		DepthCmp:     unconvertCmp(depthFunc),
+		WriteRed:     colorWrite[0],
+		WriteGreen:   colorWrite[1],
+		WriteBlue:    colorWrite[2],
+		WriteAlpha:   colorWrite[3],
+		Dithering:    dithering,
+		DepthClamp:   depthClamp,
+		DepthTest:    depthTest,
+		DepthWrite:   depthWrite,
+		StencilTest:  stencilTest,
+	}
+}
+
+// queryGraphicsState queries the existing OpenGL graphics state and returns
+// it.
+func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+	var (
+		scissor                                           [4]int32
+		clearColor                                        gfx.Color
+		clearDepth                                        float64
+		clearStencil                                      int32
+		scissorTest, blend                                bool
+		multisample, programPointSizeExt, alphaToCoverage bool
+		shaderProgram                                     int32
+	)
+	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
+	gl.GetFloatv(gl.COLOR_CLEAR_VALUE, &clearColor.R)
+	gl.GetDoublev(gl.DEPTH_CLEAR_VALUE, &clearDepth)
+	gl.GetIntegerv(gl.STENCIL_CLEAR_VALUE, &clearStencil)
+
 	gl.GetBooleanv(gl.SCISSOR_TEST, &scissorTest)
 	gl.GetBooleanv(gl.BLEND, &blend)
 	gl.GetBooleanv(gl.MULTISAMPLE, &multisample)
@@ -160,7 +187,6 @@ func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 		gl.GetBooleanv(gl.SAMPLE_ALPHA_TO_COVERAGE, &alphaToCoverage)
 	}
 	gl.GetIntegerv(gl.CURRENT_PROGRAM, &shaderProgram)
-	gl.GetIntegerv(gl.CULL_FACE_MODE, &faceCullMode)
 	//gl.Execute()
 
 	return &graphicsState{
@@ -175,22 +201,7 @@ func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 			multisample,
 			uint32(shaderProgram),
 		},
-		&gfx.State{
-			FaceCulling:  unconvertFaceCull(faceCullMode),
-			Blend:        queryBlendState(),
-			StencilFront: queryStencilFrontState(),
-			StencilBack:  queryStencilBackState(),
-			DepthCmp:     unconvertCmp(depthFunc),
-			WriteRed:     colorWrite[0],
-			WriteGreen:   colorWrite[1],
-			WriteBlue:    colorWrite[2],
-			WriteAlpha:   colorWrite[3],
-			Dithering:    dithering,
-			DepthClamp:   depthClamp,
-			DepthTest:    depthTest,
-			DepthWrite:   depthWrite,
-			StencilTest:  stencilTest,
-		},
+		queryState(gpuInfo),
 		alphaToCoverage,
 	}
 }
