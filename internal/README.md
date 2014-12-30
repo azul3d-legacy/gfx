@@ -45,7 +45,7 @@ Add the build tag line to each file:
 
 ```
 # OpenGL ES 2
-// +build arm 386,gles2 amd64,gles2
+// +build arm gles2
 
 # OpenGL 2
 // +build 386 amd64

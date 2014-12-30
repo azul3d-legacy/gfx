@@ -6,7 +6,7 @@
 // Copyright (c) 1991-2006 Silicon Graphics, Inc.
 // This document is licensed under the SGI Free Software B License.
 // For details, see http://oss.sgi.com/projects/FreeB.
-// +build arm 386,gles2 amd64,gles2
+// +build arm gles2
 
 // Package gles2 implements Go bindings to OpenGL.
 //
