@@ -16,7 +16,7 @@ import (
 // context.
 var ErrInvalidVersion = errors.New("invalid OpenGL version; must be at least OpenGL 2.0")
 
-// Device is an OpenGL 2 based graphics device.
+// Device is a OpenGL 2 based graphics device.
 //
 // It runs independant of the window management library being used (GLFW, SDL,
 // QT, etc), all it needs is a valid OpenGL 2 context.
