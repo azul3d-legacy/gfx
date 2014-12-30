@@ -53,19 +53,25 @@ var DefaultState = &gfx.State{
 
 // CommonState represents a set of common OpenGL state properties not covered by gfx.State.
 type CommonState struct {
-	Scissor       image.Rectangle
-	ClearColor    gfx.Color
-	ClearDepth    float64
-	ClearStencil  int
-	Blend         bool
-	ShaderProgram uint32
+	Scissor             image.Rectangle
+	ClearColor          gfx.Color
+	ClearDepth          float64
+	ClearStencil        int
+	Blend               bool
+	ScissorTest         bool
+	ProgramPointSizeExt bool
+	Multisample         bool
+	ShaderProgram       uint32
 }
 
 var DefaultCommonState = &CommonState{
-	image.Rect(0, 0, 0, 0),                    // scissor - Whole screen
-	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // clear color
-	1.0,   // clear depth
-	0,     // clear stencil
-	false, // blend
-	0,     // program
+	image.Rect(0, 0, 0, 0),                    // Scissor - Whole screen
+	gfx.Color{R: 0.0, G: 0.0, B: 0.0, A: 0.0}, // ClearColor
+	1.0,   // ClearDepth
+	0,     // ClearStencil
+	false, // Blend
+	false, // ScissorTest
+	false, // ProgramPointSizeExt
+	false, // Multisample
+	0,     // ShaderProgram
 }
