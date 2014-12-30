@@ -6,112 +6,77 @@ import "fmt"
 
 const _TexWrap_name = "RepeatClampBorderColorMirror"
 
-var _TexWrap_index = [...]uint8{6, 11, 22, 28}
+var _TexWrap_index = [...]uint8{0, 6, 11, 22, 28}
 
 func (i TexWrap) String() string {
-	if i >= TexWrap(len(_TexWrap_index)) {
+	if i+1 >= TexWrap(len(_TexWrap_index)) {
 		return fmt.Sprintf("TexWrap(%d)", i)
 	}
-	hi := _TexWrap_index[i]
-	lo := uint8(0)
-	if i > 0 {
-		lo = _TexWrap_index[i-1]
-	}
-	return _TexWrap_name[lo:hi]
+	return _TexWrap_name[_TexWrap_index[i]:_TexWrap_index[i+1]]
 }
 
 const _FaceCullMode_name = "BackFaceCullingFrontFaceCullingNoFaceCulling"
 
-var _FaceCullMode_index = [...]uint8{15, 31, 44}
+var _FaceCullMode_index = [...]uint8{0, 15, 31, 44}
 
 func (i FaceCullMode) String() string {
-	if i >= FaceCullMode(len(_FaceCullMode_index)) {
+	if i+1 >= FaceCullMode(len(_FaceCullMode_index)) {
 		return fmt.Sprintf("FaceCullMode(%d)", i)
 	}
-	hi := _FaceCullMode_index[i]
-	lo := uint8(0)
-	if i > 0 {
-		lo = _FaceCullMode_index[i-1]
-	}
-	return _FaceCullMode_name[lo:hi]
+	return _FaceCullMode_name[_FaceCullMode_index[i]:_FaceCullMode_index[i+1]]
 }
 
 const _TexFormat_name = "ZeroTexFormatRGBARGBDXT1DXT1RGBADXT3DXT5"
 
-var _TexFormat_index = [...]uint8{13, 17, 20, 24, 32, 36, 40}
+var _TexFormat_index = [...]uint8{0, 13, 17, 20, 24, 32, 36, 40}
 
 func (i TexFormat) String() string {
-	if i >= TexFormat(len(_TexFormat_index)) {
+	if i+1 >= TexFormat(len(_TexFormat_index)) {
 		return fmt.Sprintf("TexFormat(%d)", i)
 	}
-	hi := _TexFormat_index[i]
-	lo := uint8(0)
-	if i > 0 {
-		lo = _TexFormat_index[i-1]
-	}
-	return _TexFormat_name[lo:hi]
+	return _TexFormat_name[_TexFormat_index[i]:_TexFormat_index[i+1]]
 }
 
 const _DSFormat_name = "ZeroDSFormatDepth16Depth24Depth32Depth24AndStencil8"
 
-var _DSFormat_index = [...]uint8{12, 19, 26, 33, 51}
+var _DSFormat_index = [...]uint8{0, 12, 19, 26, 33, 51}
 
 func (i DSFormat) String() string {
-	if i >= DSFormat(len(_DSFormat_index)) {
+	if i+1 >= DSFormat(len(_DSFormat_index)) {
 		return fmt.Sprintf("DSFormat(%d)", i)
 	}
-	hi := _DSFormat_index[i]
-	lo := uint8(0)
-	if i > 0 {
-		lo = _DSFormat_index[i-1]
-	}
-	return _DSFormat_name[lo:hi]
+	return _DSFormat_name[_DSFormat_index[i]:_DSFormat_index[i+1]]
 }
 
 const _AlphaMode_name = "NoAlphaAlphaBlendBinaryAlphaAlphaToCoverage"
 
-var _AlphaMode_index = [...]uint8{7, 17, 28, 43}
+var _AlphaMode_index = [...]uint8{0, 7, 17, 28, 43}
 
 func (i AlphaMode) String() string {
-	if i >= AlphaMode(len(_AlphaMode_index)) {
+	if i+1 >= AlphaMode(len(_AlphaMode_index)) {
 		return fmt.Sprintf("AlphaMode(%d)", i)
 	}
-	hi := _AlphaMode_index[i]
-	lo := uint8(0)
-	if i > 0 {
-		lo = _AlphaMode_index[i-1]
-	}
-	return _AlphaMode_name[lo:hi]
+	return _AlphaMode_name[_AlphaMode_index[i]:_AlphaMode_index[i+1]]
 }
 
 const _TexFilter_name = "NearestLinearNearestMipmapNearestLinearMipmapNearestNearestMipmapLinearLinearMipmapLinear"
 
-var _TexFilter_index = [...]uint8{7, 13, 33, 52, 71, 89}
+var _TexFilter_index = [...]uint8{0, 7, 13, 33, 52, 71, 89}
 
 func (i TexFilter) String() string {
-	if i >= TexFilter(len(_TexFilter_index)) {
+	if i+1 >= TexFilter(len(_TexFilter_index)) {
 		return fmt.Sprintf("TexFilter(%d)", i)
 	}
-	hi := _TexFilter_index[i]
-	lo := uint8(0)
-	if i > 0 {
-		lo = _TexFilter_index[i-1]
-	}
-	return _TexFilter_name[lo:hi]
+	return _TexFilter_name[_TexFilter_index[i]:_TexFilter_index[i+1]]
 }
 
 const _Primitive_name = "TrianglesLinesPoints"
 
-var _Primitive_index = [...]uint8{9, 14, 20}
+var _Primitive_index = [...]uint8{0, 9, 14, 20}
 
 func (i Primitive) String() string {
-	if i >= Primitive(len(_Primitive_index)) {
+	if i+1 >= Primitive(len(_Primitive_index)) {
 		return fmt.Sprintf("Primitive(%d)", i)
 	}
-	hi := _Primitive_index[i]
-	lo := uint8(0)
-	if i > 0 {
-		lo = _Primitive_index[i-1]
-	}
-	return _Primitive_name[lo:hi]
+	return _Primitive_name[_Primitive_index[i]:_Primitive_index[i+1]]
 }
