@@ -4,11 +4,14 @@ This folder has vendored packages utilized by the various graphics packages (nam
 
 | Package         | Description                                            |
 |-----------------|--------------------------------------------------------|
-| gl/2.0/gl       | OpenGL 2.0 wrappers generated using Glow               |
-| gles2/2.0/gles2 | OpenGL ES 2.0 wrappers generated using Glow            |
-| restrict.json   | Glow symbol restriction JSON file                      |
+| gl/2.0/gl       | OpenGL 2.0 wrappers generated using Glow.              |
+| gles2/2.0/gles2 | OpenGL ES 2.0 wrappers generated using Glow.           |
+| restrict.json   | Glow symbol restriction JSON file.                     |
 | procaddr        | Build-tagged version of github.com/go-gl/glow/procaddr |
-| resize          | Appengine image resizing package                       |
+| resize          | Appengine image resizing package.                      |
+| util            | Common gfx.Device utilities.                           |
+| glutil          | Standard OpenGL device utilities.                      |
+| tag             | Simply exposes a few build tags.                       |
 
 ## Glow
 
