@@ -86,6 +86,17 @@ func Share(other Device) Option {
 	}
 }
 
+// DebugOutput specifies the writer, w, as the destination for the device to
+// write debug output to.
+//
+// It will mostly contain just shader debug information, but other information
+// may be written in future versions as well.
+func DebugOutput(w io.Writer) Option {
+	return func(r *device) {
+		r.SetDebugOutput(w)
+	}
+}
+
 // New returns a new OpenGL 2 graphics device. If any error occurs it is
 // returned along with a nil device.
 //
