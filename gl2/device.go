@@ -437,15 +437,15 @@ func (r *device) setGlobalState() {
 		gl.Viewport(0, 0, int32(bounds.Dx()), int32(bounds.Dy()))
 
 		// Enable scissor testing.
-		gl.Enable(gl.SCISSOR_TEST)
+		r.stateScissorTest(true)
 
 		// Enable setting point size in shader programs.
-		gl.Enable(gl.PROGRAM_POINT_SIZE_EXT)
+		r.stateProgramPointSizeExt(true)
 
 		// Enable multisampling, if available and wanted.
 		if r.glArbMultisample {
 			if r.BaseCanvas.MSAA() {
-				gl.Enable(gl.MULTISAMPLE)
+				r.stateMultisample(true)
 			}
 		}
 	}
@@ -464,17 +464,6 @@ func (r *device) clearGlobalState() {
 			oldState = r.prevGraphicsState
 		}
 		r.graphicsState.load(&r.gpuInfo, r.Bounds(), oldState)
-
-		// Disable scissor testing.
-		gl.Disable(gl.SCISSOR_TEST)
-
-		// Disable setting point size in shader programs.
-		gl.Disable(gl.PROGRAM_POINT_SIZE_EXT)
-
-		// Disable multisampling, if available.
-		if r.glArbMultisample {
-			gl.Disable(gl.MULTISAMPLE)
-		}
 	}
 }
 

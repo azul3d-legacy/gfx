@@ -13,10 +13,6 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/tag"
 )
 
-// TODO(slimsag): implement GL_SCISSOR_TEST
-// TODO(slimsag): implement GL_PROGRAM_POINT_SIZE_EXT
-// TODO(slimsag): implement GL_MULTISAMPLE
-
 // Set this to true to disable state guarding (i.e. avoiding useless OpenGL
 // state calls). This is useful for debugging the state guard code.
 const noStateGuard = tag.Gsgdebug
@@ -128,17 +124,17 @@ func queryBlendState() gfx.BlendState {
 // Queries the existing OpenGL graphics state and returns it.
 func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
 	var (
-		scissor      [4]int32
-		clearColor   gfx.Color
-		clearDepth   float64
-		clearStencil int32
-		colorWrite   [4]bool
-		depthClamp   bool
-		depthFunc    int32
-		dithering, depthTest, depthWrite, stencilTest, blend,
-		alphaToCoverage bool
-		faceCullMode  int32
-		shaderProgram int32
+		scissor                                                           [4]int32
+		clearColor                                                        gfx.Color
+		clearDepth                                                        float64
+		clearStencil                                                      int32
+		colorWrite                                                        [4]bool
+		depthClamp                                                        bool
+		depthFunc                                                         int32
+		dithering, depthTest, depthWrite, stencilTest, scissorTest, blend bool
+		multisample, programPointSizeExt, alphaToCoverage                 bool
+		faceCullMode                                                      int32
+		shaderProgram                                                     int32
 	)
 	gl.GetIntegerv(gl.SCISSOR_BOX, &scissor[0])
 	gl.GetFloatv(gl.COLOR_CLEAR_VALUE, &clearColor.R)
@@ -154,7 +150,10 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	gl.GetBooleanv(gl.DEPTH_TEST, &depthTest)
 	gl.GetBooleanv(gl.DEPTH_WRITEMASK, &depthWrite)
 	gl.GetBooleanv(gl.STENCIL_TEST, &stencilTest)
+	gl.GetBooleanv(gl.SCISSOR_TEST, &scissorTest)
 	gl.GetBooleanv(gl.BLEND, &blend)
+	gl.GetBooleanv(gl.MULTISAMPLE, &multisample)
+	gl.GetBooleanv(gl.PROGRAM_POINT_SIZE_EXT, &programPointSizeExt)
 	if gpuInfo.AlphaToCoverage {
 		gl.GetBooleanv(gl.SAMPLE_ALPHA_TO_COVERAGE, &alphaToCoverage)
 	}
@@ -169,6 +168,9 @@ func queryExistingState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 			clearDepth,
 			int(clearStencil),
 			blend,
+			scissorTest,
+			programPointSizeExt,
+			multisample,
 			uint32(shaderProgram),
 		},
 		&gfx.State{
@@ -222,7 +224,10 @@ func (s *graphicsState) load(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle, g 
 	s.stateDepthTest(g.State.DepthTest)
 	s.stateDepthWrite(g.State.DepthWrite)
 	s.stateStencilTest(g.State.StencilTest)
+	s.stateScissorTest(g.CommonState.ScissorTest)
 	s.stateBlend(g.CommonState.Blend)
+	s.stateProgramPointSizeExt(g.CommonState.ProgramPointSizeExt)
+	s.stateMultisample(g.CommonState.Multisample)
 	s.stateAlphaToCoverage(gpuInfo, g.alphaToCoverage)
 	s.stateFaceCulling(g.State.FaceCulling)
 	s.stateProgram(g.CommonState.ShaderProgram)
@@ -438,10 +443,31 @@ func (s *graphicsState) stateStencilTest(stencilTest bool) {
 	}
 }
 
+func (s *graphicsState) stateScissorTest(scissorTest bool) {
+	if noStateGuard || s.CommonState.ScissorTest != scissorTest {
+		s.CommonState.ScissorTest = scissorTest
+		glFeature(gl.SCISSOR_TEST, scissorTest)
+	}
+}
+
 func (s *graphicsState) stateBlend(blend bool) {
 	if noStateGuard || s.CommonState.Blend != blend {
 		s.CommonState.Blend = blend
 		glFeature(gl.BLEND, blend)
+	}
+}
+
+func (s *graphicsState) stateProgramPointSizeExt(enabled bool) {
+	if noStateGuard || s.CommonState.ProgramPointSizeExt != enabled {
+		s.CommonState.ProgramPointSizeExt = enabled
+		glFeature(gl.PROGRAM_POINT_SIZE_EXT, enabled)
+	}
+}
+
+func (s *graphicsState) stateMultisample(multisample bool) {
+	if noStateGuard || s.CommonState.Multisample != multisample {
+		s.CommonState.Multisample = multisample
+		glFeature(gl.MULTISAMPLE, multisample)
 	}
 }
 
