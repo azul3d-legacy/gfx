@@ -16,6 +16,7 @@ import (
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/clock"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glc"
 	"azul3d.org/gfx.v2-dev/internal/tag"
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
@@ -31,6 +32,8 @@ type pendingQuery struct {
 // renderer implements the Renderer interface defined in the gl2.go file.
 type device struct {
 	*util.BaseCanvas
+
+	Common *glc.Context
 
 	// Render execution channel.
 	renderExec chan func() bool
@@ -613,6 +616,7 @@ func newDevice(opts ...Option) (Device, error) {
 		BaseCanvas: &util.BaseCanvas{
 			VMSAA: true,
 		},
+		Common:         glc.NewContext(),
 		renderExec:     make(chan func() bool, 1024),
 		renderComplete: make(chan struct{}, 8),
 		wantFree:       make(chan struct{}, 1),

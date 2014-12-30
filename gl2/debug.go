@@ -35,7 +35,7 @@ func (r *device) debugInit(exts map[string]bool) {
 
 func (r *device) debugRender() {
 	// After each frame has been rendered we check for OpenGL errors.
-	if err := getError(); err != nil {
+	if err := r.Common.GetError(); err != nil {
 		r.logf("OpenGL Error: %v\n", err)
 	}
 }
