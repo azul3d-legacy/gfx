@@ -162,9 +162,8 @@ func queryState(gpuInfo *gfx.DeviceInfo) *gfx.State {
 	}
 }
 
-// queryGraphicsState queries the existing OpenGL graphics state and returns
-// it.
-func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+// queryCommonState queries the existing common OpenGL state and returns it.
+func queryCommonState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *glutil.CommonState {
 	var (
 		scissor                                           [4]int32
 		clearColor                                        gfx.Color
@@ -189,18 +188,30 @@ func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	gl.GetIntegerv(gl.CURRENT_PROGRAM, &shaderProgram)
 	//gl.Execute()
 
+	return &glutil.CommonState{
+		glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
+		clearColor,
+		clearDepth,
+		int(clearStencil),
+		blend,
+		scissorTest,
+		programPointSizeExt,
+		multisample,
+		uint32(shaderProgram),
+	}
+}
+
+// queryGraphicsState queries the existing OpenGL graphics state and returns
+// it.
+func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+	var alphaToCoverage bool
+	if gpuInfo.AlphaToCoverage {
+		gl.GetBooleanv(gl.SAMPLE_ALPHA_TO_COVERAGE, &alphaToCoverage)
+	}
+	//gl.Execute()
+
 	return &graphicsState{
-		&glutil.CommonState{
-			glutil.UnconvertRect(bounds, scissor[0], scissor[1], scissor[2], scissor[3]),
-			clearColor,
-			clearDepth,
-			int(clearStencil),
-			blend,
-			scissorTest,
-			programPointSizeExt,
-			multisample,
-			uint32(shaderProgram),
-		},
+		queryCommonState(gpuInfo, bounds),
 		queryState(gpuInfo),
 		alphaToCoverage,
 	}
