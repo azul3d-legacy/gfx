@@ -12,8 +12,8 @@ import (
 	"azul3d.org/gfx.v2-dev"
 )
 
-// Used when attempting to create a OpenGL 2.0 device in a lesser OpenGL
-// context.
+// ErrInvalidVersion is returned by New when attempting to create a OpenGL 2
+// device in a lesser version OpenGL context.
 var ErrInvalidVersion = errors.New("invalid OpenGL version; must be at least OpenGL 2.0")
 
 // Device is a OpenGL 2 based graphics device.
@@ -54,7 +54,7 @@ type Device interface {
 }
 
 // Option represents a single option function.
-type Option func(r *device)
+type Option func(d *device)
 
 // KeepState is an option that specifies whether or not the existing OpenGL
 // graphics state should be kept between frames.
@@ -70,8 +70,8 @@ type Option func(r *device)
 //
 // Do not specify this option unless you're sure that you need it.
 func KeepState() Option {
-	return func(r *device) {
-		r.keepState = true
+	return func(d *device) {
+		d.keepState = true
 	}
 }
 
@@ -81,8 +81,8 @@ func KeepState() Option {
 // The given other device must be from this package specifically, or else a
 // panic will occur.
 func Share(other Device) Option {
-	return func(r *device) {
-		r.shared.device = other.(*device)
+	return func(d *device) {
+		d.shared.device = other.(*device)
 	}
 }
 
@@ -92,8 +92,8 @@ func Share(other Device) Option {
 // It will mostly contain just shader debug information, but other information
 // may be written in future versions as well.
 func DebugOutput(w io.Writer) Option {
-	return func(r *device) {
-		r.SetDebugOutput(w)
+	return func(d *device) {
+		d.SetDebugOutput(w)
 	}
 }
 
@@ -103,9 +103,9 @@ func DebugOutput(w io.Writer) Option {
 // It is only safe to call this function under the presence of an OpenGL 2
 // feature level context.
 func New(opts ...Option) (Device, error) {
-	r, err := newDevice(opts...)
+	d, err := newDevice(opts...)
 	if err != nil {
 		return nil, err
 	}
-	return r, nil
+	return d, nil
 }
