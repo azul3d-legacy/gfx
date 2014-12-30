@@ -4,6 +4,6 @@
 
 package glc
 
-type Context struct {
-	GetError func() error
+type Context interface {
+	GetError() error
 }

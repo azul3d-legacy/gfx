@@ -5,10 +5,14 @@
 
 package glc
 
-import gl "github.com/gopherjs/webgl"
+import "github.com/gopherjs/webgl"
 
-func NewContext(c *gl.Context) *Context {
-	return &Context{
-		GetError: func() error { return getError(c) },
+type jsContext struct {
+	gl *webgl.Context
+}
+
+func NewContext(ctx *webgl.Context) Context {
+	return &jsContext{
+		gl: ctx,
 	}
 }

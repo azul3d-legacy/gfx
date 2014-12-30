@@ -11,7 +11,7 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 )
 
-func getError() error {
+func (c *gl2Context) GetError() error {
 	code := gl.GetError()
 	switch code {
 	case gl.NO_ERROR:

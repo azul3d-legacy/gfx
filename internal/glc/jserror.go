@@ -5,27 +5,22 @@
 
 package glc
 
-import (
-	"fmt"
+import "fmt"
 
-	"azul3d.org/gfx.v2-dev/internal/glc"
-	gl "github.com/gopherjs/webgl"
-)
-
-func getError(c *gl.Context) error {
-	code := c.GetError()
+func (c *jsContext) GetError() error {
+	code := c.gl.GetError()
 	switch code {
-	case c.NO_ERROR:
+	case c.gl.NO_ERROR:
 		return nil
-	case c.INVALID_ENUM:
+	case c.gl.INVALID_ENUM:
 		return InvalidEnum
-	case c.INVALID_VALUE:
+	case c.gl.INVALID_VALUE:
 		return InvalidValue
-	case c.INVALID_OPERATION:
+	case c.gl.INVALID_OPERATION:
 		return InvalidOperation
-	case c.INVALID_FRAMEBUFFER_OPERATION:
+	case c.gl.INVALID_FRAMEBUFFER_OPERATION:
 		return InvalidFramebufferOperation
-	case c.OUT_OF_MEMORY:
+	case c.gl.OUT_OF_MEMORY:
 		return OutOfMemory
 	default:
 		return fmt.Errorf("Unknown GL Error (0x%X)\n", code)

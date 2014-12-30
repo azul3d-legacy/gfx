@@ -5,8 +5,8 @@
 
 package glc
 
-func NewContext() *Context {
-	return &Context{
-		GetError: getError,
-	}
+type gl2Context struct{}
+
+func NewContext() Context {
+	return &gl2Context{}
 }
