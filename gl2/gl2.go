@@ -12,7 +12,7 @@ import (
 	"azul3d.org/gfx.v2-dev"
 )
 
-// Used when attempting to create an OpenGL 2.0 renderer in a lesser OpenGL
+// Used when attempting to create a OpenGL 2.0 device in a lesser OpenGL
 // context.
 var ErrInvalidVersion = errors.New("invalid OpenGL version; must be at least OpenGL 2.0")
 
