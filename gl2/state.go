@@ -18,16 +18,6 @@ import (
 // state calls). This is useful for debugging the state guard code.
 const noStateGuard = tag.Gsgdebug
 
-// glFeature enables or disables the given feature depending on the given
-// boolean.
-func glFeature(feature uint32, enabled bool) {
-	if enabled {
-		gl.Enable(feature)
-		return
-	}
-	gl.Disable(feature)
-}
-
 // Please ensure these values match the default OpenGL state values listed in
 // the OpenGL documentation.
 var defaultGraphicsState = &graphicsState{
@@ -446,14 +436,14 @@ func (s *graphicsState) stateStencilMask(front, back uint) {
 func (s *graphicsState) stateDithering(enabled bool) {
 	if noStateGuard || s.State.Dithering != enabled {
 		s.State.Dithering = enabled
-		glFeature(gl.DITHER, enabled)
+		s.Common.Feature(gl.DITHER, enabled)
 	}
 }
 
 func (s *graphicsState) stateDepthTest(enabled bool) {
 	if noStateGuard || s.State.DepthTest != enabled {
 		s.State.DepthTest = enabled
-		glFeature(gl.DEPTH_TEST, enabled)
+		s.Common.Feature(gl.DEPTH_TEST, enabled)
 	}
 }
 
@@ -467,35 +457,35 @@ func (s *graphicsState) stateDepthWrite(enabled bool) {
 func (s *graphicsState) stateStencilTest(stencilTest bool) {
 	if noStateGuard || s.State.StencilTest != stencilTest {
 		s.State.StencilTest = stencilTest
-		glFeature(gl.STENCIL_TEST, stencilTest)
+		s.Common.Feature(gl.STENCIL_TEST, stencilTest)
 	}
 }
 
 func (s *graphicsState) stateScissorTest(scissorTest bool) {
 	if noStateGuard || s.CommonState.ScissorTest != scissorTest {
 		s.CommonState.ScissorTest = scissorTest
-		glFeature(gl.SCISSOR_TEST, scissorTest)
+		s.Common.Feature(gl.SCISSOR_TEST, scissorTest)
 	}
 }
 
 func (s *graphicsState) stateBlend(blend bool) {
 	if noStateGuard || s.CommonState.Blend != blend {
 		s.CommonState.Blend = blend
-		glFeature(gl.BLEND, blend)
+		s.Common.Feature(gl.BLEND, blend)
 	}
 }
 
 func (s *graphicsState) stateProgramPointSizeExt(enabled bool) {
 	if noStateGuard || s.CommonState.ProgramPointSizeExt != enabled {
 		s.CommonState.ProgramPointSizeExt = enabled
-		glFeature(gl.PROGRAM_POINT_SIZE_EXT, enabled)
+		s.Common.Feature(gl.PROGRAM_POINT_SIZE_EXT, enabled)
 	}
 }
 
 func (s *graphicsState) stateMultisample(multisample bool) {
 	if noStateGuard || s.CommonState.Multisample != multisample {
 		s.CommonState.Multisample = multisample
-		glFeature(gl.MULTISAMPLE, multisample)
+		s.Common.Feature(gl.MULTISAMPLE, multisample)
 	}
 }
 
@@ -503,7 +493,7 @@ func (s *graphicsState) stateAlphaToCoverage(gpuInfo *gfx.DeviceInfo, alphaToCov
 	if noStateGuard || s.alphaToCoverage != alphaToCoverage {
 		s.alphaToCoverage = alphaToCoverage
 		if gpuInfo.AlphaToCoverage {
-			glFeature(gl.SAMPLE_ALPHA_TO_COVERAGE, alphaToCoverage)
+			s.Common.Feature(gl.SAMPLE_ALPHA_TO_COVERAGE, alphaToCoverage)
 		}
 	}
 }
@@ -512,10 +502,10 @@ func (s *graphicsState) stateDepthClamp(gpuInfo *gfx.DeviceInfo, clamp bool) {
 	if noStateGuard || s.State.DepthClamp != clamp {
 		s.State.DepthClamp = clamp
 		if gpuInfo.DepthClamp {
-			glFeature(gl.DEPTH_CLAMP, clamp)
+			s.Common.Feature(gl.DEPTH_CLAMP, clamp)
 		}
 	}
-	glFeature(gl.DEPTH_CLAMP, true)
+	s.Common.Feature(gl.DEPTH_CLAMP, true)
 }
 
 func (s *graphicsState) stateFaceCulling(m gfx.FaceCullMode) {
