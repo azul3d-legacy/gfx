@@ -175,6 +175,22 @@ func (r *device) Render() {
 	r.hookedRender(nil, nil)
 }
 
+// Info implements the gfx.Device interface.
+func (r *device) Info() gfx.DeviceInfo {
+	return r.gpuInfo
+}
+
+// SetDebugOutput implements the Device interface.
+func (r *device) SetDebugOutput(w io.Writer) {
+	r.debug.RLock()
+	r.debug.W = w
+	r.debug.RUnlock()
+}
+
+// Destroy implements the Device interface.
+func (r *device) Destroy() {
+}
+
 // Implements gfx.Canvas interface.
 func (r *device) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post func()) {
 	// Clearing an empty rectangle is effectively no-op.
@@ -368,11 +384,6 @@ func (r *device) queryWait() {
 	}
 }
 
-// GPUInfo implements the gfx.Renderer interface.
-func (r *device) Info() gfx.DeviceInfo {
-	return r.gpuInfo
-}
-
 // Effectively just calls stateScissor(), but passes in the proper bounds
 // according to whether or not we are rendering to an rttCanvas or not.
 func (r *device) performScissor(rect image.Rectangle) {
@@ -477,17 +488,6 @@ func (r *device) logf(format string, args ...interface{}) {
 		fmt.Fprintf(r.debug.W, format, args...)
 	}
 	r.debug.RUnlock()
-}
-
-// SetDebugOutput implements the Renderer interface.
-func (r *device) SetDebugOutput(w io.Writer) {
-	r.debug.RLock()
-	r.debug.W = w
-	r.debug.RUnlock()
-}
-
-// Destroy implements the Renderer interface.
-func (r *device) Destroy() {
 }
 
 func queryVersion() (major, minor, release int, vendorVersion string) {
