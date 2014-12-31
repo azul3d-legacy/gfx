@@ -22,7 +22,7 @@ var (
 
 // Used as the *gfx.Object.NativeObject interface value.
 type nativeObject struct {
-	glutil.MVPCache
+	*glutil.MVPCache
 
 	// The pending occlusion query ID.
 	pendingQuery uint32
@@ -52,7 +52,9 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 	// Ask the render loop to perform drawing.
 	r.renderExec <- func() bool {
 		// Give the object a native object.
-		o.NativeObject = nativeObject{}
+		o.NativeObject = nativeObject{
+			MVPCache: &glutil.MVPCache{},
+		}
 
 		if pre != nil {
 			pre()
