@@ -4,6 +4,23 @@
 
 package glc
 
+import "azul3d.org/gfx.v2-dev"
+
 type Context interface {
 	GetError() error
+
+	ConvertPrimitive(p gfx.Primitive) int
+	UnconvertFaceCull(facecull int) gfx.FaceCullMode
+
+	ConvertStencilOp(o gfx.StencilOp) int
+	UnconvertStencilOp(o int) gfx.StencilOp
+
+	ConvertCmp(cmp gfx.Cmp) int
+	UnconvertCmp(cmp int) gfx.Cmp
+
+	ConvertBlendOp(o gfx.BlendOp) int
+	UnconvertBlendOp(o int) gfx.BlendOp
+
+	ConvertBlendEq(eq gfx.BlendEq) int
+	UnconvertBlendEq(eq int) gfx.BlendEq
 }
