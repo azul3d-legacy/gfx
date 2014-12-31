@@ -9,6 +9,8 @@ import gl "azul3d.org/gfx.v2-dev/internal/gles2/2.0/gles2"
 
 type glFuncs struct {
 	GetError func() int
+	Enable   func(capability int)
+	Disable  func(capability int)
 }
 
 type Context struct {
@@ -70,6 +72,8 @@ type Context struct {
 func NewContext() *Context {
 	f := &glFuncs{
 		GetError: func() int { return int(gl.GetError()) },
+		Enable:   func(capability int) { gl.Enable(uint32(capability)) },
+		Disable:  func(capability int) { gl.Disable(uint32(capability)) },
 	}
 
 	return &Context{
