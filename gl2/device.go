@@ -427,7 +427,7 @@ func (r *device) setGlobalState() {
 			// We want to maintain state between frames for cooperation with
 			// another renderer. Store the existing graphics state now so that
 			// we can restore it after the frame is rendered.
-			r.prevGraphicsState = queryGraphicsState(&r.gpuInfo, r.Bounds())
+			r.prevGraphicsState = queryGraphicsState(r.Common, &r.gpuInfo, r.Bounds())
 
 			// Since the existing state is also not what we think it is, we
 			// must update our state now.
@@ -786,7 +786,7 @@ func newDevice(opts ...Option) (Device, error) {
 
 	if r.keepState {
 		// Load the existing graphics state.
-		r.graphicsState = queryGraphicsState(&r.gpuInfo, r.BaseCanvas.VBounds)
+		r.graphicsState = queryGraphicsState(r.Common, &r.gpuInfo, r.BaseCanvas.VBounds)
 	} else {
 		r.graphicsState = defaultGraphicsState
 	}

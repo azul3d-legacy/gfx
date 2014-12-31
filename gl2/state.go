@@ -9,6 +9,7 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glc"
 	"azul3d.org/gfx.v2-dev/internal/glutil"
 	"azul3d.org/gfx.v2-dev/internal/tag"
 )
@@ -30,6 +31,7 @@ func glFeature(feature uint32, enabled bool) {
 // Please ensure these values match the default OpenGL state values listed in
 // the OpenGL documentation.
 var defaultGraphicsState = &graphicsState{
+	nil,
 	glutil.DefaultCommonState,
 	glutil.DefaultState,
 	false, // alpha to coverage
@@ -37,7 +39,7 @@ var defaultGraphicsState = &graphicsState{
 
 // queryStencilFrontState queries the existing front-face stencil graphics
 // state from OpenGL and returns it.
-func queryStencilFrontState() gfx.StencilState {
+func queryStencilFrontState(common glc.Context) gfx.StencilState {
 	var (
 		stencilFrontWriteMask, stencilFrontReadMask, stencilFrontRef,
 		stencilFrontOpFail, stencilFrontOpDepthFail, stencilFrontOpDepthPass,
@@ -56,16 +58,16 @@ func queryStencilFrontState() gfx.StencilState {
 		uint(stencilFrontWriteMask),
 		uint(stencilFrontReadMask),
 		uint(stencilFrontRef),
-		unconvertStencilOp(stencilFrontOpFail),
-		unconvertStencilOp(stencilFrontOpDepthFail),
-		unconvertStencilOp(stencilFrontOpDepthPass),
-		unconvertCmp(stencilFrontCmp),
+		common.UnconvertStencilOp(int(stencilFrontOpFail)),
+		common.UnconvertStencilOp(int(stencilFrontOpDepthFail)),
+		common.UnconvertStencilOp(int(stencilFrontOpDepthPass)),
+		common.UnconvertCmp(int(stencilFrontCmp)),
 	}
 }
 
 // queryStencilBackState queries the existing back-face stencil graphics state
 // from OpenGL and returns it.
-func queryStencilBackState() gfx.StencilState {
+func queryStencilBackState(common glc.Context) gfx.StencilState {
 	var (
 		stencilBackWriteMask, stencilBackReadMask, stencilBackRef,
 		stencilBackOpFail, stencilBackOpDepthFail, stencilBackOpDepthPass,
@@ -84,16 +86,16 @@ func queryStencilBackState() gfx.StencilState {
 		uint(stencilBackWriteMask),
 		uint(stencilBackReadMask),
 		uint(stencilBackRef),
-		unconvertStencilOp(stencilBackOpFail),
-		unconvertStencilOp(stencilBackOpDepthFail),
-		unconvertStencilOp(stencilBackOpDepthPass),
-		unconvertCmp(stencilBackCmp),
+		common.UnconvertStencilOp(int(stencilBackOpFail)),
+		common.UnconvertStencilOp(int(stencilBackOpDepthFail)),
+		common.UnconvertStencilOp(int(stencilBackOpDepthPass)),
+		common.UnconvertCmp(int(stencilBackCmp)),
 	}
 }
 
 // queryBlendState queries the existing blend graphics state from OpenGL and
 // returns it.
-func queryBlendState() gfx.BlendState {
+func queryBlendState(common glc.Context) gfx.BlendState {
 	var (
 		blendColor                   gfx.Color
 		blendDstRGB, blendSrcRGB     int32
@@ -113,17 +115,17 @@ func queryBlendState() gfx.BlendState {
 
 	return gfx.BlendState{
 		blendColor,
-		unconvertBlendOp(blendSrcRGB),
-		unconvertBlendOp(blendDstRGB),
-		unconvertBlendOp(blendSrcAlpha),
-		unconvertBlendOp(blendDstAlpha),
-		unconvertBlendEq(blendEqRGB),
-		unconvertBlendEq(blendEqAlpha),
+		common.UnconvertBlendOp(int(blendSrcRGB)),
+		common.UnconvertBlendOp(int(blendDstRGB)),
+		common.UnconvertBlendOp(int(blendSrcAlpha)),
+		common.UnconvertBlendOp(int(blendDstAlpha)),
+		common.UnconvertBlendEq(int(blendEqRGB)),
+		common.UnconvertBlendEq(int(blendEqAlpha)),
 	}
 }
 
 // queryState queries the existing OpenGL gfx.State and returns it.
-func queryState(gpuInfo *gfx.DeviceInfo) *gfx.State {
+func queryState(common glc.Context, gpuInfo *gfx.DeviceInfo) *gfx.State {
 	var (
 		colorWrite                                    [4]bool
 		depthClamp                                    bool
@@ -145,11 +147,11 @@ func queryState(gpuInfo *gfx.DeviceInfo) *gfx.State {
 	//gl.Execute()
 
 	return &gfx.State{
-		FaceCulling:  unconvertFaceCull(faceCullMode),
-		Blend:        queryBlendState(),
-		StencilFront: queryStencilFrontState(),
-		StencilBack:  queryStencilBackState(),
-		DepthCmp:     unconvertCmp(depthFunc),
+		FaceCulling:  common.UnconvertFaceCull(int(faceCullMode)),
+		Blend:        queryBlendState(common),
+		StencilFront: queryStencilFrontState(common),
+		StencilBack:  queryStencilBackState(common),
+		DepthCmp:     common.UnconvertCmp(int(depthFunc)),
 		WriteRed:     colorWrite[0],
 		WriteGreen:   colorWrite[1],
 		WriteBlue:    colorWrite[2],
@@ -203,7 +205,7 @@ func queryCommonState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *glutil.C
 
 // queryGraphicsState queries the existing OpenGL graphics state and returns
 // it.
-func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+func queryGraphicsState(common glc.Context, gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
 	var alphaToCoverage bool
 	if gpuInfo.AlphaToCoverage {
 		gl.GetBooleanv(gl.SAMPLE_ALPHA_TO_COVERAGE, &alphaToCoverage)
@@ -211,8 +213,9 @@ func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 	//gl.Execute()
 
 	return &graphicsState{
+		common,
 		queryCommonState(gpuInfo, bounds),
-		queryState(gpuInfo),
+		queryState(common, gpuInfo),
 		alphaToCoverage,
 	}
 }
@@ -221,6 +224,7 @@ func queryGraphicsState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphi
 // setting OpenGL state twice and keeping state between frames if needed for
 // interoperability with, e.g. QT5's renderer.
 type graphicsState struct {
+	Common glc.Context
 	*glutil.CommonState
 	*gfx.State
 	alphaToCoverage bool
@@ -312,7 +316,7 @@ func (s *graphicsState) stateColorWrite(red, green, blue, alpha bool) {
 func (s *graphicsState) stateDepthFunc(cmp gfx.Cmp) {
 	if noStateGuard || s.State.DepthCmp != cmp {
 		s.State.DepthCmp = cmp
-		gl.DepthFunc(convertCmp(cmp))
+		gl.DepthFunc(uint32(s.Common.ConvertCmp(cmp)))
 	}
 }
 
@@ -327,10 +331,10 @@ func (s *graphicsState) stateBlendFuncSeparate(bs gfx.BlendState) {
 		s.State.Blend.SrcAlpha = bs.SrcAlpha
 
 		gl.BlendFuncSeparate(
-			convertBlendOp(bs.SrcRGB),
-			convertBlendOp(bs.DstRGB),
-			convertBlendOp(bs.SrcAlpha),
-			convertBlendOp(bs.SrcAlpha),
+			uint32(s.Common.ConvertBlendOp(bs.SrcRGB)),
+			uint32(s.Common.ConvertBlendOp(bs.DstRGB)),
+			uint32(s.Common.ConvertBlendOp(bs.SrcAlpha)),
+			uint32(s.Common.ConvertBlendOp(bs.SrcAlpha)),
 		)
 	}
 }
@@ -341,8 +345,8 @@ func (s *graphicsState) stateBlendEquationSeparate(bs gfx.BlendState) {
 		s.State.Blend.AlphaEq = bs.AlphaEq
 
 		gl.BlendEquationSeparate(
-			convertBlendEq(bs.RGBEq),
-			convertBlendEq(bs.AlphaEq),
+			uint32(s.Common.ConvertBlendEq(bs.RGBEq)),
+			uint32(s.Common.ConvertBlendEq(bs.AlphaEq)),
 		)
 	}
 }
@@ -365,22 +369,22 @@ func (s *graphicsState) stateStencilOp(front, back gfx.StencilState) {
 			// We can save a few calls.
 			gl.StencilOpSeparate(
 				gl.FRONT_AND_BACK,
-				convertStencilOp(front.Fail),
-				convertStencilOp(front.DepthFail),
-				convertStencilOp(front.DepthPass),
+				uint32(s.Common.ConvertStencilOp(front.Fail)),
+				uint32(s.Common.ConvertStencilOp(front.DepthFail)),
+				uint32(s.Common.ConvertStencilOp(front.DepthPass)),
 			)
 		} else {
 			gl.StencilOpSeparate(
 				gl.FRONT,
-				convertStencilOp(front.Fail),
-				convertStencilOp(front.DepthFail),
-				convertStencilOp(front.DepthPass),
+				uint32(s.Common.ConvertStencilOp(front.Fail)),
+				uint32(s.Common.ConvertStencilOp(front.DepthFail)),
+				uint32(s.Common.ConvertStencilOp(front.DepthPass)),
 			)
 			gl.StencilOpSeparate(
 				gl.BACK,
-				convertStencilOp(back.Fail),
-				convertStencilOp(back.DepthFail),
-				convertStencilOp(back.DepthPass),
+				uint32(s.Common.ConvertStencilOp(back.Fail)),
+				uint32(s.Common.ConvertStencilOp(back.DepthFail)),
+				uint32(s.Common.ConvertStencilOp(back.DepthPass)),
 			)
 		}
 	}
@@ -404,20 +408,20 @@ func (s *graphicsState) stateStencilFunc(front, back gfx.StencilState) {
 			// We can save a few calls.
 			gl.StencilFuncSeparate(
 				gl.FRONT_AND_BACK,
-				convertCmp(front.Cmp),
+				uint32(s.Common.ConvertCmp(front.Cmp)),
 				int32(front.Reference),
 				uint32(front.ReadMask),
 			)
 		} else {
 			gl.StencilFuncSeparate(
 				gl.FRONT,
-				convertCmp(front.Cmp),
+				uint32(s.Common.ConvertCmp(front.Cmp)),
 				int32(front.Reference),
 				uint32(front.ReadMask),
 			)
 			gl.StencilFuncSeparate(
 				gl.BACK,
-				convertCmp(back.Cmp),
+				uint32(s.Common.ConvertCmp(back.Cmp)),
 				int32(back.Reference),
 				uint32(back.ReadMask),
 			)
