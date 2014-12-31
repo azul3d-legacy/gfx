@@ -13,7 +13,6 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/glutil"
 	"azul3d.org/gfx.v2-dev/internal/util"
-	"azul3d.org/lmath.v1"
 )
 
 var (
@@ -23,18 +22,7 @@ var (
 
 // Used as the *gfx.Object.NativeObject interface value.
 type nativeObject struct {
-	// The graphics object's last-known transform, if they are not equal then
-	// the matrices must be recalculated.
-	Transform lmath.Mat4
-
-	// The last-known camera transform and projection.
-	CameraTransform lmath.Mat4
-	Projection      gfx.Mat4
-
-	// Cached pre-calculated matrices to feed into shaders, this way we don't
-	// recalculate matrices every single frame but instead only when they
-	// actually change.
-	model, view, projection, mvp gfx.Mat4
+	glutil.MVPCache
 
 	// The pending occlusion query ID.
 	pendingQuery uint32
@@ -50,52 +38,6 @@ func (n nativeObject) SampleCount() int {
 
 // Implements the gfx.Destroyable interface.
 func (n nativeObject) Destroy() {}
-
-func (n nativeObject) needRebuild(o *gfx.Object, c *gfx.Camera) bool {
-	if o.Transform.Mat4() != n.Transform {
-		return true
-	}
-	if c.Object.Transform.Mat4() != n.CameraTransform {
-		return true
-	}
-	if c.Projection != n.Projection {
-		return true
-	}
-	return false
-}
-
-func (n nativeObject) rebuild(o *gfx.Object, c *gfx.Camera) nativeObject {
-	objMat := o.Transform.Mat4()
-	n.Transform = objMat
-
-	// The "Model" matrix is the Object's transformation matrix, we feed it
-	// directly in.
-	n.model = gfx.ConvertMat4(objMat)
-
-	// The "View" matrix is the coordinate system conversion, multiplied
-	// against the camera object's transformation matrix
-	view := glutil.CoordSys
-	if c != nil {
-		// Apply inverse of camera object transformation.
-		camInverse, _ := c.Object.Transform.Mat4().Inverse()
-		view = camInverse.Mul(view)
-	}
-	n.view = gfx.ConvertMat4(view)
-
-	// The "Projection" matrix is the camera's projection matrix.
-	projection := lmath.Mat4Identity
-	if c != nil {
-		projection = c.Projection.Mat4()
-	}
-	n.projection = gfx.ConvertMat4(projection)
-
-	// The "MVP" matrix is Model * View * Projection matrix.
-	mvp := objMat
-	mvp = mvp.Mul(view)
-	mvp = mvp.Mul(projection)
-	n.mvp = gfx.ConvertMat4(mvp)
-	return n
-}
 
 func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
 	doDraw, err := util.PreDraw(r, rect, o, c)
@@ -271,19 +213,15 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 		}
 	}
 
-	// Consider rebuilding the object's cached matrices, if needed.
+	// Update the object's MVP cache, if needed.
 	nativeObj := obj.NativeObject.(nativeObject)
-	if nativeObj.needRebuild(obj, c) {
-		// Rebuild cached matrices.
-		nativeObj = nativeObj.rebuild(obj, c)
-	}
-	obj.NativeObject = nativeObj
+	nativeObj.MVPCache.Update(obj, c)
 
 	// Add the matrix inputs for the object.
-	r.updateUniform(ns, "Model", nativeObj.model)
-	r.updateUniform(ns, "View", nativeObj.view)
-	r.updateUniform(ns, "Projection", nativeObj.projection)
-	r.updateUniform(ns, "MVP", nativeObj.mvp)
+	r.updateUniform(ns, "Model", nativeObj.MVPCache.Model)
+	r.updateUniform(ns, "View", nativeObj.MVPCache.View)
+	r.updateUniform(ns, "Projection", nativeObj.MVPCache.Projection)
+	r.updateUniform(ns, "MVP", nativeObj.MVPCache.MVP)
 
 	// Set alpha mode.
 	r.stateAlphaToCoverage(&r.gpuInfo, obj.AlphaMode == gfx.AlphaToCoverage)
