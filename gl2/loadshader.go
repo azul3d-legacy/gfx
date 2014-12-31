@@ -11,14 +11,15 @@ import (
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glutil"
 )
 
 // nativeShader is stored inside the *Shader.Native interface and stores GLSL
 // shader IDs.
 type nativeShader struct {
-	program, vertex, fragment   uint32
-	attribLookup, uniformLookup map[string]int32
-	r                           *device
+	*glutil.LocationCache
+	program, vertex, fragment uint32
+	r                         *device
 }
 
 func finalizeShader(n *nativeShader) {
@@ -105,9 +106,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		}
 
 		native := &nativeShader{
-			attribLookup:  make(map[string]int32, 8),
-			uniformLookup: make(map[string]int32, 8),
-			r:             r,
+			r: r,
 		}
 
 		// Handle the vertex shader now.
@@ -226,6 +225,15 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 
 		// Mark the shader as loaded if there were no errors.
 		if len(s.Error) == 0 {
+			native.LocationCache = &glutil.LocationCache{
+				GetAttribLocation: func(name string) int {
+					return int(gl.GetAttribLocation(native.program, glStr(name)))
+				},
+				GetUniformLocation: func(name string) int {
+					return int(gl.GetUniformLocation(native.program, glStr(name)))
+				},
+			}
+
 			s.Loaded = true
 			s.NativeShader = native
 			s.ClearData()

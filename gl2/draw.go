@@ -148,36 +148,10 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 	}
 }
 
-func (r *device) findAttribLocation(native *nativeShader, name string) (uint32, bool) {
-	location, ok := native.attribLookup[name]
-	if ok {
-		return uint32(location), true
-	}
-	location = gl.GetAttribLocation(native.program, glStr(name))
-	if location < 0 {
-		return 0, false
-	}
-	return uint32(location), true
-}
-
-func (r *device) findUniformLocation(native *nativeShader, name string) int32 {
-	location, ok := native.uniformLookup[name]
-	if ok {
-		return location
-	}
-	location = gl.GetUniformLocation(native.program, glStr(name))
-	if location < 0 {
-		// Just for sanity.
-		return -1
-	}
-	native.uniformLookup[name] = location
-	return location
-}
-
 type texSlot int32
 
 func (r *device) updateUniform(native *nativeShader, name string, value interface{}) {
-	location := r.findUniformLocation(native, name)
+	location := int32(native.LocationCache.FindUniform(name))
 	if location == -1 {
 		// The uniform is not used by the shader program and should just be
 		// dropped.
@@ -394,22 +368,22 @@ func (r *device) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 	native := m.NativeMesh.(*nativeMesh)
 
 	// Use vertices data.
-	location, ok := r.findAttribLocation(ns, "Vertex")
-	if ok {
+	location := ns.LocationCache.FindAttrib("Vertex")
+	if location != -1 {
 		gl.BindBuffer(gl.ARRAY_BUFFER, native.vertices)
-		gl.EnableVertexAttribArray(location)
-		defer gl.DisableVertexAttribArray(location)
-		gl.VertexAttribPointer(location, 3, gl.FLOAT, false, 0, nil)
+		gl.EnableVertexAttribArray(uint32(location))
+		defer gl.DisableVertexAttribArray(uint32(location))
+		gl.VertexAttribPointer(uint32(location), 3, gl.FLOAT, false, 0, nil)
 	}
 
 	// Use each texture coordinate set data.
 	for index, texCoords := range native.texCoords {
-		location, ok = r.findAttribLocation(ns, texCoordIndex.Name(index))
-		if ok {
+		location = ns.LocationCache.FindAttrib(texCoordIndex.Name(index))
+		if location != -1 {
 			gl.BindBuffer(gl.ARRAY_BUFFER, texCoords)
-			gl.EnableVertexAttribArray(location)
-			defer gl.DisableVertexAttribArray(location)
-			gl.VertexAttribPointer(location, 2, gl.FLOAT, false, 0, nil)
+			gl.EnableVertexAttribArray(uint32(location))
+			defer gl.DisableVertexAttribArray(uint32(location))
+			gl.VertexAttribPointer(uint32(location), 2, gl.FLOAT, false, 0, nil)
 		}
 	}
 
@@ -423,15 +397,15 @@ func (r *device) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 			}
 
 			// Find input location.
-			location, ok = r.findAttribLocation(ns, indexName)
-			if !ok {
+			location = ns.LocationCache.FindAttrib(indexName)
+			if location == -1 {
 				continue
 			}
 
 			// Bind the buffer, send each row.
 			gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 			for row := uint32(0); row < attrib.rows; row++ {
-				l := location + row
+				l := uint32(location) + row
 				gl.EnableVertexAttribArray(l)
 				defer gl.DisableVertexAttribArray(l)
 				gl.VertexAttribPointer(l, attrib.size, gl.FLOAT, false, 0, nil)
