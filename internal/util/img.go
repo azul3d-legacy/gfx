@@ -33,3 +33,24 @@ func POT(img image.Image) image.Image {
 	// Resize works in all cases.
 	return resize.Resize(img, bounds, potX, potY)
 }
+
+// VerticalFlip flips the given image in-place, vertically.
+func VerticalFlip(img *image.RGBA) {
+	b := img.Bounds()
+	rowCpy := make([]uint8, b.Dx()*4)
+	for r := 0; r < (b.Dy() / 2); r++ {
+		topRow := img.Pix[img.PixOffset(0, r):img.PixOffset(b.Dx(), r)]
+
+		bottomR := b.Dy() - r - 1
+		bottomRow := img.Pix[img.PixOffset(0, bottomR):img.PixOffset(b.Dx(), bottomR)]
+
+		// Save bottom row.
+		copy(rowCpy, bottomRow)
+
+		// Copy top row to bottom row.
+		copy(bottomRow, topRow)
+
+		// Copy saved bottom row to top row.
+		copy(topRow, rowCpy)
+	}
+}

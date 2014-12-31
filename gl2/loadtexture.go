@@ -148,26 +148,6 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 	}
 }
 
-func verticalFlip(img *image.RGBA) {
-	b := img.Bounds()
-	rowCpy := make([]uint8, b.Dx()*4)
-	for r := 0; r < (b.Dy() / 2); r++ {
-		topRow := img.Pix[img.PixOffset(0, r):img.PixOffset(b.Dx(), r)]
-
-		bottomR := b.Dy() - r - 1
-		bottomRow := img.Pix[img.PixOffset(0, bottomR):img.PixOffset(b.Dx(), bottomR)]
-
-		// Save bottom row.
-		copy(rowCpy, bottomRow)
-
-		// Copy top row to bottom row.
-		copy(bottomRow, topRow)
-
-		// Copy saved bottom row to top row.
-		copy(topRow, rowCpy)
-	}
-}
-
 func prepareImage(npot bool, img image.Image) *image.RGBA {
 	bounds := img.Bounds()
 
@@ -223,7 +203,7 @@ func (r *device) hookedDownload(rect image.Rectangle, complete chan image.Image,
 		//gl.Execute()
 
 		// We must vertically flip the image.
-		verticalFlip(img)
+		util.VerticalFlip(img)
 
 		// Yield for occlusion query results, if any are available.
 		r.queryYield()
