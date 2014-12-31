@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
-	"math"
 	"runtime"
 	"unsafe"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/glutil"
-	"azul3d.org/gfx.v2-dev/internal/resize"
+	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
 type nativeTexture struct {
@@ -169,29 +168,12 @@ func verticalFlip(img *image.RGBA) {
 	}
 }
 
-func nearestPOT(k int) int {
-	// See:
-	//
-	// http://en.wikipedia.org/wiki/Power_of_two#Algorithm_to_convert_any_number_into_nearest_power_of_two_numbers
-	return int(math.Pow(2, math.Ceil(math.Log(float64(k))/math.Log(2))))
-}
-
 func prepareImage(npot bool, img image.Image) *image.RGBA {
 	bounds := img.Bounds()
 
 	if !npot {
 		// Convert the image to a power-of-two size if it's not already.
-		x, y := bounds.Dx(), bounds.Dy()
-		potX, potY := nearestPOT(x), nearestPOT(y)
-		if x != potX || y != potY {
-			if potX < x && potY < y {
-				// Resample is faster but only works for scaling down.
-				img = resize.Resample(img, bounds, potX, potY)
-			} else {
-				// Resize works in all cases.
-				img = resize.Resize(img, bounds, potX, potY)
-			}
-		}
+		img = util.POT(img)
 
 		// Update known bounds.
 		bounds = img.Bounds()
