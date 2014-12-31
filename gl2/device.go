@@ -33,7 +33,7 @@ type pendingQuery struct {
 type device struct {
 	*util.BaseCanvas
 
-	Common glc.Context
+	Common *glc.Context
 
 	// Render execution channel.
 	renderExec chan func() bool

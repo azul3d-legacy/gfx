@@ -39,7 +39,7 @@ var defaultGraphicsState = &graphicsState{
 
 // queryStencilFrontState queries the existing front-face stencil graphics
 // state from OpenGL and returns it.
-func queryStencilFrontState(common glc.Context) gfx.StencilState {
+func queryStencilFrontState(common *glc.Context) gfx.StencilState {
 	var (
 		stencilFrontWriteMask, stencilFrontReadMask, stencilFrontRef,
 		stencilFrontOpFail, stencilFrontOpDepthFail, stencilFrontOpDepthPass,
@@ -67,7 +67,7 @@ func queryStencilFrontState(common glc.Context) gfx.StencilState {
 
 // queryStencilBackState queries the existing back-face stencil graphics state
 // from OpenGL and returns it.
-func queryStencilBackState(common glc.Context) gfx.StencilState {
+func queryStencilBackState(common *glc.Context) gfx.StencilState {
 	var (
 		stencilBackWriteMask, stencilBackReadMask, stencilBackRef,
 		stencilBackOpFail, stencilBackOpDepthFail, stencilBackOpDepthPass,
@@ -95,7 +95,7 @@ func queryStencilBackState(common glc.Context) gfx.StencilState {
 
 // queryBlendState queries the existing blend graphics state from OpenGL and
 // returns it.
-func queryBlendState(common glc.Context) gfx.BlendState {
+func queryBlendState(common *glc.Context) gfx.BlendState {
 	var (
 		blendColor                   gfx.Color
 		blendDstRGB, blendSrcRGB     int32
@@ -125,7 +125,7 @@ func queryBlendState(common glc.Context) gfx.BlendState {
 }
 
 // queryState queries the existing OpenGL gfx.State and returns it.
-func queryState(common glc.Context, gpuInfo *gfx.DeviceInfo) *gfx.State {
+func queryState(common *glc.Context, gpuInfo *gfx.DeviceInfo) *gfx.State {
 	var (
 		colorWrite                                    [4]bool
 		depthClamp                                    bool
@@ -205,7 +205,7 @@ func queryCommonState(gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *glutil.C
 
 // queryGraphicsState queries the existing OpenGL graphics state and returns
 // it.
-func queryGraphicsState(common glc.Context, gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
+func queryGraphicsState(common *glc.Context, gpuInfo *gfx.DeviceInfo, bounds image.Rectangle) *graphicsState {
 	var alphaToCoverage bool
 	if gpuInfo.AlphaToCoverage {
 		gl.GetBooleanv(gl.SAMPLE_ALPHA_TO_COVERAGE, &alphaToCoverage)
@@ -224,7 +224,7 @@ func queryGraphicsState(common glc.Context, gpuInfo *gfx.DeviceInfo, bounds imag
 // setting OpenGL state twice and keeping state between frames if needed for
 // interoperability with, e.g. QT5's renderer.
 type graphicsState struct {
-	Common glc.Context
+	Common *glc.Context
 	*glutil.CommonState
 	*gfx.State
 	alphaToCoverage bool
