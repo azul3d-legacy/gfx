@@ -4,7 +4,7 @@
 
 package glc
 
-import(
+import (
 	"errors"
 	"fmt"
 )
