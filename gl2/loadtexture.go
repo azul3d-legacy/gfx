@@ -333,7 +333,7 @@ func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	}
 
 	// Prepare the image for uploading.
-	src := prepareImage(r.gpuInfo.NPOT, t.Source)
+	src := prepareImage(r.devInfo.NPOT, t.Source)
 
 	f := func() bool {
 		// Determine appropriate internal image format.

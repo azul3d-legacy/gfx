@@ -199,7 +199,7 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	r.graphicsState.StencilOpSeparate(obj.StencilFront, obj.StencilBack)
 	r.graphicsState.stencilFuncSeparate(obj.StencilFront, obj.StencilBack)
 	r.graphicsState.stencilMaskSeparate(obj.StencilFront.WriteMask, obj.StencilBack.WriteMask)
-	if r.gpuInfo.DepthClamp {
+	if r.devInfo.DepthClamp {
 		r.graphicsState.depthClamp(obj.DepthClamp)
 	}
 	r.graphicsState.DepthCmp(obj.DepthCmp)
@@ -228,7 +228,7 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	r.updateUniform(ns, "MVP", nativeObj.MVPCache.MVP)
 
 	// Set alpha mode.
-	if r.gpuInfo.AlphaToCoverage {
+	if r.devInfo.AlphaToCoverage {
 		r.graphicsState.SampleAlphaToCoverage(obj.AlphaMode == gfx.AlphaToCoverage)
 	}
 	r.graphicsState.Blend(obj.AlphaMode == gfx.AlphaBlend)
@@ -360,10 +360,10 @@ func (r *device) drawMesh(ns *nativeShader, m *gfx.Mesh) {
 	if native.indicesCount > 0 {
 		// Draw indexed mesh.
 		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, native.indices)
-		gl.DrawElements(uint32(r.Common.ConvertPrimitive(m.Primitive)), native.indicesCount, gl.UNSIGNED_INT, nil)
+		gl.DrawElements(uint32(r.common.ConvertPrimitive(m.Primitive)), native.indicesCount, gl.UNSIGNED_INT, nil)
 	} else {
 		// Draw regular mesh.
-		gl.DrawArrays(uint32(r.Common.ConvertPrimitive(m.Primitive)), 0, native.verticesCount)
+		gl.DrawArrays(uint32(r.common.ConvertPrimitive(m.Primitive)), 0, native.verticesCount)
 	}
 
 	// Unbind buffer to avoid carrying OpenGL state.

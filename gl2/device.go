@@ -32,8 +32,9 @@ type pendingQuery struct {
 // renderer implements the Renderer interface defined in the gl2.go file.
 type device struct {
 	*util.BaseCanvas
-
-	Common *glc.Context
+	common  *glc.Context
+	clock   *clock.Clock
+	devInfo gfx.DeviceInfo
 
 	// Render execution channel.
 	renderExec chan func() bool
@@ -43,12 +44,6 @@ type device struct {
 		sync.RWMutex
 		*device
 	}
-
-	// The graphics clock.
-	clock *clock.Clock
-
-	// GPU limitations.
-	gpuInfo gfx.DeviceInfo
 
 	// Whether or not certain extensions we use are present or not.
 	glArbDebugOutput, glArbMultisample, glArbFramebufferObject,
@@ -166,7 +161,7 @@ func (r *device) Render() {
 
 // Info implements the gfx.Device interface.
 func (r *device) Info() gfx.DeviceInfo {
-	return r.gpuInfo
+	return r.devInfo
 }
 
 // SetDebugOutput implements the Device interface.
@@ -476,14 +471,14 @@ func newDevice(opts ...Option) (Device, error) {
 		BaseCanvas: &util.BaseCanvas{
 			VMSAA: true,
 		},
-		Common:         glc.NewContext(),
+		common:         glc.NewContext(),
+		clock:          clock.New(),
 		renderExec:     make(chan func() bool, 1024),
 		renderComplete: make(chan struct{}, 8),
 		wantFree:       make(chan struct{}, 1),
-		clock:          clock.New(),
 	}
 	r.graphicsState = &graphicsState{
-		GraphicsState: glc.NewGraphicsState(r.Common),
+		GraphicsState: glc.NewGraphicsState(r.common),
 	}
 
 	for _, opt := range opts {
@@ -558,22 +553,22 @@ func newDevice(opts ...Option) (Device, error) {
 	//gl.Execute()
 
 	// Collect GPU information.
-	r.gpuInfo.DepthClamp = extension("GL_ARB_depth_clamp", exts)
-	r.gpuInfo.MaxTextureSize = int(maxTextureSize)
-	r.gpuInfo.AlphaToCoverage = r.glArbMultisample && r.samples > 0 && r.sampleBuffers > 0
-	r.gpuInfo.Name = gl.GoStr(gl.GetString(gl.RENDERER))
-	r.gpuInfo.Vendor = gl.GoStr(gl.GetString(gl.VENDOR))
-	r.gpuInfo.OcclusionQuery = r.glArbOcclusionQuery && occlusionQueryBits > 0
-	r.gpuInfo.OcclusionQueryBits = int(occlusionQueryBits)
-	r.gpuInfo.NPOT = extension("GL_ARB_texture_non_power_of_two", exts)
-	r.gpuInfo.TexWrapBorderColor = true
+	r.devInfo.DepthClamp = extension("GL_ARB_depth_clamp", exts)
+	r.devInfo.MaxTextureSize = int(maxTextureSize)
+	r.devInfo.AlphaToCoverage = r.glArbMultisample && r.samples > 0 && r.sampleBuffers > 0
+	r.devInfo.Name = gl.GoStr(gl.GetString(gl.RENDERER))
+	r.devInfo.Vendor = gl.GoStr(gl.GetString(gl.VENDOR))
+	r.devInfo.OcclusionQuery = r.glArbOcclusionQuery && occlusionQueryBits > 0
+	r.devInfo.OcclusionQueryBits = int(occlusionQueryBits)
+	r.devInfo.NPOT = extension("GL_ARB_texture_non_power_of_two", exts)
+	r.devInfo.TexWrapBorderColor = true
 
 	// OpenGL Information.
 	glInfo := &gfx.GLInfo{
 		Extensions: extsStr,
 	}
 	glInfo.MajorVersion, glInfo.MinorVersion, _, _ = queryVersion()
-	r.gpuInfo.GL = glInfo
+	r.devInfo.GL = glInfo
 
 	// GLSL information.
 	glslInfo := &gfx.GLSLInfo{
@@ -582,7 +577,7 @@ func newDevice(opts ...Option) (Device, error) {
 		MaxFragmentInputs: int(maxFragmentInputs),
 	}
 	glslInfo.MajorVersion, glslInfo.MinorVersion, _, _ = queryShaderVersion()
-	r.gpuInfo.GLSL = glslInfo
+	r.devInfo.GLSL = glslInfo
 
 	if r.glArbFramebufferObject {
 		// See http://www.opengl.org/wiki/Image_Format for more information.
@@ -601,7 +596,7 @@ func newDevice(opts ...Option) (Device, error) {
 		r.rttDSFormats = make(map[gfx.DSFormat]int32, 16)
 
 		// Formats below are guaranteed to be supported in OpenGL 2.x hardware:
-		fmts := r.gpuInfo.RTTFormats
+		fmts := r.devInfo.RTTFormats
 
 		// Color formats.
 		fmts.ColorFormats = append(fmts.ColorFormats, []gfx.TexFormat{
@@ -639,7 +634,7 @@ func newDevice(opts ...Option) (Device, error) {
 			fmts.Samples = append(fmts.Samples, i)
 		}
 
-		r.gpuInfo.RTTFormats = fmts
+		r.devInfo.RTTFormats = fmts
 	}
 
 	// Grab the current renderer bounds (opengl viewport).
