@@ -335,7 +335,7 @@ func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 	// Prepare the image for uploading.
 	src := prepareImage(r.devInfo.NPOT, t.Source)
 
-	f := func() bool {
+	r.renderExec <- func() bool {
 		// Determine appropriate internal image format.
 		targetFormat := convertTexFormat(t.Format)
 		internalFormat := int32(gl.RGBA)
@@ -396,13 +396,5 @@ func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		default:
 		}
 		return false // no frame rendered.
-	}
-
-	select {
-	case r.renderExec <- f:
-	default:
-		go func() {
-			r.renderExec <- f
-		}()
 	}
 }

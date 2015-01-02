@@ -221,7 +221,7 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		return
 	}
 
-	f := func() bool {
+	r.renderExec <- func() bool {
 		// Find the native mesh, creating a new one if the mesh is not loaded.
 		var native *nativeMesh
 		if !m.Loaded {
@@ -425,13 +425,5 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		default:
 		}
 		return false // no frame rendered.
-	}
-
-	select {
-	case r.renderExec <- f:
-	default:
-		go func() {
-			r.renderExec <- f
-		}()
 	}
 }
