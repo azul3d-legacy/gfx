@@ -353,7 +353,7 @@ func (r *device) queryYield() int {
 			//gl.Execute()
 
 			// Update object's sample count.
-			nativeObj := query.o.NativeObject.(nativeObject)
+			nativeObj := query.o.NativeObject.(*nativeObject)
 			nativeObj.sampleCount = int(result)
 			query.o.NativeObject = nativeObj
 

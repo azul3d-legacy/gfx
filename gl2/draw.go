@@ -32,12 +32,12 @@ type nativeObject struct {
 }
 
 // Implements the gfx.NativeObject interface.
-func (n nativeObject) SampleCount() int {
+func (n *nativeObject) SampleCount() int {
 	return n.sampleCount
 }
 
 // Implements the gfx.Destroyable interface.
-func (n nativeObject) Destroy() {}
+func (n *nativeObject) Destroy() {}
 
 func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
 	doDraw, err := util.PreDraw(r, rect, o, c)
@@ -52,8 +52,10 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 	// Ask the render loop to perform drawing.
 	r.renderExec <- func() bool {
 		// Give the object a native object.
-		o.NativeObject = nativeObject{
-			MVPCache: &glutil.MVPCache{},
+		if o.NativeObject == nil {
+			o.NativeObject = &nativeObject{
+				MVPCache: &glutil.MVPCache{},
+			}
 		}
 
 		if pre != nil {
@@ -168,7 +170,7 @@ func (r *device) updateUniform(native *nativeShader, name string, value interfac
 	}
 }
 
-func (r *device) beginQuery(o *gfx.Object, n nativeObject) nativeObject {
+func (r *device) beginQuery(o *gfx.Object, n *nativeObject) {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
 		gl.GenQueries(1, &n.pendingQuery)
 		//gl.Execute()
@@ -180,15 +182,13 @@ func (r *device) beginQuery(o *gfx.Object, n nativeObject) nativeObject {
 		r.pending.queries = append(r.pending.queries, pendingQuery{n.pendingQuery, o})
 		r.pending.Unlock()
 	}
-	return n
 }
 
-func (r *device) endQuery(o *gfx.Object, n nativeObject) nativeObject {
+func (r *device) endQuery(o *gfx.Object, n *nativeObject) {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
 		gl.EndQuery(gl.SAMPLES_PASSED)
 		//gl.Execute()
 	}
-	return n
 }
 
 func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
@@ -218,7 +218,7 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	}
 
 	// Update the object's MVP cache, if needed.
-	nativeObj := obj.NativeObject.(nativeObject)
+	nativeObj := obj.NativeObject.(*nativeObject)
 	nativeObj.MVPCache.Update(obj, c)
 
 	// Add the matrix inputs for the object.
@@ -295,12 +295,12 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	}
 
 	// Begin occlusion query.
-	obj.NativeObject = r.beginQuery(obj, nativeObj)
+	r.beginQuery(obj, nativeObj)
 }
 
 func (r *device) clearState(ns *nativeShader, obj *gfx.Object) {
 	// End occlusion query.
-	obj.NativeObject = r.endQuery(obj, obj.NativeObject.(nativeObject))
+	r.endQuery(obj, obj.NativeObject.(*nativeObject))
 
 	// Use no texture.
 	gl.BindTexture(gl.TEXTURE_2D, 0)
