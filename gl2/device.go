@@ -44,13 +44,6 @@ type device struct {
 		*device
 	}
 
-	// Whether or not the existing graphics state should be kept between
-	// frames. If set to true before rendering a frame the renderer will ask
-	// OpenGL for the existing state, the frame will be rendered, and the old
-	// OpenGL state restored. This is particularly useful when the renderer
-	// must interoperate with other renderers (e.g. QT5).
-	keepState bool
-
 	// The graphics clock.
 	clock *clock.Clock
 
@@ -187,6 +180,11 @@ func (r *device) SetDebugOutput(w io.Writer) {
 	r.debug.RUnlock()
 }
 
+// RestoreState implements the Device interface.
+func (r *device) RestoreState() {
+	r.graphicsState.Restore(r)
+}
+
 // Destroy implements the Device interface.
 func (r *device) Destroy() {
 }
@@ -317,9 +315,6 @@ func (r *device) hookedRender(pre, post func()) {
 			r.renderComplete <- struct{}{}
 			return false
 		}
-
-		// Clear our OpenGL state now.
-		r.graphicsState.Restore(r)
 
 		// Tick the clock.
 		r.clock.Tick()

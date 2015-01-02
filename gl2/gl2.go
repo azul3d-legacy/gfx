@@ -47,6 +47,29 @@ type Device interface {
 	// be written in future versions as well.
 	SetDebugOutput(w io.Writer)
 
+	// RestoreState immediately restores the OpenGL state to what it was before
+	// a call to Canvas.Draw, Canvas.Clear[Depth][Stencil], etc occurred.
+	//
+	// This device keeps track in full of the OpenGL graphics state in it's
+	// context. It does not expect for outsiders to touch the OpenGL state, and
+	// as such can optimize many edge cases. It is able to carry OpenGL state
+	// across multiple frames, even. For more information see:
+	//
+	//  internal/glc/state.go
+	//
+	// Using this function you may place OpenGL calls that modify the graphics
+	// state inbetween Canvas operations, like so:
+	//
+	//  canvas.Clear(...)
+	//  canvas.Draw(...)
+	//
+	//  glFoo()
+	//
+	//  device.RestoreState()
+	//
+	// This function must be called under the presence of an OpenGL context.
+	RestoreState()
+
 	// Destroy immediately destroys this device and it's associated assets.
 	//
 	// This function must be called under the presence of an OpenGL context.
@@ -55,25 +78,6 @@ type Device interface {
 
 // Option represents a single option function.
 type Option func(d *device)
-
-// KeepState is an option that specifies whether or not the existing OpenGL
-// graphics state should be kept between frames.
-//
-// If this option is present, the device will save and restore the OpenGL
-// graphics state before and after rendering each frame. This is needed when
-// trying to cooperate with another renderer in the same OpenGL context (such
-// as rendering into a QT5 user interface).
-//
-// If not specified, the device is able to carry OpenGL state across multiple
-// frames and avoid needlessly setting OpenGL state, which is more optimal for
-// performance.
-//
-// Do not specify this option unless you're sure that you need it.
-func KeepState() Option {
-	return func(d *device) {
-		d.keepState = true
-	}
-}
 
 // Share is an option that specifies that this device should request the other
 // device to perform loading of all assets.

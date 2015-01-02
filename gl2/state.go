@@ -11,8 +11,6 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/tag"
 )
 
-// TODO(slimsag): give clients explicit state control
-
 // Set this to true to disable state guarding (i.e. avoiding useless OpenGL
 // state calls). This is useful for debugging the state guard code.
 const noStateGuard = tag.Gsgdebug
