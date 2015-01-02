@@ -6,7 +6,7 @@
 // Copyright (c) 1991-2006 Silicon Graphics, Inc.
 // This document is licensed under the SGI Free Software B License.
 // For details, see http://oss.sgi.com/projects/FreeB.
-// +build 386 amd64
+// +build 386,!gles2 amd64,!gles2
 
 // Package gl implements Go bindings to OpenGL.
 //
@@ -492,6 +492,15 @@ const (
 	CULL_FACE_MODE                            = 0x0B45
 	CURRENT_PROGRAM                           = 0x8B8D
 	DEBUG_OUTPUT_SYNCHRONOUS_ARB              = 0x8242
+	DEBUG_SEVERITY_HIGH                       = 0x9146
+	DEBUG_SEVERITY_LOW                        = 0x9148
+	DEBUG_SEVERITY_MEDIUM                     = 0x9147
+	DEBUG_TYPE_DEPRECATED_BEHAVIOR            = 0x824D
+	DEBUG_TYPE_ERROR                          = 0x824C
+	DEBUG_TYPE_OTHER                          = 0x8251
+	DEBUG_TYPE_PERFORMANCE                    = 0x8250
+	DEBUG_TYPE_PORTABILITY                    = 0x824F
+	DEBUG_TYPE_UNDEFINED_BEHAVIOR             = 0x824E
 	DECR                                      = 0x1E03
 	DECR_WRAP                                 = 0x8508
 	DEPTH24_STENCIL8                          = 0x88F0
