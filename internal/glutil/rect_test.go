@@ -23,7 +23,7 @@ func TestRectConversion(t *testing.T) {
 		t.Fail()
 	}
 
-	tmp := UnconvertRect(bounds, x, y, int32(w), int32(h))
+	tmp := UnconvertRect(bounds, x, y, w, h)
 	if tmp != s {
 		t.Log("got", tmp)
 		t.Log("want", s)
@@ -41,7 +41,7 @@ func TestRectConversionDual(t *testing.T) {
 		y1 := y0 + rand.Intn(80)
 		s := image.Rect(x0, y0, x1, y1)
 		x, y, w, h := ConvertRect(s, bounds)
-		tmp := UnconvertRect(bounds, x, y, int32(w), int32(h))
+		tmp := UnconvertRect(bounds, x, y, w, h)
 		if tmp != s {
 			t.Log("got", tmp)
 			t.Log("want", s)
