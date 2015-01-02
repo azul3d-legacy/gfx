@@ -96,7 +96,6 @@ type device struct {
 	}
 
 	*graphicsState
-	prevGraphicsState *graphicsState
 
 	// Structure used to manage the debug output stream.
 	debug struct {
@@ -117,9 +116,6 @@ type device struct {
 	// If non-nil, then we are currently rendering to a texture. It is only
 	// touched inside renderExec.
 	*rttCanvas
-
-	// Whether or not our global OpenGL state has been set for this frame.
-	stateSetForFrame bool
 
 	// Channel to wait for a Render() call to finish.
 	renderComplete chan struct{}
