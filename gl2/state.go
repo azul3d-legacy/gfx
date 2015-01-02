@@ -23,13 +23,14 @@ type graphicsState struct {
 }
 
 func (g *graphicsState) Begin(d *device) {
+	// Update viewport bounds.
 	bounds := d.BaseCanvas.Bounds()
+	gl.Viewport(0, 0, int32(bounds.Dx()), int32(bounds.Dy()))
+
+	// Begin use of the graphics state.
 	if !g.GraphicsState.Begin(bounds, g.beginCustom) {
 		return
 	}
-
-	// Update viewport bounds.
-	gl.Viewport(0, 0, int32(bounds.Dx()), int32(bounds.Dy()))
 
 	// Enable scissor testing.
 	g.ScissorTest(true)
