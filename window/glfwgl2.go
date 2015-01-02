@@ -16,10 +16,7 @@ const (
 	glfwContextVersionMinor = 0
 )
 
-var (
-	keepState = gl2.KeepState
-	share     = gl2.Share
-)
+var share = gl2.Share
 
 func glfwNewDevice(opts ...gl2.Option) (glfwDevice, error) {
 	return gl2.New(opts...)

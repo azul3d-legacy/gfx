@@ -44,6 +44,7 @@ type glfwDevice interface {
 	Exec() chan func() bool
 	UpdateBounds(bounds image.Rectangle)
 	SetDebugOutput(w io.Writer)
+	RestoreState()
 	Destroy()
 }
 
@@ -740,7 +741,7 @@ func (w *glfwWindow) build() error {
 	}
 
 	// Create the device.
-	d, err := glfwNewDevice(keepState(), share(asset.glfwDevice))
+	d, err := glfwNewDevice(share(asset.glfwDevice))
 	if err != nil {
 		return err
 	}
