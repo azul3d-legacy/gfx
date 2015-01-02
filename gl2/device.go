@@ -191,7 +191,16 @@ func (r *device) hookedClear(rect image.Rectangle, bg gfx.Color, pre, post func(
 		if pre != nil {
 			pre()
 		}
-		r.performClear(rect, bg)
+		r.graphicsState.Begin(r)
+
+		// Color write mask effects the glClear call below.
+		r.graphicsState.ColorWrite(true, true, true, true)
+
+		// Perform clearing.
+		r.performScissor(rect)
+		r.graphicsState.ClearColor(bg)
+		gl.Clear(uint32(gl.COLOR_BUFFER_BIT))
+
 		r.queryYield()
 		if post != nil {
 			post()
@@ -210,7 +219,16 @@ func (r *device) hookedClearDepth(rect image.Rectangle, depth float64, pre, post
 		if pre != nil {
 			pre()
 		}
-		r.performClearDepth(rect, depth)
+		r.graphicsState.Begin(r)
+
+		// Depth write mask effects the glClear call below.
+		r.graphicsState.DepthWrite(true)
+
+		// Perform clearing.
+		r.performScissor(rect)
+		r.graphicsState.ClearDepth(depth)
+		gl.Clear(uint32(gl.DEPTH_BUFFER_BIT))
+
 		r.queryYield()
 		if post != nil {
 			post()
@@ -229,7 +247,16 @@ func (r *device) hookedClearStencil(rect image.Rectangle, stencil int, pre, post
 		if pre != nil {
 			pre()
 		}
-		r.performClearStencil(rect, stencil)
+		r.graphicsState.Begin(r)
+
+		// Stencil mask effects the glClear call below.
+		r.graphicsState.stencilMaskSeparate(0xFFFF, 0xFFFF)
+
+		// Perform clearing.
+		r.performScissor(rect)
+		r.graphicsState.ClearStencil(stencil)
+		gl.Clear(uint32(gl.STENCIL_BUFFER_BIT))
+
 		r.queryYield()
 		if post != nil {
 			post()
@@ -379,42 +406,6 @@ func (r *device) performScissor(rect image.Rectangle) {
 	} else {
 		r.graphicsState.Scissor(r.Bounds(), rect)
 	}
-}
-
-func (r *device) performClear(rect image.Rectangle, bg gfx.Color) {
-	r.graphicsState.Begin(r)
-
-	// Color write mask effects the glClear call below.
-	r.graphicsState.ColorWrite(true, true, true, true)
-
-	// Perform clearing.
-	r.performScissor(rect)
-	r.graphicsState.ClearColor(bg)
-	gl.Clear(uint32(gl.COLOR_BUFFER_BIT))
-}
-
-func (r *device) performClearDepth(rect image.Rectangle, depth float64) {
-	r.graphicsState.Begin(r)
-
-	// Depth write mask effects the glClear call below.
-	r.graphicsState.DepthWrite(true)
-
-	// Perform clearing.
-	r.performScissor(rect)
-	r.graphicsState.ClearDepth(depth)
-	gl.Clear(uint32(gl.DEPTH_BUFFER_BIT))
-}
-
-func (r *device) performClearStencil(rect image.Rectangle, stencil int) {
-	r.graphicsState.Begin(r)
-
-	// Stencil mask effects the glClear call below.
-	r.graphicsState.stencilMaskSeparate(0xFFFF, 0xFFFF)
-
-	// Perform clearing.
-	r.performScissor(rect)
-	r.graphicsState.ClearStencil(stencil)
-	gl.Clear(uint32(gl.STENCIL_BUFFER_BIT))
 }
 
 func (r *device) logf(format string, args ...interface{}) {
