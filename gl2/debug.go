@@ -5,10 +5,44 @@
 package gl2
 
 import (
+	"fmt"
+	"strings"
 	"unsafe"
 
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 )
+
+func debugType(t uint32) string {
+	switch t {
+	case gl.DEBUG_TYPE_ERROR:
+		return "ERROR"
+	case gl.DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+		return "DEPRECATED_BEHAVIOR"
+	case gl.DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+		return "UNDEFINED_BEHAVIOR"
+	case gl.DEBUG_TYPE_PORTABILITY:
+		return "PORTABILITY"
+	case gl.DEBUG_TYPE_PERFORMANCE:
+		return "PERFORMANCE"
+	case gl.DEBUG_TYPE_OTHER:
+		return "OTHER"
+	default:
+		return fmt.Sprintf("Type(0x%x)")
+	}
+}
+
+func debugSeverity(t uint32) string {
+	switch t {
+	case gl.DEBUG_SEVERITY_LOW:
+		return "LOW"
+	case gl.DEBUG_SEVERITY_MEDIUM:
+		return "MEDIUM"
+	case gl.DEBUG_SEVERITY_HIGH:
+		return "HIGH"
+	default:
+		return fmt.Sprintf("Severity(0x%x)")
+	}
+}
 
 func glDebugCallback(
 	source uint32,
@@ -18,10 +52,14 @@ func glDebugCallback(
 	length int32,
 	message string,
 	userParam unsafe.Pointer) {
-	// TODO(slimsag): better printing of source, type, and severity.
+
+	// Log the error using the device.
 	r := (*device)(userParam)
-	r.logf("OpenGL Debug (source=%d type=%d severity=%d):\n", source, gltype, severity)
-	r.logf("    %s\n", message)
+	r.logf("OpenGL: %s\n", strings.TrimSpace(message))
+	r.logf("    Type: %s\n", debugType(gltype))
+	r.logf("    Severity: %s\n", debugSeverity(severity))
+	r.logf("    Source: %d\n", source)
+	r.logf("    ID: %d\n", id)
 }
 
 func (r *device) debugInit(exts map[string]bool) {
