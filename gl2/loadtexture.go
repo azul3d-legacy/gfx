@@ -129,7 +129,7 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		img := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
 		x, y, w, h := glutil.ConvertRect(rect, bounds)
 		gl.ReadPixels(
-			x, y, w, h,
+			int32(x), int32(y), int32(w), int32(h),
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
 			unsafe.Pointer(&img.Pix[0]),
@@ -188,7 +188,7 @@ func (r *device) hookedDownload(rect image.Rectangle, complete chan image.Image,
 		img := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
 		x, y, w, h := glutil.ConvertRect(rect, bounds)
 		gl.ReadPixels(
-			x, y, w, h,
+			int32(x), int32(y), int32(w), int32(h),
 			gl.RGBA,
 			gl.UNSIGNED_BYTE,
 			unsafe.Pointer(&img.Pix[0]),

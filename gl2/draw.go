@@ -61,7 +61,7 @@ func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, 
 		}
 
 		// Set global GL state.
-		r.setGlobalState()
+		r.graphicsState.Begin(r)
 
 		// Update the scissor region (effects drawing).
 		r.performScissor(rect)
@@ -193,26 +193,28 @@ func (r *device) endQuery(o *gfx.Object, n nativeObject) nativeObject {
 
 func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	// Use object state.
-	r.stateColorWrite(obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha)
-	r.stateDithering(obj.Dithering)
-	r.stateStencilTest(obj.StencilTest)
-	r.stateStencilOp(obj.StencilFront, obj.StencilBack)
-	r.stateStencilFunc(obj.StencilFront, obj.StencilBack)
-	r.stateStencilMask(obj.StencilFront.WriteMask, obj.StencilBack.WriteMask)
-	r.stateDepthClamp(&r.gpuInfo, obj.DepthClamp)
-	r.stateDepthFunc(obj.DepthCmp)
-	r.stateDepthTest(obj.DepthTest)
-	r.stateDepthWrite(obj.DepthWrite)
-	r.stateFaceCulling(obj.FaceCulling)
+	r.graphicsState.ColorWrite(obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha)
+	r.graphicsState.Dithering(obj.Dithering)
+	r.graphicsState.StencilTest(obj.StencilTest)
+	r.graphicsState.StencilOpSeparate(obj.StencilFront, obj.StencilBack)
+	r.graphicsState.stencilFuncSeparate(obj.StencilFront, obj.StencilBack)
+	r.graphicsState.stencilMaskSeparate(obj.StencilFront.WriteMask, obj.StencilBack.WriteMask)
+	if r.gpuInfo.DepthClamp {
+		r.graphicsState.depthClamp(obj.DepthClamp)
+	}
+	r.graphicsState.DepthCmp(obj.DepthCmp)
+	r.graphicsState.DepthTest(obj.DepthTest)
+	r.graphicsState.DepthWrite(obj.DepthWrite)
+	r.graphicsState.FaceCulling(obj.FaceCulling)
 
 	// Begin using the shader.
 	shader := obj.Shader
-	if r.stateProgram(ns.program) {
-		// Update shader inputs.
-		for name := range shader.Inputs {
-			value := shader.Inputs[name]
-			r.updateUniform(ns, name, value)
-		}
+	r.graphicsState.useProgram(ns.program)
+
+	// Update shader inputs.
+	for name := range shader.Inputs {
+		value := shader.Inputs[name]
+		r.updateUniform(ns, name, value)
 	}
 
 	// Update the object's MVP cache, if needed.
@@ -226,12 +228,14 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 	r.updateUniform(ns, "MVP", nativeObj.MVPCache.MVP)
 
 	// Set alpha mode.
-	r.stateAlphaToCoverage(&r.gpuInfo, obj.AlphaMode == gfx.AlphaToCoverage)
-	r.stateBlend(obj.AlphaMode == gfx.AlphaBlend)
+	if r.gpuInfo.AlphaToCoverage {
+		r.graphicsState.SampleAlphaToCoverage(obj.AlphaMode == gfx.AlphaToCoverage)
+	}
+	r.graphicsState.Blend(obj.AlphaMode == gfx.AlphaBlend)
 	if obj.AlphaMode == gfx.AlphaBlend {
-		r.stateBlendColor(obj.Blend.Color)
-		r.stateBlendFuncSeparate(obj.Blend)
-		r.stateBlendEquationSeparate(obj.Blend)
+		r.graphicsState.BlendColor(obj.Blend.Color)
+		r.graphicsState.BlendFuncSeparate(obj.Blend)
+		r.graphicsState.BlendEquationSeparate(obj.Blend)
 	}
 
 	switch obj.AlphaMode {

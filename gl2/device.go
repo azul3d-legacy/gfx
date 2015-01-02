@@ -319,7 +319,7 @@ func (r *device) hookedRender(pre, post func()) {
 		}
 
 		// Clear our OpenGL state now.
-		r.clearGlobalState()
+		r.graphicsState.Restore(r)
 
 		// Tick the clock.
 		r.clock.Tick()
@@ -388,97 +388,46 @@ func (r *device) queryWait() {
 // according to whether or not we are rendering to an rttCanvas or not.
 func (r *device) performScissor(rect image.Rectangle) {
 	if r.rttCanvas != nil {
-		r.stateScissor(r.rttCanvas.Bounds(), rect)
+		r.graphicsState.Scissor(r.rttCanvas.Bounds(), rect)
 	} else {
-		r.stateScissor(r.Bounds(), rect)
+		r.graphicsState.Scissor(r.Bounds(), rect)
 	}
 }
 
 func (r *device) performClear(rect image.Rectangle, bg gfx.Color) {
-	r.setGlobalState()
+	r.graphicsState.Begin(r)
 
 	// Color write mask effects the glClear call below.
-	r.stateColorWrite(true, true, true, true)
+	r.graphicsState.ColorWrite(true, true, true, true)
 
 	// Perform clearing.
 	r.performScissor(rect)
-	r.stateClearColor(bg)
+	r.graphicsState.ClearColor(bg)
 	gl.Clear(uint32(gl.COLOR_BUFFER_BIT))
 }
 
 func (r *device) performClearDepth(rect image.Rectangle, depth float64) {
-	r.setGlobalState()
+	r.graphicsState.Begin(r)
 
 	// Depth write mask effects the glClear call below.
-	r.stateDepthWrite(true)
+	r.graphicsState.DepthWrite(true)
 
 	// Perform clearing.
 	r.performScissor(rect)
-	r.stateClearDepth(depth)
+	r.graphicsState.ClearDepth(depth)
 	gl.Clear(uint32(gl.DEPTH_BUFFER_BIT))
 }
 
 func (r *device) performClearStencil(rect image.Rectangle, stencil int) {
-	r.setGlobalState()
+	r.graphicsState.Begin(r)
 
 	// Stencil mask effects the glClear call below.
-	r.stateStencilMask(0xFFFF, 0xFFFF)
+	r.graphicsState.stencilMaskSeparate(0xFFFF, 0xFFFF)
 
 	// Perform clearing.
 	r.performScissor(rect)
-	r.stateClearStencil(stencil)
+	r.graphicsState.ClearStencil(stencil)
 	gl.Clear(uint32(gl.STENCIL_BUFFER_BIT))
-}
-
-func (r *device) setGlobalState() {
-	if !r.stateSetForFrame {
-		r.stateSetForFrame = true
-
-		if r.keepState {
-			// We want to maintain state between frames for cooperation with
-			// another renderer. Store the existing graphics state now so that
-			// we can restore it after the frame is rendered.
-			r.prevGraphicsState = queryGraphicsState(r.Common, &r.gpuInfo, r.Bounds())
-
-			// Since the existing state is also not what we think it is, we
-			// must update our state now.
-			cpy := *r.prevGraphicsState
-			r.graphicsState = &cpy
-		}
-
-		// Update viewport bounds.
-		bounds := r.BaseCanvas.Bounds()
-		gl.Viewport(0, 0, int32(bounds.Dx()), int32(bounds.Dy()))
-
-		// Enable scissor testing.
-		r.stateScissorTest(true)
-
-		// Enable setting point size in shader programs.
-		r.stateProgramPointSizeExt(true)
-
-		// Enable multisampling, if available and wanted.
-		if r.glArbMultisample {
-			if r.BaseCanvas.MSAA() {
-				r.stateMultisample(true)
-			}
-		}
-	}
-}
-
-func (r *device) clearGlobalState() {
-	if r.stateSetForFrame {
-		r.stateSetForFrame = false
-
-		// Clear last used state.
-		oldState := defaultGraphicsState
-		if r.keepState {
-			// We want to maintain state between frames for cooperation with
-			// another renderer. Use the graphics state that was active when
-			// the frame started then.
-			oldState = r.prevGraphicsState
-		}
-		r.graphicsState.load(&r.gpuInfo, r.Bounds(), oldState)
-	}
 }
 
 func (r *device) logf(format string, args ...interface{}) {
@@ -542,6 +491,10 @@ func newDevice(opts ...Option) (Device, error) {
 		wantFree:       make(chan struct{}, 1),
 		clock:          clock.New(),
 	}
+	r.graphicsState = &graphicsState{
+		GraphicsState: glc.NewGraphicsState(r.Common),
+	}
+
 	for _, opt := range opts {
 		opt(r)
 	}
@@ -704,15 +657,11 @@ func newDevice(opts ...Option) (Device, error) {
 	//gl.Execute()
 	r.BaseCanvas.VBounds = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
 
-	if r.keepState {
-		// Load the existing graphics state.
-		r.graphicsState = queryGraphicsState(r.Common, &r.gpuInfo, r.BaseCanvas.VBounds)
-	} else {
-		r.graphicsState = defaultGraphicsState
-	}
+	// Load the existing graphics state.
+	r.graphicsState.Begin(r)
 
 	// Update scissor rectangle.
-	r.stateScissor(r.BaseCanvas.VBounds, r.BaseCanvas.VBounds)
+	r.graphicsState.Scissor(r.BaseCanvas.VBounds, r.BaseCanvas.VBounds)
 
 	// Grab the number of texture compression formats.
 	var numFormats int32
