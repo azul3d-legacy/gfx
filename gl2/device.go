@@ -178,6 +178,7 @@ func (r *device) RestoreState() {
 
 // Destroy implements the Device interface.
 func (r *device) Destroy() {
+	// TODO(slimsag): free pending resources.
 }
 
 // Implements gfx.Canvas interface.
@@ -425,16 +426,19 @@ func (r *device) logf(format string, args ...interface{}) {
 	r.debug.RUnlock()
 }
 
+// TODO(slimsag): move to internal/glc ?
 func queryVersion() (major, minor, release int, vendorVersion string) {
 	versionString := gl.GoStr(gl.GetString(gl.VERSION))
 	return glutil.ParseVersionString(versionString)
 }
 
+// TODO(slimsag): move to internal/glc ?
 func queryShaderVersion() (major, minor, release int, vendorVersion string) {
 	versionString := gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
 	return glutil.ParseVersionString(versionString)
 }
 
+// TODO(slimsag): move to internal/glc ?
 func queryExtensions() map[string]bool {
 	// Initialize extensions map
 	var (
@@ -452,6 +456,7 @@ func queryExtensions() map[string]bool {
 	return extensions
 }
 
+// TODO(slimsag): move to internal/glc ?
 func extension(name string, extensions map[string]bool) bool {
 	_, ok := extensions[name]
 	return ok

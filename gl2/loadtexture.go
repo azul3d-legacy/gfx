@@ -62,6 +62,7 @@ func finalizeTexture(n *nativeTexture) {
 	n.r.texturesToFree.Unlock()
 }
 
+// TODO(slimsag): move to internal/glc ?
 func fbErrorString(err uint32) string {
 	switch err {
 	case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
@@ -213,6 +214,7 @@ func (r *device) hookedDownload(rect image.Rectangle, complete chan image.Image,
 	}
 }
 
+// TODO(slimsag): move to internal/glc
 func convertWrap(w gfx.TexWrap) int32 {
 	switch w {
 	case gfx.Repeat:
@@ -227,6 +229,7 @@ func convertWrap(w gfx.TexWrap) int32 {
 	panic("Invalid wrap mode")
 }
 
+// TODO(slimsag): move to internal/glc
 func convertFilter(f gfx.TexFilter) int32 {
 	switch f {
 	case gfx.Nearest:
@@ -272,6 +275,7 @@ const (
 	glCOMPRESSED_RGBA_S3TC_DXT5_EXT = 0x83F3
 )
 
+// TODO(slimsag): move to internal/glc ?
 func convertTexFormat(f gfx.TexFormat) int32 {
 	switch f {
 	case gfx.RGBA:
@@ -290,6 +294,7 @@ func convertTexFormat(f gfx.TexFormat) int32 {
 	panic("unknown format")
 }
 
+// TODO(slimsag): move to internal/glc ?
 func unconvertTexFormat(f int32) gfx.TexFormat {
 	switch f {
 	case gl.RGBA8:

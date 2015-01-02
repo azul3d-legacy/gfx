@@ -13,6 +13,7 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 )
 
+// TODO(slimsag): move to internal/glc ?
 type nativeAttrib struct {
 	size int32    // 1, 2, 3, 4 - parameter to VertexAttribPointer
 	rows uint32   // e.g. 1 for vec[2,3,4], 3 for mat3, 4 for mat4.
@@ -82,6 +83,8 @@ func (r *device) deleteVBO(vboID *uint32) {
 //  size == 3 == gfx.Vec3
 //  size == 4 == gfx.Vec4, gfx.Color, gfx.Mat4
 // ok == false is returned if x is not one of the above types.
+//
+// TODO(slimsag): move to internal/glc ?
 func attribSize(x interface{}) (rows uint32, size int32, ok bool) {
 	switch x.(type) {
 	case float32:

@@ -204,6 +204,7 @@ func (r *rttCanvas) rttEnd() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
+// TODO(slimsag): move to internal/glc ?
 var (
 	errFramebufferUndefined                   = errors.New("GL_FRAMEBUFFER_UNDEFINED")
 	errFramebufferIncompleteAttachment        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT")
@@ -215,6 +216,7 @@ var (
 	errFramebufferIncompleteLayerTargets      = errors.New("GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS")
 )
 
+// TODO(slimsag): move to internal/glc ?
 func checkFramebufferError(target uint32) error {
 	err := gl.CheckFramebufferStatus(target)
 	switch err {
