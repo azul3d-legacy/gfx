@@ -21,7 +21,7 @@ type MVPCache struct {
 
 	// The last-known camera transform and projection.
 	lastCameraTransform lmath.Mat4
-	lastProjection      gfx.Mat4
+	lastProjection      lmath.Mat4
 
 	// The cached pre-calculated matrices to feed directly into shaders.
 	Model, View, Projection, MVP gfx.Mat4
@@ -33,10 +33,10 @@ func (m *MVPCache) needUpdate(o *gfx.Object, c *gfx.Camera) bool {
 	if o.Transform.Mat4() != m.lastTransform {
 		return true
 	}
-	if c.Object.Transform.Mat4() != m.lastCameraTransform {
+	if m.camMat(c) != m.lastCameraTransform {
 		return true
 	}
-	if c.Projection != m.lastProjection {
+	if m.camProj(c) != m.lastProjection {
 		return true
 	}
 	return false
@@ -59,25 +59,41 @@ func (m *MVPCache) Update(o *gfx.Object, c *gfx.Camera) {
 
 	// The "View" matrix is the coordinate system conversion, multiplied
 	// against the camera object's transformation matrix.
+	m.lastCameraTransform = m.camMat(c)
 	view := CoordSys
 	if c != nil {
 		// Apply inverse of camera object transformation.
-		camInverse, _ := c.Object.Transform.Mat4().Inverse()
+		camInverse, _ := m.lastCameraTransform.Inverse()
 		view = camInverse.Mul(view)
 	}
 	m.View = gfx.ConvertMat4(view)
 
 	// The "Projection" matrix is the camera's projection matrix, completely
 	// untouched.
-	projection := lmath.Mat4Identity
-	if c != nil {
-		projection = c.Projection.Mat4()
-	}
-	m.Projection = gfx.ConvertMat4(projection)
+	m.lastProjection = m.camProj(c)
+	m.Projection = gfx.ConvertMat4(m.lastProjection)
 
 	// The "MVP" matrix is Model * View * Projection matrix.
 	mvp := objMat
 	mvp = mvp.Mul(view)
-	mvp = mvp.Mul(projection)
+	mvp = mvp.Mul(m.lastProjection)
 	m.MVP = gfx.ConvertMat4(mvp)
+}
+
+// camMat returns the camera's transformation matrix, or the identity matrix if
+// the camera is nil.
+func (m *MVPCache) camMat(c *gfx.Camera) lmath.Mat4 {
+	if c != nil {
+		return c.Object.Transform.Mat4()
+	}
+	return lmath.Mat4Identity
+}
+
+// camProj returns the camera's projection matrix, or the identity matrix if
+// the camera is nil.
+func (m *MVPCache) camProj(c *gfx.Camera) lmath.Mat4 {
+	if c != nil {
+		return c.Projection.Mat4()
+	}
+	return lmath.Mat4Identity
 }
