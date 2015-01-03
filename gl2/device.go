@@ -40,7 +40,7 @@ type rsrcManager struct {
 	renderbuffers []uint32
 }
 
-// renderer implements the Renderer interface defined in the gl2.go file.
+// device implements the Device interface.
 type device struct {
 	*util.BaseCanvas
 	common  *glc.Context
@@ -51,7 +51,7 @@ type device struct {
 	// Render execution channel.
 	renderExec chan func() bool
 
-	// The other shared renderer to be used for loading assets, or nil.
+	// The other shared device to be used for loading assets, or nil.
 	shared struct {
 		sync.RWMutex
 		*device
@@ -98,12 +98,12 @@ type device struct {
 	renderComplete chan struct{}
 }
 
-// Exec implements the Renderer interface.
+// Exec implements the Device interface.
 func (r *device) Exec() chan func() bool {
 	return r.renderExec
 }
 
-// Clock implements the gfx.Renderer interface.
+// Clock implements the gfx.Device interface.
 func (r *device) Clock() *clock.Clock {
 	return r.clock
 }
@@ -475,7 +475,7 @@ func newDevice(opts ...Option) (Device, error) {
 	// Note: we don't need r.gl.Lock() here because no other goroutines
 	// can be using r.ctx yet since we haven't returned from New().
 
-	// Find the renderer's precision.
+	// Find the device's framebuffer precision.
 	var redBits, greenBits, blueBits, alphaBits, depthBits, stencilBits int32
 	gl.GetIntegerv(gl.RED_BITS, &redBits)
 	gl.GetIntegerv(gl.GREEN_BITS, &greenBits)
