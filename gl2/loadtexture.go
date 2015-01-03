@@ -22,7 +22,7 @@ type nativeTexture struct {
 	id             uint32
 	internalFormat int32
 	width, height  int
-	*rttCanvas
+	rttCanvas      *rttCanvas
 	destroyHandler func(n *nativeTexture)
 }
 
