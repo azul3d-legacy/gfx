@@ -263,8 +263,8 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 		gl.BindTexture(gl.TEXTURE_2D, nt.id)
 
 		// Load wrap mode.
-		uWrap := convertWrap(t.WrapU)
-		vWrap := convertWrap(t.WrapV)
+		uWrap := int32(r.common.ConvertWrap(t.WrapU))
+		vWrap := int32(r.common.ConvertWrap(t.WrapV))
 		if t.WrapU == gfx.BorderColor || t.WrapV == gfx.BorderColor {
 			// We must specify the actual border color then.
 			gl.TexParameterfv(gl.TEXTURE_2D, gl.TEXTURE_BORDER_COLOR, &t.BorderColor.R)
@@ -273,8 +273,8 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, vWrap)
 
 		// Load filter.
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, convertFilter(t.MinFilter))
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, convertFilter(t.MagFilter))
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, int32(r.common.ConvertFilter(t.MinFilter)))
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, int32(r.common.ConvertFilter(t.MagFilter)))
 
 		// If we do not want mipmapping, turn it off. Note that only the
 		// minification filter can be mipmapped (mag filter can never be).

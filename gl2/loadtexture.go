@@ -210,40 +210,6 @@ func (r *device) hookedDownload(rect image.Rectangle, complete chan image.Image,
 	}
 }
 
-// TODO(slimsag): move to internal/glc
-func convertWrap(w gfx.TexWrap) int32 {
-	switch w {
-	case gfx.Repeat:
-		return gl.REPEAT
-	case gfx.Clamp:
-		return gl.CLAMP_TO_EDGE
-	case gfx.BorderColor:
-		return gl.CLAMP_TO_BORDER
-	case gfx.Mirror:
-		return gl.MIRRORED_REPEAT
-	}
-	panic("Invalid wrap mode")
-}
-
-// TODO(slimsag): move to internal/glc
-func convertFilter(f gfx.TexFilter) int32 {
-	switch f {
-	case gfx.Nearest:
-		return gl.NEAREST
-	case gfx.Linear:
-		return gl.LINEAR
-	case gfx.NearestMipmapNearest:
-		return gl.NEAREST_MIPMAP_NEAREST
-	case gfx.LinearMipmapNearest:
-		return gl.LINEAR_MIPMAP_NEAREST
-	case gfx.NearestMipmapLinear:
-		return gl.NEAREST_MIPMAP_LINEAR
-	case gfx.LinearMipmapLinear:
-		return gl.LINEAR_MIPMAP_LINEAR
-	}
-	panic("invalid filter.")
-}
-
 func (r *rsrcManager) freeTextures() {
 	// Lock the list.
 	r.Lock()

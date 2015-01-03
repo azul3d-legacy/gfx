@@ -6,6 +6,40 @@ package glc
 
 import "azul3d.org/gfx.v2-dev"
 
+func (c *Context) ConvertWrap(w gfx.TexWrap) int {
+	switch w {
+	case gfx.Repeat:
+		return c.REPEAT
+	case gfx.Clamp:
+		return c.CLAMP_TO_EDGE
+	case gfx.BorderColor:
+		return c.CLAMP_TO_BORDER
+	case gfx.Mirror:
+		return c.MIRRORED_REPEAT
+	default:
+		panic("failed to convert")
+	}
+}
+
+func (c *Context) ConvertFilter(f gfx.TexFilter) int {
+	switch f {
+	case gfx.Nearest:
+		return c.NEAREST
+	case gfx.Linear:
+		return c.LINEAR
+	case gfx.NearestMipmapNearest:
+		return c.NEAREST_MIPMAP_NEAREST
+	case gfx.LinearMipmapNearest:
+		return c.LINEAR_MIPMAP_NEAREST
+	case gfx.NearestMipmapLinear:
+		return c.NEAREST_MIPMAP_LINEAR
+	case gfx.LinearMipmapLinear:
+		return c.LINEAR_MIPMAP_LINEAR
+	default:
+		panic("failed to convert")
+	}
+}
+
 func (c *Context) ConvertPrimitive(p gfx.Primitive) int {
 	switch p {
 	case gfx.Triangles:

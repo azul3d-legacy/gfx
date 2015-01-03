@@ -34,7 +34,8 @@ type Context struct {
 	STACK_OVERFLOW  int
 	STACK_UNDERFLOW int
 
-	MULTISAMPLE int
+	MULTISAMPLE     int
+	CLAMP_TO_BORDER int
 }
 
 func NewContext(ctx *webgl.Context) *Context {
@@ -82,5 +83,9 @@ func NewContext(ctx *webgl.Context) *Context {
 
 		STACK_OVERFLOW:  -1024,
 		STACK_UNDERFLOW: -1025,
+
+		// WebGL does not support BorderColor (CLAMP_TO_BORDER), per the gfx
+		// package spec we choose just Clamp (CLAMP_TO_EDGE) instead.
+		CLAMP_TO_BORDER: ctx.CLAMP_TO_EDGE,
 	}
 }

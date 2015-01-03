@@ -118,6 +118,17 @@ type Context struct {
 	STENCIL_BACK_FAIL            int
 	STENCIL_BACK_PASS_DEPTH_FAIL int
 	STENCIL_BACK_PASS_DEPTH_PASS int
+
+	REPEAT                 int
+	CLAMP_TO_EDGE          int
+	CLAMP_TO_BORDER        int
+	MIRRORED_REPEAT        int
+	NEAREST                int
+	LINEAR                 int
+	NEAREST_MIPMAP_NEAREST int
+	LINEAR_MIPMAP_NEAREST  int
+	NEAREST_MIPMAP_LINEAR  int
+	LINEAR_MIPMAP_LINEAR   int
 }
 
 func NewContext() *Context {
@@ -265,5 +276,19 @@ func NewContext() *Context {
 		STENCIL_BACK_FAIL:            gl.STENCIL_BACK_FAIL,
 		STENCIL_BACK_PASS_DEPTH_FAIL: gl.STENCIL_BACK_PASS_DEPTH_FAIL,
 		STENCIL_BACK_PASS_DEPTH_PASS: gl.STENCIL_BACK_PASS_DEPTH_PASS,
+
+		REPEAT:                 gl.REPEAT,
+		CLAMP_TO_EDGE:          gl.CLAMP_TO_EDGE,
+		MIRRORED_REPEAT:        gl.MIRRORED_REPEAT,
+		NEAREST:                gl.NEAREST,
+		LINEAR:                 gl.LINEAR,
+		NEAREST_MIPMAP_NEAREST: gl.NEAREST_MIPMAP_NEAREST,
+		LINEAR_MIPMAP_NEAREST:  gl.LINEAR_MIPMAP_NEAREST,
+		NEAREST_MIPMAP_LINEAR:  gl.NEAREST_MIPMAP_LINEAR,
+		LINEAR_MIPMAP_LINEAR:   gl.LINEAR_MIPMAP_LINEAR,
+
+		// OpenGL ES 2 does not support BorderColor (CLAMP_TO_BORDER), per the
+		// gfx package spec we choose just Clamp (CLAMP_TO_EDGE) instead.
+		CLAMP_TO_BORDER: gl.CLAMP_TO_EDGE,
 	}
 }
