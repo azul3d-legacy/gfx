@@ -71,7 +71,7 @@ func PreDraw(dev gfx.Device, rect image.Rectangle, o *gfx.Object, c *gfx.Camera)
 	}
 	meshesToLoad := 0
 	for _, m := range o.Meshes {
-		if m.Loaded {
+		if m.Loaded && !m.HasChanged() {
 			continue
 		}
 		meshesToLoad++
