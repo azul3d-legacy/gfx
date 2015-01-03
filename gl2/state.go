@@ -34,7 +34,7 @@ func (g *graphicsState) Begin(d *device) {
 	g.ScissorTest(true)
 
 	// Enable setting point size in shader programs.
-	d.programPointSizeExt(true)
+	g.programPointSizeExt(true)
 
 	// Enable multisampling, if available and wanted.
 	if d.glArbMultisample {
