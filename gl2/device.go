@@ -40,6 +40,15 @@ type rsrcManager struct {
 	renderbuffers []uint32
 }
 
+// free free's all of the pending resources.
+func (r *rsrcManager) free() {
+	r.freeMeshes()
+	r.freeShaders()
+	r.freeTextures()
+	r.freeFBOs()
+	r.freeRenderbuffers()
+}
+
 // device implements the Device interface.
 type device struct {
 	*util.BaseCanvas
@@ -277,11 +286,7 @@ func (r *device) hookedRender(pre, post func()) {
 	r.renderExec <- func() bool {
 		// If any finalizers have ran and actually want us to free something,
 		// then we perform this operation now.
-		r.freeMeshes()
-		r.freeShaders()
-		r.freeTextures()
-		r.freeFBOs()
-		r.freeRenderbuffers()
+		r.rsrcManager.free()
 
 		if pre != nil {
 			pre()

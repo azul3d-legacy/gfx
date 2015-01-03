@@ -33,12 +33,12 @@ func (n *nativeShader) Destroy() {
 	finalizeShader(n)
 }
 
-func (r *device) freeShaders() {
+func (r *rsrcManager) freeShaders() {
 	// Lock the list.
-	r.rsrcManager.Lock()
+	r.Lock()
 
 	// Free the shaders.
-	for _, native := range r.rsrcManager.shaders {
+	for _, native := range r.shaders {
 		// Delete shader objects (in practice we should be able to do this
 		// directly after linking, but it would just leave the driver to
 		// reference count anyway).
@@ -54,8 +54,8 @@ func (r *device) freeShaders() {
 	}
 
 	// Slice to zero, and unlock.
-	r.rsrcManager.shaders = r.rsrcManager.shaders[:0]
-	r.rsrcManager.Unlock()
+	r.shaders = r.shaders[:0]
+	r.Unlock()
 }
 
 // LoadShader implements the gfx.Renderer interface.

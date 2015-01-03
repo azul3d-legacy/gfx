@@ -248,13 +248,13 @@ func convertFilter(f gfx.TexFilter) int32 {
 	panic("invalid filter.")
 }
 
-func (r *device) freeTextures() {
+func (r *rsrcManager) freeTextures() {
 	// Lock the list.
-	r.rsrcManager.Lock()
+	r.Lock()
 
-	if len(r.rsrcManager.textures) > 0 {
+	if len(r.textures) > 0 {
 		// Free the textures.
-		gl.DeleteTextures(int32(len(r.rsrcManager.textures)), &r.rsrcManager.textures[0])
+		gl.DeleteTextures(int32(len(r.textures)), &r.textures[0])
 
 		// Flush and execute OpenGL commands.
 		gl.Flush()
@@ -262,8 +262,8 @@ func (r *device) freeTextures() {
 	}
 
 	// Slice to zero, and unlock.
-	r.rsrcManager.textures = r.rsrcManager.textures[:0]
-	r.rsrcManager.Unlock()
+	r.textures = r.textures[:0]
+	r.Unlock()
 }
 
 const (

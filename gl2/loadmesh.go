@@ -171,12 +171,12 @@ func (r *device) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.
 	}
 }
 
-func (r *device) freeMeshes() {
+func (r *rsrcManager) freeMeshes() {
 	// Lock the list.
-	r.rsrcManager.Lock()
+	r.Lock()
 
 	// Free the meshes.
-	for _, native := range r.rsrcManager.meshes {
+	for _, native := range r.meshes {
 		// Delete single VBO's.
 		gl.DeleteBuffers(1, &native.indices)
 		gl.DeleteBuffers(1, &native.vertices)
@@ -197,8 +197,8 @@ func (r *device) freeMeshes() {
 	}
 
 	// Slice to zero, and unlock.
-	r.rsrcManager.meshes = r.rsrcManager.meshes[:0]
-	r.rsrcManager.Unlock()
+	r.meshes = r.meshes[:0]
+	r.Unlock()
 }
 
 // LoadMesh implements the gfx.Renderer interface.

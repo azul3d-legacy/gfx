@@ -16,13 +16,13 @@ import (
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
-func (r *device) freeFBOs() {
+func (r *rsrcManager) freeFBOs() {
 	// Lock the list.
-	r.rsrcManager.Lock()
+	r.Lock()
 
-	if len(r.rsrcManager.fbos) > 0 {
+	if len(r.fbos) > 0 {
 		// Free the FBOs.
-		gl.DeleteFramebuffers(int32(len(r.rsrcManager.fbos)), &r.rsrcManager.fbos[0])
+		gl.DeleteFramebuffers(int32(len(r.fbos)), &r.fbos[0])
 
 		// Flush and execute OpenGL commands.
 		gl.Flush()
@@ -30,17 +30,17 @@ func (r *device) freeFBOs() {
 	}
 
 	// Slice to zero, and unlock.
-	r.rsrcManager.fbos = r.rsrcManager.fbos[:0]
-	r.rsrcManager.Unlock()
+	r.fbos = r.fbos[:0]
+	r.Unlock()
 }
 
-func (r *device) freeRenderbuffers() {
+func (r *rsrcManager) freeRenderbuffers() {
 	// Lock the list.
-	r.rsrcManager.Lock()
+	r.Lock()
 
-	if len(r.rsrcManager.renderbuffers) > 0 {
+	if len(r.renderbuffers) > 0 {
 		// Free the FBOs.
-		gl.DeleteRenderbuffers(int32(len(r.rsrcManager.renderbuffers)), &r.rsrcManager.renderbuffers[0])
+		gl.DeleteRenderbuffers(int32(len(r.renderbuffers)), &r.renderbuffers[0])
 
 		// Flush and execute OpenGL commands.
 		gl.Flush()
@@ -48,8 +48,8 @@ func (r *device) freeRenderbuffers() {
 	}
 
 	// Slice to zero, and unlock.
-	r.rsrcManager.renderbuffers = r.rsrcManager.renderbuffers[:0]
-	r.rsrcManager.Unlock()
+	r.renderbuffers = r.renderbuffers[:0]
+	r.Unlock()
 }
 
 // rttCanvas is the gfx.Canvas returned by RenderToTexture.
