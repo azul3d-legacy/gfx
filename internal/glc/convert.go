@@ -6,7 +6,7 @@ package glc
 
 import "azul3d.org/gfx.v2-dev"
 
-func (c *Context) ConvertWrap(w gfx.TexWrap) int {
+func (c *Context) ConvertTexWrap(w gfx.TexWrap) int {
 	switch w {
 	case gfx.Repeat:
 		return c.REPEAT
@@ -21,7 +21,7 @@ func (c *Context) ConvertWrap(w gfx.TexWrap) int {
 	}
 }
 
-func (c *Context) ConvertFilter(f gfx.TexFilter) int {
+func (c *Context) ConvertTexFilter(f gfx.TexFilter) int {
 	switch f {
 	case gfx.Nearest:
 		return c.NEAREST
@@ -53,7 +53,7 @@ func (c *Context) ConvertPrimitive(p gfx.Primitive) int {
 	}
 }
 
-func (c *Context) UnconvertFaceCull(fc int) gfx.FaceCullMode {
+func (c *Context) UnconvertFaceCullMode(fc int) gfx.FaceCullMode {
 	switch fc {
 	case c.FRONT:
 		return gfx.FrontFaceCulling
