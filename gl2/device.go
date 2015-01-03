@@ -262,9 +262,8 @@ func (r *device) hookedQueryWait(pre, post func()) {
 			pre()
 		}
 
-		// Flush and execute any pending OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 
 		// Wait for occlusion query results to come in.
 		r.queryWait()
@@ -297,9 +296,8 @@ func (r *device) hookedRender(pre, post func()) {
 			f()
 		}
 
-		// Flush and execute any pending OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 
 		// Wait for occlusion query results to come in.
 		r.queryWait()
@@ -343,14 +341,12 @@ func (r *device) queryYield() int {
 	)
 	for queryIndex, query := range r.pending.queries {
 		gl.GetQueryObjectiv(query.id, gl.QUERY_RESULT_AVAILABLE, &available)
-		//gl.Execute()
 		if available == gl.TRUE {
 			// Get the result then.
 			gl.GetQueryObjectiv(query.id, gl.QUERY_RESULT, &result)
 
 			// Delete the query.
 			gl.DeleteQueries(1, &query.id)
-			//gl.Execute()
 
 			// Update object's sample count.
 			nativeObj := query.o.NativeObject.(*nativeObject)
@@ -487,7 +483,6 @@ func newDevice(opts ...Option) (Device, error) {
 	gl.GetIntegerv(gl.ALPHA_BITS, &alphaBits)
 	gl.GetIntegerv(gl.DEPTH_BITS, &depthBits)
 	gl.GetIntegerv(gl.STENCIL_BITS, &stencilBits)
-	//gl.Execute()
 
 	r.BaseCanvas.VPrecision.RedBits = uint8(redBits)
 	r.BaseCanvas.VPrecision.GreenBits = uint8(greenBits)
@@ -520,7 +515,6 @@ func newDevice(opts ...Option) (Device, error) {
 		// Query the number of samples and sample buffers we have, if any.
 		gl.GetIntegerv(gl.SAMPLES, &r.samples)
 		gl.GetIntegerv(gl.SAMPLE_BUFFERS, &r.sampleBuffers)
-		//gl.Execute() // Needed because glGetIntegerv must execute now.
 		r.BaseCanvas.VPrecision.Samples = int(r.samples)
 	}
 
@@ -533,7 +527,6 @@ func newDevice(opts ...Option) (Device, error) {
 	if r.glArbOcclusionQuery {
 		gl.GetQueryiv(gl.SAMPLES_PASSED, gl.QUERY_COUNTER_BITS, &occlusionQueryBits)
 	}
-	//gl.Execute()
 
 	// Collect GPU information.
 	r.devInfo.DepthClamp = extension("GL_ARB_depth_clamp", exts)
@@ -612,7 +605,6 @@ func newDevice(opts ...Option) (Device, error) {
 		//       GL_MAX_INTEGER_SAMPLES with those.
 		var maxSamples int32
 		gl.GetIntegerv(gl.MAX_SAMPLES, &maxSamples)
-		//gl.Execute()
 		for i := 0; i < int(maxSamples); i++ {
 			fmts.Samples = append(fmts.Samples, i)
 		}
@@ -623,7 +615,6 @@ func newDevice(opts ...Option) (Device, error) {
 	// Grab the current renderer bounds (opengl viewport).
 	var viewport [4]int32
 	gl.GetIntegerv(gl.VIEWPORT, &viewport[0])
-	//gl.Execute()
 	r.BaseCanvas.VBounds = image.Rect(0, 0, int(viewport[2]), int(viewport[3]))
 
 	// Load the existing graphics state.
@@ -635,13 +626,11 @@ func newDevice(opts ...Option) (Device, error) {
 	// Grab the number of texture compression formats.
 	var numFormats int32
 	gl.GetIntegerv(gl.NUM_COMPRESSED_TEXTURE_FORMATS, &numFormats)
-	//gl.Execute() // Needed because glGetIntegerv must execute now.
 
 	// Store the slice of texture compression formats.
 	if numFormats > 0 {
 		r.compressedTextureFormats = make([]int32, numFormats)
 		gl.GetIntegerv(gl.COMPRESSED_TEXTURE_FORMATS, &r.compressedTextureFormats[0])
-		//gl.Execute() // Needed because glGetIntegerv must execute now.
 	}
 	return r, nil
 }

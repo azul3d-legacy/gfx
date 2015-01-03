@@ -173,9 +173,7 @@ func (r *device) updateUniform(native *nativeShader, name string, value interfac
 func (r *device) beginQuery(o *gfx.Object, n *nativeObject) {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
 		gl.GenQueries(1, &n.pendingQuery)
-		//gl.Execute()
 		gl.BeginQuery(gl.SAMPLES_PASSED, n.pendingQuery)
-		//gl.Execute()
 
 		// Add the pending query.
 		r.pending.Lock()
@@ -187,7 +185,6 @@ func (r *device) beginQuery(o *gfx.Object, n *nativeObject) {
 func (r *device) endQuery(o *gfx.Object, n *nativeObject) {
 	if r.glArbOcclusionQuery && o.OcclusionTest {
 		gl.EndQuery(gl.SAMPLES_PASSED)
-		//gl.Execute()
 	}
 }
 
@@ -271,7 +268,6 @@ func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
 		if t.WrapU == gfx.BorderColor || t.WrapV == gfx.BorderColor {
 			// We must specify the actual border color then.
 			gl.TexParameterfv(gl.TEXTURE_2D, gl.TEXTURE_BORDER_COLOR, &t.BorderColor.R)
-			//gl.Execute()
 		}
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, uWrap)
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, vWrap)

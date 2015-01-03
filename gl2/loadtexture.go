@@ -38,7 +38,6 @@ func newNativeTexture(r *device, internalFormat int32, width, height int) *nativ
 		destroyHandler: finalizeTexture,
 	}
 	gl.GenTextures(1, &tex.id)
-	//gl.Execute()
 
 	gl.BindTexture(gl.TEXTURE_2D, tex.id)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_BASE_LEVEL, 0)
@@ -97,7 +96,6 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		// Create a FBO, bind it now.
 		var fbo uint32
 		gl.GenFramebuffers(1, &fbo)
-		//gl.Execute()
 		gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
 		gl.BindTexture(gl.TEXTURE_2D, n.id)
@@ -140,9 +138,8 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 		gl.DeleteFramebuffers(1, &fbo)
 
-		// Flush and execute.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 
 		complete <- img
 		return false // no frame rendered.
@@ -199,9 +196,8 @@ func (r *device) hookedDownload(rect image.Rectangle, complete chan image.Image,
 			post()
 		}
 
-		// Flush and execute.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 
 		// We must vertically flip the image.
 		util.VerticalFlip(img)
@@ -256,9 +252,8 @@ func (r *rsrcManager) freeTextures() {
 		// Free the textures.
 		gl.DeleteTextures(int32(len(r.textures)), &r.textures[0])
 
-		// Flush and execute OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -380,12 +375,15 @@ func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		// Unbind texture to avoid carrying OpenGL state.
 		gl.BindTexture(gl.TEXTURE_2D, 0)
 
-		// Flush, Finish and execute OpenGL commands.
+		// Flush and Finish OpenGL commands.
 		gl.Flush()
+
 		// Use Finish() to avoid accessing the texture before upload has completed, see:
-		//  http://higherorderfun.com/blog/2011/05/26/multi-thread-opengl-texture-loading/
+		//
+		// http://higherorderfun.com/blog/2011/05/26/multi-thread-opengl-texture-loading/
+		//
+		// TODO(slimsag): is Finish needed now that we don't use multiple (false) threads?
 		gl.Finish()
-		//gl.Execute()
 
 		// Mark the texture as loaded.
 		t.Loaded = true

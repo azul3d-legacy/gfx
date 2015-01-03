@@ -45,7 +45,6 @@ func (n *nativeMesh) Destroy() {
 func (r *device) createVBO() (vboID uint32) {
 	// Generate new VBO.
 	gl.GenBuffers(1, &vboID)
-	//gl.Execute()
 	return
 }
 
@@ -60,7 +59,6 @@ func (r *device) updateVBO(usageHint int32, dataSize uintptr, dataLength int, da
 		data,
 		uint32(usageHint),
 	)
-	//gl.Execute()
 }
 
 func (r *device) deleteVBO(vboID *uint32) {
@@ -69,7 +67,6 @@ func (r *device) deleteVBO(vboID *uint32) {
 		return
 	}
 	gl.DeleteBuffers(1, vboID)
-	//gl.Execute()
 	*vboID = 0 // Just for safety.
 }
 
@@ -144,7 +141,6 @@ func (r *device) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.
 		// Generate them.
 		n.vbos = make([]uint32, numVBO)
 		gl.GenBuffers(int32(numVBO), &n.vbos[0])
-		//gl.Execute()
 	}
 
 	// Update VBO's now.
@@ -191,9 +187,8 @@ func (r *rsrcManager) freeMeshes() {
 			gl.DeleteBuffers(int32(len(attrib.vbos)), &attrib.vbos[0])
 		}
 
-		// Flush and execute OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -404,9 +399,8 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		// Ensure no buffer is active when we leave (so that OpenGL state is untouched).
 		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
-		// Flush and execute OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 
 		// If the mesh was not loaded, then we need to assign the native mesh
 		// and create a finalizer to free the native mesh later.

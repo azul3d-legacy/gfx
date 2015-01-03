@@ -47,9 +47,8 @@ func (r *rsrcManager) freeShaders() {
 		// Delete program.
 		gl.DeleteProgram(native.program)
 
-		// Flush and execute OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -62,16 +61,13 @@ func shaderCompilerLog(s uint32) (log []byte, compiled bool) {
 		ok, logSize int32
 	)
 	gl.GetShaderiv(s, gl.COMPILE_STATUS, &ok)
-	//gl.Execute()
 
 	// Shader compiler error
 	gl.GetShaderiv(s, gl.INFO_LOG_LENGTH, &logSize)
-	//gl.Execute()
 
 	if logSize > 0 {
 		log = make([]byte, logSize)
 		gl.GetShaderInfoLog(s, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
-		//gl.Execute()
 
 		// Strip null-termination byte.
 		if log[len(log)-1] == 0 {
@@ -113,7 +109,6 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		sources := &s.GLSL.Vertex[0]
 		gl.ShaderSource(native.vertex, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
 		gl.CompileShader(native.vertex)
-		//gl.Execute()
 
 		// Check if the shader compiled or not.
 		log, compiled := shaderCompilerLog(native.vertex)
@@ -137,7 +132,6 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		sources = &s.GLSL.Fragment[0]
 		gl.ShaderSource(native.fragment, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
 		gl.CompileShader(native.fragment)
-		//gl.Execute()
 
 		// Check if the shader compiled or not.
 		log, compiled = shaderCompilerLog(native.fragment)
@@ -169,12 +163,10 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 				log     []byte
 			)
 			gl.GetProgramiv(native.program, gl.INFO_LOG_LENGTH, &logSize)
-			//gl.Execute()
 
 			if logSize > 0 {
 				log = make([]byte, logSize)
 				gl.GetProgramInfoLog(native.program, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
-				//gl.Execute()
 
 				// Strip null-termination byte.
 				if log[len(log)-1] == 0 {
@@ -185,7 +177,6 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			// Check for linker errors.
 			var ok int32
 			gl.GetProgramiv(native.program, gl.LINK_STATUS, &ok)
-			//gl.Execute()
 			if ok == 0 {
 				// Just for sanity.
 				native.program = 0
@@ -220,9 +211,8 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			runtime.SetFinalizer(native, finalizeShader)
 		}
 
-		// Flush and execute OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 
 		// Signal completion and return.
 		select {

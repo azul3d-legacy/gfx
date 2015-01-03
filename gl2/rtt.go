@@ -24,9 +24,8 @@ func (r *rsrcManager) freeFBOs() {
 		// Free the FBOs.
 		gl.DeleteFramebuffers(int32(len(r.fbos)), &r.fbos[0])
 
-		// Flush and execute OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -42,9 +41,8 @@ func (r *rsrcManager) freeRenderbuffers() {
 		// Free the FBOs.
 		gl.DeleteRenderbuffers(int32(len(r.renderbuffers)), &r.renderbuffers[0])
 
-		// Flush and execute OpenGL commands.
+		// Flush OpenGL commands.
 		gl.Flush()
-		//gl.Execute()
 	}
 
 	// Slice to zero, and unlock.
@@ -295,7 +293,6 @@ func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 
 		// Create the FBO.
 		gl.GenFramebuffers(1, &canvas.fbo)
-		//gl.Execute()
 		gl.BindFramebuffer(gl.FRAMEBUFFER, canvas.fbo)
 
 		// Create an OpenGL render buffer for each nil cfg texture. This allows
