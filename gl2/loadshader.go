@@ -19,13 +19,13 @@ import (
 type nativeShader struct {
 	*glutil.LocationCache
 	program, vertex, fragment uint32
-	r                         *device
+	r                         *rsrcManager
 }
 
 func finalizeShader(n *nativeShader) {
-	n.r.rsrcManager.Lock()
-	n.r.rsrcManager.shaders = append(n.r.rsrcManager.shaders, n)
-	n.r.rsrcManager.Unlock()
+	n.r.Lock()
+	n.r.shaders = append(n.r.shaders, n)
+	n.r.Unlock()
 }
 
 // Implements gfx.Destroyable interface.
@@ -106,7 +106,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		}
 
 		native := &nativeShader{
-			r: r,
+			r: r.rsrcManager,
 		}
 
 		// Handle the vertex shader now.

@@ -28,13 +28,13 @@ type nativeMesh struct {
 	texCoords                   []uint32
 	attribs                     map[string]*nativeAttrib
 	verticesCount, indicesCount int32
-	r                           *device
+	r                           *rsrcManager
 }
 
 func finalizeMesh(n *nativeMesh) {
-	n.r.rsrcManager.Lock()
-	n.r.rsrcManager.meshes = append(n.r.rsrcManager.meshes, n)
-	n.r.rsrcManager.Unlock()
+	n.r.Lock()
+	n.r.meshes = append(n.r.meshes, n)
+	n.r.Unlock()
 }
 
 // Destroy implements the gfx.Destroyable interface.
@@ -229,7 +229,7 @@ func (r *device) LoadMesh(m *gfx.Mesh, done chan *gfx.Mesh) {
 		var native *nativeMesh
 		if !m.Loaded {
 			native = &nativeMesh{
-				r:       r,
+				r:       r.rsrcManager,
 				attribs: make(map[string]*nativeAttrib),
 			}
 		} else {
