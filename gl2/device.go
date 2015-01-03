@@ -52,10 +52,10 @@ func (r *rsrcManager) free() {
 // device implements the Device interface.
 type device struct {
 	*util.BaseCanvas
-	common  *glc.Context
-	clock   *clock.Clock
-	devInfo gfx.DeviceInfo
-	*rsrcManager
+	common      *glc.Context
+	clock       *clock.Clock
+	devInfo     gfx.DeviceInfo
+	rsrcManager *rsrcManager
 
 	// Render execution channel.
 	renderExec chan func() bool
