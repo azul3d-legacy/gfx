@@ -58,6 +58,30 @@ func (r *rsrcManager) freeShaders() {
 	r.Unlock()
 }
 
+func shaderCompilerLog(s uint32) (log []byte, compiled bool) {
+	var (
+		ok, logSize int32
+	)
+	gl.GetShaderiv(s, gl.COMPILE_STATUS, &ok)
+	//gl.Execute()
+
+	// Shader compiler error
+	gl.GetShaderiv(s, gl.INFO_LOG_LENGTH, &logSize)
+	//gl.Execute()
+
+	if logSize > 0 {
+		log = make([]byte, logSize)
+		gl.GetShaderInfoLog(s, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
+		//gl.Execute()
+
+		// Strip null-termination byte.
+		if log[len(log)-1] == 0 {
+			log = log[:len(log)-1]
+		}
+	}
+	return log, ok == 1
+}
+
 // LoadShader implements the gfx.Renderer interface.
 func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 	// If we are sharing assets with another renderer, allow it to load the
@@ -81,30 +105,6 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 	}
 
 	r.renderExec <- func() bool {
-		shaderCompilerLog := func(s uint32) (log []byte, compiled bool) {
-			var (
-				ok, logSize int32
-			)
-			gl.GetShaderiv(s, gl.COMPILE_STATUS, &ok)
-			//gl.Execute()
-
-			// Shader compiler error
-			gl.GetShaderiv(s, gl.INFO_LOG_LENGTH, &logSize)
-			//gl.Execute()
-
-			if logSize > 0 {
-				log = make([]byte, logSize)
-				gl.GetShaderInfoLog(s, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
-				//gl.Execute()
-
-				// Strip null-termination byte.
-				if log[len(log)-1] == 0 {
-					log = log[:len(log)-1]
-				}
-			}
-			return log, ok == 1
-		}
-
 		native := &nativeShader{
 			r: r.rsrcManager,
 		}
