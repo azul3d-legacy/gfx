@@ -100,7 +100,7 @@ type device struct {
 
 	// If non-nil, then we are currently rendering to a texture. It is only
 	// touched inside renderExec.
-	*rttCanvas
+	rttCanvas *rttCanvas
 
 	// Channel to wait for a Render() call to finish.
 	renderComplete chan struct{}
