@@ -6,7 +6,6 @@ package gl2
 
 import (
 	"runtime"
-	"strings"
 	"unsafe"
 
 	"azul3d.org/gfx.v2-dev"
@@ -94,13 +93,12 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 	}
 	r.shared.RUnlock()
 
-	if s.Loaded || len(s.Error) > 0 {
-		// Shader is already loaded or there was an error loading, signal
-		// completion if needed and return.
-		select {
-		case done <- s:
-		default:
-		}
+	doLoad, err := glutil.PreLoadShader(s, done)
+	if err != nil {
+		r.logf("%v\n", err)
+		return
+	}
+	if !doLoad {
 		return
 	}
 
@@ -109,72 +107,52 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			r: r.rsrcManager,
 		}
 
-		// Handle the vertex shader now.
-		if len(strings.TrimSpace(string(s.GLSL.Vertex))) == 0 {
-			// No source code in vertex shader (some drivers will crash in
-			// this case).
-			s.Error = append(s.Error, []byte(s.Name+" | Vertex shader with no source code.\n")...)
+		// Compile vertex shader.
+		native.vertex = gl.CreateShader(gl.VERTEX_SHADER)
+		lengths := int32(len(s.GLSL.Vertex))
+		sources := &s.GLSL.Vertex[0]
+		gl.ShaderSource(native.vertex, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
+		gl.CompileShader(native.vertex)
+		//gl.Execute()
 
-			// Log the error.
-			r.logf("%s | Vertex shader with no source code.\n", s.Name)
-		} else {
-			// Compile vertex shader.
-			native.vertex = gl.CreateShader(gl.VERTEX_SHADER)
-			lengths := int32(len(s.GLSL.Vertex))
-			sources := &s.GLSL.Vertex[0]
-			gl.ShaderSource(native.vertex, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
-			gl.CompileShader(native.vertex)
-			//gl.Execute()
+		// Check if the shader compiled or not.
+		log, compiled := shaderCompilerLog(native.vertex)
+		if !compiled {
+			// Just for sanity.
+			native.vertex = 0
 
-			// Check if the shader compiled or not.
-			log, compiled := shaderCompilerLog(native.vertex)
-			if !compiled {
-				// Just for sanity.
-				native.vertex = 0
-
-				// Append the errors.
-				s.Error = append(s.Error, []byte(s.Name+" | Vertex shader errors:\n")...)
-				s.Error = append(s.Error, log...)
-			}
-			if len(log) > 0 {
-				// Send the compiler log to the debug writer.
-				r.logf("%s | Vertex shader errors:\n", s.Name)
-				r.logf(string(log))
-			}
+			// Append the errors.
+			s.Error = append(s.Error, []byte(s.Name+" | Vertex shader errors:\n")...)
+			s.Error = append(s.Error, log...)
+		}
+		if len(log) > 0 {
+			// Send the compiler log to the debug writer.
+			r.logf("%s | Vertex shader errors:\n", s.Name)
+			r.logf(string(log))
 		}
 
-		// Handle the fragment shader now.
-		if len(strings.TrimSpace(string(s.GLSL.Fragment))) == 0 {
-			// No source code in fragment shader (some drivers will crash in
-			// this case).
-			s.Error = append(s.Error, []byte(s.Name+" | Fragment shader with no source code.\n")...)
+		// Compile fragment shader.
+		native.fragment = gl.CreateShader(gl.FRAGMENT_SHADER)
+		lengths = int32(len(s.GLSL.Fragment))
+		sources = &s.GLSL.Fragment[0]
+		gl.ShaderSource(native.fragment, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
+		gl.CompileShader(native.fragment)
+		//gl.Execute()
 
-			// Log the error.
-			r.logf("%s | Fragment shader with no source code.\n", s.Name)
-		} else {
-			// Compile fragment shader.
-			native.fragment = gl.CreateShader(gl.FRAGMENT_SHADER)
-			lengths := int32(len(s.GLSL.Fragment))
-			sources := &s.GLSL.Fragment[0]
-			gl.ShaderSource(native.fragment, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
-			gl.CompileShader(native.fragment)
-			//gl.Execute()
+		// Check if the shader compiled or not.
+		log, compiled = shaderCompilerLog(native.fragment)
+		if !compiled {
+			// Just for sanity.
+			native.fragment = 0
 
-			// Check if the shader compiled or not.
-			log, compiled := shaderCompilerLog(native.fragment)
-			if !compiled {
-				// Just for sanity.
-				native.fragment = 0
-
-				// Append the errors.
-				s.Error = append(s.Error, []byte(s.Name+" | Fragment shader errors:\n")...)
-				s.Error = append(s.Error, log...)
-			}
-			if len(log) > 0 {
-				// Send the compiler log to the debug writer.
-				r.logf("%s | Fragment shader errors:\n", s.Name)
-				r.logf(string(log))
-			}
+			// Append the errors.
+			s.Error = append(s.Error, []byte(s.Name+" | Fragment shader errors:\n")...)
+			s.Error = append(s.Error, log...)
+		}
+		if len(log) > 0 {
+			// Send the compiler log to the debug writer.
+			r.logf("%s | Fragment shader errors:\n", s.Name)
+			r.logf(string(log))
 		}
 
 		// Create the shader program if all went well with the vertex and
