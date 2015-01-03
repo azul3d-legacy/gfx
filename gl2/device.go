@@ -29,12 +29,24 @@ type pendingQuery struct {
 	o *gfx.Object
 }
 
+// rsrcManager keeps a list of meshes, shaders, textures, FBO's, and
+// renderbuffers that should be free'd at the next available time.
+type rsrcManager struct {
+	sync.RWMutex
+	meshes        []*nativeMesh
+	shaders       []*nativeShader
+	textures      []uint32
+	fbos          []uint32
+	renderbuffers []uint32
+}
+
 // renderer implements the Renderer interface defined in the gl2.go file.
 type device struct {
 	*util.BaseCanvas
 	common  *glc.Context
 	clock   *clock.Clock
 	devInfo gfx.DeviceInfo
+	*rsrcManager
 
 	// Render execution channel.
 	renderExec chan func() bool
@@ -59,36 +71,6 @@ type device struct {
 	// a finalizer for a mesh, texture, etc has ran and something needs to be
 	// free'd.
 	wantFree chan struct{}
-
-	// List of native meshes to free at next frame.
-	meshesToFree struct {
-		sync.RWMutex
-		slice []*nativeMesh
-	}
-
-	// List of native shaders to free at next frame.
-	shadersToFree struct {
-		sync.RWMutex
-		slice []*nativeShader
-	}
-
-	// List of native texture id's to free at next frame.
-	texturesToFree struct {
-		sync.RWMutex
-		slice []uint32
-	}
-
-	// List of native FBO id's to free at next frame.
-	fbosToFree struct {
-		sync.RWMutex
-		slice []uint32
-	}
-
-	// List of native render buffer id's to free at next frame.
-	renderbuffersToFree struct {
-		sync.RWMutex
-		slice []uint32
-	}
 
 	*graphicsState
 
@@ -469,6 +451,7 @@ func newDevice(opts ...Option) (Device, error) {
 		},
 		common:         glc.NewContext(),
 		clock:          clock.New(),
+		rsrcManager:    &rsrcManager{},
 		renderExec:     make(chan func() bool, 1024),
 		renderComplete: make(chan struct{}, 8),
 		wantFree:       make(chan struct{}, 1),

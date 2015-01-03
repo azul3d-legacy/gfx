@@ -18,11 +18,11 @@ import (
 
 func (r *device) freeFBOs() {
 	// Lock the list.
-	r.fbosToFree.Lock()
+	r.rsrcManager.Lock()
 
-	if len(r.fbosToFree.slice) > 0 {
+	if len(r.rsrcManager.fbos) > 0 {
 		// Free the FBOs.
-		gl.DeleteFramebuffers(int32(len(r.fbosToFree.slice)), &r.fbosToFree.slice[0])
+		gl.DeleteFramebuffers(int32(len(r.rsrcManager.fbos)), &r.rsrcManager.fbos[0])
 
 		// Flush and execute OpenGL commands.
 		gl.Flush()
@@ -30,17 +30,17 @@ func (r *device) freeFBOs() {
 	}
 
 	// Slice to zero, and unlock.
-	r.fbosToFree.slice = r.fbosToFree.slice[:0]
-	r.fbosToFree.Unlock()
+	r.rsrcManager.fbos = r.rsrcManager.fbos[:0]
+	r.rsrcManager.Unlock()
 }
 
 func (r *device) freeRenderbuffers() {
 	// Lock the list.
-	r.renderbuffersToFree.Lock()
+	r.rsrcManager.Lock()
 
-	if len(r.renderbuffersToFree.slice) > 0 {
+	if len(r.rsrcManager.renderbuffers) > 0 {
 		// Free the FBOs.
-		gl.DeleteRenderbuffers(int32(len(r.renderbuffersToFree.slice)), &r.renderbuffersToFree.slice[0])
+		gl.DeleteRenderbuffers(int32(len(r.rsrcManager.renderbuffers)), &r.rsrcManager.renderbuffers[0])
 
 		// Flush and execute OpenGL commands.
 		gl.Flush()
@@ -48,8 +48,8 @@ func (r *device) freeRenderbuffers() {
 	}
 
 	// Slice to zero, and unlock.
-	r.renderbuffersToFree.slice = r.renderbuffersToFree.slice[:0]
-	r.renderbuffersToFree.Unlock()
+	r.rsrcManager.renderbuffers = r.rsrcManager.renderbuffers[:0]
+	r.rsrcManager.Unlock()
 }
 
 // rttCanvas is the gfx.Canvas returned by RenderToTexture.
@@ -96,9 +96,9 @@ func (r *rttCanvas) freeTexture(n *nativeTexture) {
 
 		// Add the FBO to the free list.
 		if r.fbo != 0 {
-			r.r.fbosToFree.Lock()
-			r.r.fbosToFree.slice = append(r.r.fbosToFree.slice, r.fbo)
-			r.r.fbosToFree.Unlock()
+			r.r.rsrcManager.Lock()
+			r.r.rsrcManager.fbos = append(r.r.rsrcManager.fbos, r.fbo)
+			r.r.rsrcManager.Unlock()
 		}
 
 		// Add the render buffers to the free list.
@@ -106,9 +106,9 @@ func (r *rttCanvas) freeTexture(n *nativeTexture) {
 			if id == 0 {
 				return
 			}
-			r.r.renderbuffersToFree.Lock()
-			r.r.renderbuffersToFree.slice = append(r.r.renderbuffersToFree.slice, id)
-			r.r.renderbuffersToFree.Unlock()
+			r.r.rsrcManager.Lock()
+			r.r.rsrcManager.renderbuffers = append(r.r.rsrcManager.renderbuffers, id)
+			r.r.rsrcManager.Unlock()
 		}
 		freeRb(r.rbColor)
 		freeRb(r.rbDepth)

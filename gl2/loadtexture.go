@@ -57,9 +57,9 @@ func (n *nativeTexture) ChosenFormat() gfx.TexFormat {
 }
 
 func finalizeTexture(n *nativeTexture) {
-	n.r.texturesToFree.Lock()
-	n.r.texturesToFree.slice = append(n.r.texturesToFree.slice, n.id)
-	n.r.texturesToFree.Unlock()
+	n.r.rsrcManager.Lock()
+	n.r.rsrcManager.textures = append(n.r.rsrcManager.textures, n.id)
+	n.r.rsrcManager.Unlock()
 }
 
 // TODO(slimsag): move to internal/glc ?
@@ -250,11 +250,11 @@ func convertFilter(f gfx.TexFilter) int32 {
 
 func (r *device) freeTextures() {
 	// Lock the list.
-	r.texturesToFree.Lock()
+	r.rsrcManager.Lock()
 
-	if len(r.texturesToFree.slice) > 0 {
+	if len(r.rsrcManager.textures) > 0 {
 		// Free the textures.
-		gl.DeleteTextures(int32(len(r.texturesToFree.slice)), &r.texturesToFree.slice[0])
+		gl.DeleteTextures(int32(len(r.rsrcManager.textures)), &r.rsrcManager.textures[0])
 
 		// Flush and execute OpenGL commands.
 		gl.Flush()
@@ -262,8 +262,8 @@ func (r *device) freeTextures() {
 	}
 
 	// Slice to zero, and unlock.
-	r.texturesToFree.slice = r.texturesToFree.slice[:0]
-	r.texturesToFree.Unlock()
+	r.rsrcManager.textures = r.rsrcManager.textures[:0]
+	r.rsrcManager.Unlock()
 }
 
 const (

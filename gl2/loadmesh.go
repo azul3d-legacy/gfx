@@ -32,9 +32,9 @@ type nativeMesh struct {
 }
 
 func finalizeMesh(n *nativeMesh) {
-	n.r.meshesToFree.Lock()
-	n.r.meshesToFree.slice = append(n.r.meshesToFree.slice, n)
-	n.r.meshesToFree.Unlock()
+	n.r.rsrcManager.Lock()
+	n.r.rsrcManager.meshes = append(n.r.rsrcManager.meshes, n)
+	n.r.rsrcManager.Unlock()
 }
 
 // Destroy implements the gfx.Destroyable interface.
@@ -173,10 +173,10 @@ func (r *device) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.
 
 func (r *device) freeMeshes() {
 	// Lock the list.
-	r.meshesToFree.Lock()
+	r.rsrcManager.Lock()
 
 	// Free the meshes.
-	for _, native := range r.meshesToFree.slice {
+	for _, native := range r.rsrcManager.meshes {
 		// Delete single VBO's.
 		gl.DeleteBuffers(1, &native.indices)
 		gl.DeleteBuffers(1, &native.vertices)
@@ -197,8 +197,8 @@ func (r *device) freeMeshes() {
 	}
 
 	// Slice to zero, and unlock.
-	r.meshesToFree.slice = r.meshesToFree.slice[:0]
-	r.meshesToFree.Unlock()
+	r.rsrcManager.meshes = r.rsrcManager.meshes[:0]
+	r.rsrcManager.Unlock()
 }
 
 // LoadMesh implements the gfx.Renderer interface.
