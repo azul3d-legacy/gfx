@@ -27,7 +27,7 @@ const (
 	//  }
 	//
 	// Devices fall back to the Clamp TexWrap mode in the event that you
-	// try and use BorderColor and the device does not support it.
+	// attempt to use it and the device does not support it.
 	BorderColor
 
 	// Mirror represents the extra area of the texture by mirroring itself into
