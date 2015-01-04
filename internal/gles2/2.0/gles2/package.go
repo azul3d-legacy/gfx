@@ -852,7 +852,7 @@ func GenerateMipmap(target uint32) {
 }
 
 // Returns the location of an attribute variable
-func GetAttribLocation(program uint32, name *int8) int32 {
+func GetAttribLocation(program uint32, name *uint8) int32 {
 	ret := C.glowGetAttribLocation(gpGetAttribLocation, (C.GLuint)(program), (*C.GLchar)(unsafe.Pointer(name)))
 	return (int32)(ret)
 }
@@ -873,7 +873,7 @@ func GetIntegerv(pname uint32, data *int32) {
 }
 
 // Returns the information log for a program object
-func GetProgramInfoLog(program uint32, bufSize int32, length *int32, infoLog *int8) {
+func GetProgramInfoLog(program uint32, bufSize int32, length *int32, infoLog *uint8) {
 	C.glowGetProgramInfoLog(gpGetProgramInfoLog, (C.GLuint)(program), (C.GLsizei)(bufSize), (*C.GLsizei)(unsafe.Pointer(length)), (*C.GLchar)(unsafe.Pointer(infoLog)))
 }
 
@@ -883,7 +883,7 @@ func GetProgramiv(program uint32, pname uint32, params *int32) {
 }
 
 // Returns the information log for a shader object
-func GetShaderInfoLog(shader uint32, bufSize int32, length *int32, infoLog *int8) {
+func GetShaderInfoLog(shader uint32, bufSize int32, length *int32, infoLog *uint8) {
 	C.glowGetShaderInfoLog(gpGetShaderInfoLog, (C.GLuint)(shader), (C.GLsizei)(bufSize), (*C.GLsizei)(unsafe.Pointer(length)), (*C.GLchar)(unsafe.Pointer(infoLog)))
 }
 
@@ -899,7 +899,7 @@ func GetString(name uint32) *uint8 {
 }
 
 // Returns the location of a uniform variable
-func GetUniformLocation(program uint32, name *int8) int32 {
+func GetUniformLocation(program uint32, name *uint8) int32 {
 	ret := C.glowGetUniformLocation(gpGetUniformLocation, (C.GLuint)(program), (*C.GLchar)(unsafe.Pointer(name)))
 	return (int32)(ret)
 }
@@ -925,7 +925,7 @@ func Scissor(x int32, y int32, width int32, height int32) {
 }
 
 // Replaces the source code in a shader object
-func ShaderSource(shader uint32, count int32, xstring **int8, length *int32) {
+func ShaderSource(shader uint32, count int32, xstring **uint8, length *int32) {
 	C.glowShaderSource(gpShaderSource, (C.GLuint)(shader), (C.GLsizei)(count), (**C.GLchar)(unsafe.Pointer(xstring)), (*C.GLint)(unsafe.Pointer(length)))
 }
 
