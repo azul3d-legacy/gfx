@@ -328,13 +328,6 @@ func (r *device) LoadTexture(t *gfx.Texture, done chan *gfx.Texture) {
 		// Flush and Finish OpenGL commands.
 		gl.Flush()
 
-		// Use Finish() to avoid accessing the texture before upload has completed, see:
-		//
-		// http://higherorderfun.com/blog/2011/05/26/multi-thread-opengl-texture-loading/
-		//
-		// TODO(slimsag): is Finish needed now that we don't use multiple (false) threads?
-		gl.Finish()
-
 		// Mark the texture as loaded.
 		t.Loaded = true
 		t.NativeTexture = native
