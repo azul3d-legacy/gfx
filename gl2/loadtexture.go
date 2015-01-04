@@ -220,7 +220,6 @@ const (
 	glCOMPRESSED_RGBA_S3TC_DXT5_EXT = 0x83F3
 )
 
-// TODO(slimsag): move to internal/glc ?
 func convertTexFormat(f gfx.TexFormat) int32 {
 	switch f {
 	case gfx.RGBA:
@@ -235,11 +234,11 @@ func convertTexFormat(f gfx.TexFormat) int32 {
 		return glCOMPRESSED_RGBA_S3TC_DXT3_EXT
 	case gfx.DXT5:
 		return glCOMPRESSED_RGBA_S3TC_DXT5_EXT
+	default:
+		panic("unknown format")
 	}
-	panic("unknown format")
 }
 
-// TODO(slimsag): move to internal/glc ?
 func unconvertTexFormat(f int32) gfx.TexFormat {
 	switch f {
 	case gl.RGBA8:
@@ -254,8 +253,9 @@ func unconvertTexFormat(f int32) gfx.TexFormat {
 		return gfx.DXT3
 	case glCOMPRESSED_RGBA_S3TC_DXT5_EXT:
 		return gfx.DXT5
+	default:
+		panic("unknown format")
 	}
-	panic("unknown format")
 }
 
 // LoadTexture implements the gfx.Renderer interface.
