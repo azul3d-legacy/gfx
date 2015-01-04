@@ -42,3 +42,27 @@ func (c *Context) GetError() error {
 		return fmt.Errorf("Unknown GL Error (0x%X)\n", code)
 	}
 }
+
+var (
+	FramebufferIncompleteAttachment        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT")
+	FramebufferIncompleteDimensions        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS")
+	FramebufferIncompleteMissingAttachment = errors.New("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT")
+	FramebufferUnsupported                 = errors.New("GL_FRAMEBUFFER_UNSUPPORTED")
+)
+
+func (c *Context) FramebufferStatus(code int) error {
+	switch code {
+	case c.FRAMEBUFFER_COMPLETE:
+		return nil
+	case c.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+		return FramebufferIncompleteAttachment
+	case c.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+		return FramebufferIncompleteDimensions
+	case c.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+		return FramebufferIncompleteMissingAttachment
+	case c.FRAMEBUFFER_UNSUPPORTED:
+		return FramebufferUnsupported
+	default:
+		return fmt.Errorf("FramebufferStatus(0x%X)", code)
+	}
+}

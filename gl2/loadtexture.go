@@ -5,7 +5,6 @@
 package gl2
 
 import (
-	"fmt"
 	"image"
 	"image/draw"
 	"runtime"
@@ -61,21 +60,6 @@ func finalizeTexture(n *nativeTexture) {
 	n.r.rsrcManager.Unlock()
 }
 
-// TODO(slimsag): move to internal/glc ?
-func fbErrorString(err uint32) string {
-	switch err {
-	case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-		return "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"
-	case 36057: //gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-		return "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS"
-	case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-		return "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"
-	case gl.FRAMEBUFFER_UNSUPPORTED:
-		return "GL_FRAMEBUFFER_UNSUPPORTED"
-	}
-	return fmt.Sprintf("%d", err)
-}
-
 // Download implements the gfx.Downloadable interface.
 func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image) {
 	if !n.r.glArbFramebufferObject {
@@ -116,10 +100,10 @@ func (n *nativeTexture) Download(rect image.Rectangle, complete chan image.Image
 		bounds := image.Rect(0, 0, n.width, n.height)
 		rect = bounds.Intersect(rect)
 
-		status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
+		status := int(gl.CheckFramebufferStatus(gl.FRAMEBUFFER))
 		if status != gl.FRAMEBUFFER_COMPLETE {
 			// Log the error.
-			n.r.logf("Download(): glCheckFramebufferStatus() failed! Status == %s.\n", fbErrorString(status))
+			n.r.logf("Download(): glCheckFramebufferStatus() failed! Status == %s.\n", n.r.common.FramebufferStatus(status))
 			complete <- nil
 			return false // no frame rendered.
 		}
