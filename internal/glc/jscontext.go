@@ -28,11 +28,16 @@ type Context struct {
 	*webgl.Context
 
 	// TODO(slimsag): add to webgl bindings.
-	ALWAYS int
+	ALWAYS                             int
+	FRAMEBUFFER_INCOMPLETE_MULTISAMPLE int
 
-	// WebGL doesn't have these errors, they are faked here for GetError.
-	STACK_OVERFLOW  int
-	STACK_UNDERFLOW int
+	// WebGL doesn't have these errors, they are faked here to let error.go
+	// build fine.
+	STACK_OVERFLOW                     int
+	STACK_UNDERFLOW                    int
+	FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER int
+	FRAMEBUFFER_INCOMPLETE_READ_BUFFER int
+	FRAMEBUFFER_UNDEFINED              int
 
 	MULTISAMPLE     int
 	CLAMP_TO_BORDER int
@@ -76,11 +81,15 @@ func NewContext(ctx *webgl.Context) *Context {
 			},
 		},
 		Context: ctx,
-		ALWAYS:  519,
+
+		// TODO(slimsag): add to webgl bindings.
+		ALWAYS: 519,
+		FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: 0x8D56,
 
 		// TODO(slimsag): Find out if this is valid WebGL ? See gles2context.go
 		MULTISAMPLE: 0x809D,
 
+		// Phony error values (WebGL doesn't need them).
 		STACK_OVERFLOW:  -1024,
 		STACK_UNDERFLOW: -1025,
 

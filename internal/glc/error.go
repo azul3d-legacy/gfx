@@ -47,7 +47,11 @@ var (
 	FramebufferIncompleteAttachment        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT")
 	FramebufferIncompleteDimensions        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS")
 	FramebufferIncompleteMissingAttachment = errors.New("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT")
+	FramebufferIncompleteDrawBuffer        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER")
+	FramebufferIncompleteReadBuffer        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER")
+	FramebufferIncompleteMultisample       = errors.New("GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE")
 	FramebufferUnsupported                 = errors.New("GL_FRAMEBUFFER_UNSUPPORTED")
+	FramebufferUndefined                   = errors.New("GL_FRAMEBUFFER_UNDEFINED")
 )
 
 func (c *Context) FramebufferStatus(code int) error {
@@ -60,8 +64,16 @@ func (c *Context) FramebufferStatus(code int) error {
 		return FramebufferIncompleteDimensions
 	case c.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
 		return FramebufferIncompleteMissingAttachment
+	case c.FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+		return FramebufferIncompleteDrawBuffer
+	case c.FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+		return FramebufferIncompleteReadBuffer
+	case c.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+		return FramebufferIncompleteMultisample
 	case c.FRAMEBUFFER_UNSUPPORTED:
 		return FramebufferUnsupported
+	case c.FRAMEBUFFER_UNDEFINED:
+		return FramebufferUndefined
 	default:
 		return fmt.Errorf("FramebufferStatus(0x%X)", code)
 	}
