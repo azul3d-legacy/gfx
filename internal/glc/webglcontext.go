@@ -21,6 +21,7 @@ type glFuncs struct {
 	GetParameterBool    func(p int) bool
 	GetParameterInt     func(p int) int
 	GetParameterFloat64 func(p int) float64
+	GetParameterString  func(p int) string
 }
 
 type Context struct {
@@ -78,6 +79,9 @@ func NewContext(ctx *webgl.Context) *Context {
 			},
 			GetParameterFloat64: func(p int) float64 {
 				return ctx.GetParameter(p).Float()
+			},
+			GetParameterString: func(p int) string {
+				return ctx.GetParameter(p).Str()
 			},
 		},
 		Context: ctx,

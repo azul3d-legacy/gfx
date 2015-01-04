@@ -33,6 +33,7 @@ type glFuncs struct {
 	GetParameterBool    func(p int) bool
 	GetParameterInt     func(p int) int
 	GetParameterFloat64 func(p int) float64
+	GetParameterString  func(p int) string
 }
 
 type Context struct {
@@ -139,6 +140,9 @@ type Context struct {
 	FRAMEBUFFER_INCOMPLETE_MULTISAMPLE        int
 	FRAMEBUFFER_UNSUPPORTED                   int
 	FRAMEBUFFER_UNDEFINED                     int
+
+	VERSION                  int
+	SHADING_LANGUAGE_VERSION int
 }
 
 func NewContext() *Context {
@@ -193,6 +197,9 @@ func NewContext() *Context {
 			var f float32
 			gl.GetFloatv(uint32(p), &f)
 			return float64(f)
+		},
+		GetParameterString: func(p int) string {
+			return gl.GoStr(gl.GetString(uint32(p)))
 		},
 	}
 
@@ -310,5 +317,8 @@ func NewContext() *Context {
 		FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:        gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE,
 		FRAMEBUFFER_UNSUPPORTED:                   gl.FRAMEBUFFER_UNSUPPORTED,
 		FRAMEBUFFER_UNDEFINED:                     gl.FRAMEBUFFER_UNDEFINED,
+
+		VERSION:                  gl.VERSION,
+		SHADING_LANGUAGE_VERSION: gl.SHADING_LANGUAGE_VERSION,
 	}
 }

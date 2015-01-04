@@ -398,18 +398,6 @@ func (r *device) logf(format string, args ...interface{}) {
 	r.debug.RUnlock()
 }
 
-// TODO(slimsag): move to internal/glc ?
-func queryVersion() (major, minor, release int, vendorVersion string) {
-	versionString := gl.GoStr(gl.GetString(gl.VERSION))
-	return glutil.ParseVersionString(versionString)
-}
-
-// TODO(slimsag): move to internal/glc ?
-func queryShaderVersion() (major, minor, release int, vendorVersion string) {
-	versionString := gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
-	return glutil.ParseVersionString(versionString)
-}
-
 func glStr(s string) *uint8 {
 	return gl.Str(s + "\x00")
 }
@@ -514,7 +502,7 @@ func newDevice(opts ...Option) (Device, error) {
 	glInfo := &gfx.GLInfo{
 		Extensions: exts.Slice(),
 	}
-	glInfo.MajorVersion, glInfo.MinorVersion, _, _ = queryVersion()
+	glInfo.MajorVersion, glInfo.MinorVersion, _, _ = r.common.Version()
 	r.devInfo.GL = glInfo
 
 	// GLSL information.
@@ -523,7 +511,7 @@ func newDevice(opts ...Option) (Device, error) {
 		MaxVertexInputs:   int(maxVertexInputs),
 		MaxFragmentInputs: int(maxFragmentInputs),
 	}
-	glslInfo.MajorVersion, glslInfo.MinorVersion, _, _ = queryShaderVersion()
+	glslInfo.MajorVersion, glslInfo.MinorVersion, _, _ = r.common.ShadingLanguageVersion()
 	r.devInfo.GLSL = glslInfo
 
 	if r.glArbFramebufferObject {
