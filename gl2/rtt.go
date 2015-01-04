@@ -5,14 +5,13 @@
 package gl2
 
 import (
-	"errors"
-	"fmt"
 	"image"
 	"runtime"
 	"sync"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glc"
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
@@ -202,45 +201,6 @@ func (r *rttCanvas) rttEnd() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
-// TODO(slimsag): move to internal/glc ?
-var (
-	errFramebufferUndefined                   = errors.New("GL_FRAMEBUFFER_UNDEFINED")
-	errFramebufferIncompleteAttachment        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT")
-	errFramebufferIncompleteMissingAttachment = errors.New("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT")
-	errFramebufferIncompleteDrawBuffer        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER")
-	errFramebufferIncompleteReadBuffer        = errors.New("GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER")
-	errFramebufferUnsupported                 = errors.New("GL_FRAMEBUFFER_UNSUPPORTED")
-	errFramebufferIncompleteMultisample       = errors.New("GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE")
-	errFramebufferIncompleteLayerTargets      = errors.New("GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS")
-)
-
-// TODO(slimsag): move to internal/glc ?
-func checkFramebufferError(target uint32) error {
-	err := gl.CheckFramebufferStatus(target)
-	switch err {
-	case gl.FRAMEBUFFER_COMPLETE:
-		return nil
-	case gl.FRAMEBUFFER_UNDEFINED:
-		return errFramebufferUndefined
-	case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-		return errFramebufferIncompleteAttachment
-	case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-		return errFramebufferIncompleteMissingAttachment
-	case gl.FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-		return errFramebufferIncompleteDrawBuffer
-	case gl.FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-		return errFramebufferIncompleteReadBuffer
-	case gl.FRAMEBUFFER_UNSUPPORTED:
-		return errFramebufferUnsupported
-	case gl.FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
-		return errFramebufferIncompleteMultisample
-		// TODO(slimsag): determine if this is needed
-		//case gl.FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-		//	return errFramebufferIncompleteLayerTargets
-	}
-	return fmt.Errorf("unkown framebuffer error (%d)", err)
-}
-
 // RenderToTexture implements the gfx.Renderer interface.
 func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 	if !cfg.Valid() {
@@ -352,7 +312,8 @@ func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 		}
 
 		// Check for errors.
-		fbError = checkFramebufferError(gl.FRAMEBUFFER)
+		status := int(gl.CheckFramebufferStatus(gl.FRAMEBUFFER))
+		fbError = r.common.FramebufferStatus(status)
 
 		// Unbind textures, render buffers, and the FBO.
 		gl.BindTexture(gl.TEXTURE_2D, 0)
@@ -366,7 +327,7 @@ func (r *device) RenderToTexture(cfg gfx.RTTConfig) gfx.Canvas {
 	<-r.renderComplete
 
 	if fbError != nil {
-		if fbError == errFramebufferUnsupported {
+		if fbError == glc.FramebufferUnsupported {
 			// Ideally this shouldn't happen, but it could under e.g. strange
 			// drivers not supporting a combination of 'supported' formats.
 			return nil
