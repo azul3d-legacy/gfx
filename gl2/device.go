@@ -410,7 +410,7 @@ func queryShaderVersion() (major, minor, release int, vendorVersion string) {
 	return glutil.ParseVersionString(versionString)
 }
 
-func glStr(s string) *int8 {
+func glStr(s string) *uint8 {
 	return gl.Str(s + "\x00")
 }
 

@@ -67,7 +67,7 @@ func shaderCompilerLog(s uint32) (log []byte, compiled bool) {
 
 	if logSize > 0 {
 		log = make([]byte, logSize)
-		gl.GetShaderInfoLog(s, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
+		gl.GetShaderInfoLog(s, int32(logSize), nil, (*uint8)(unsafe.Pointer(&log[0])))
 
 		// Strip null-termination byte.
 		if log[len(log)-1] == 0 {
@@ -107,7 +107,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		native.vertex = gl.CreateShader(gl.VERTEX_SHADER)
 		lengths := int32(len(s.GLSL.Vertex))
 		sources := &s.GLSL.Vertex[0]
-		gl.ShaderSource(native.vertex, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
+		gl.ShaderSource(native.vertex, 1, (**uint8)(unsafe.Pointer(&sources)), &lengths)
 		gl.CompileShader(native.vertex)
 
 		// Check if the shader compiled or not.
@@ -130,7 +130,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		native.fragment = gl.CreateShader(gl.FRAGMENT_SHADER)
 		lengths = int32(len(s.GLSL.Fragment))
 		sources = &s.GLSL.Fragment[0]
-		gl.ShaderSource(native.fragment, 1, (**int8)(unsafe.Pointer(&sources)), &lengths)
+		gl.ShaderSource(native.fragment, 1, (**uint8)(unsafe.Pointer(&sources)), &lengths)
 		gl.CompileShader(native.fragment)
 
 		// Check if the shader compiled or not.
@@ -166,7 +166,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 
 			if logSize > 0 {
 				log = make([]byte, logSize)
-				gl.GetProgramInfoLog(native.program, int32(logSize), nil, (*int8)(unsafe.Pointer(&log[0])))
+				gl.GetProgramInfoLog(native.program, int32(logSize), nil, (*uint8)(unsafe.Pointer(&log[0])))
 
 				// Strip null-termination byte.
 				if log[len(log)-1] == 0 {
