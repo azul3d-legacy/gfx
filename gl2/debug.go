@@ -10,6 +10,7 @@ import (
 	"unsafe"
 
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-dev/internal/glutil"
 )
 
 func debugType(t uint32) string {
@@ -62,9 +63,9 @@ func glDebugCallback(
 	r.logf("    ID: %d\n", id)
 }
 
-func (r *device) debugInit(exts map[string]bool) {
+func (r *device) debugInit(exts glutil.Extensions) {
 	// If we have the GL_ARB_debug_output extension we utilize it.
-	r.glArbDebugOutput = extension("GL_ARB_debug_output", exts)
+	r.glArbDebugOutput = exts.Present("GL_ARB_debug_output")
 	if r.glArbDebugOutput {
 		gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS_ARB)
 		gl.DebugMessageCallbackARB(gl.DebugProc(glDebugCallback), unsafe.Pointer(r))

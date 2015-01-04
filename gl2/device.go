@@ -9,7 +9,6 @@ import (
 	"image"
 	"io"
 	"runtime"
-	"strings"
 	"sync"
 
 	"azul3d.org/gfx.v2-dev"
@@ -411,30 +410,6 @@ func queryShaderVersion() (major, minor, release int, vendorVersion string) {
 	return glutil.ParseVersionString(versionString)
 }
 
-// TODO(slimsag): move to internal/glc ?
-func queryExtensions() map[string]bool {
-	// Initialize extensions map
-	var (
-		extensions = make(map[string]bool)
-		extString  = gl.GoStr(gl.GetString(gl.EXTENSIONS))
-	)
-	if len(extString) > 0 {
-		split := strings.Split(extString, " ")
-		for _, ext := range split {
-			if len(ext) > 0 {
-				extensions[ext] = true
-			}
-		}
-	}
-	return extensions
-}
-
-// TODO(slimsag): move to internal/glc ?
-func extension(name string, extensions map[string]bool) bool {
-	_, ok := extensions[name]
-	return ok
-}
-
 func glStr(s string) *int8 {
 	return gl.Str(s + "\x00")
 }
@@ -491,26 +466,22 @@ func newDevice(opts ...Option) (Device, error) {
 	r.BaseCanvas.VPrecision.DepthBits = uint8(depthBits)
 	r.BaseCanvas.VPrecision.StencilBits = uint8(stencilBits)
 
-	exts := queryExtensions()
-	extsStr := make([]string, len(exts))
-	ei := 0
-	for s := range exts {
-		extsStr[ei] = s
-		ei++
-	}
+	// Get the list of OpenGL extensions and parse it.
+	extStr := gl.GoStr(gl.GetString(gl.EXTENSIONS))
+	exts := glutil.ParseExtensions(extStr)
 
 	if tag.Gfxdebug {
 		r.debugInit(exts)
 	}
 
 	// Query whether we have the GL_ARB_framebuffer_object extension.
-	r.glArbFramebufferObject = extension("GL_ARB_framebuffer_object", exts)
+	r.glArbFramebufferObject = exts.Present("GL_ARB_framebuffer_object")
 
 	// Query whether we have the GL_ARB_occlusion_query extension.
-	r.glArbOcclusionQuery = extension("GL_ARB_occlusion_query", exts)
+	r.glArbOcclusionQuery = exts.Present("GL_ARB_occlusion_query")
 
 	// Query whether we have the GL_ARB_multisample extension.
-	r.glArbMultisample = extension("GL_ARB_multisample", exts)
+	r.glArbMultisample = exts.Present("GL_ARB_multisample")
 	if r.glArbMultisample {
 		// Query the number of samples and sample buffers we have, if any.
 		gl.GetIntegerv(gl.SAMPLES, &r.samples)
@@ -529,19 +500,19 @@ func newDevice(opts ...Option) (Device, error) {
 	}
 
 	// Collect GPU information.
-	r.devInfo.DepthClamp = extension("GL_ARB_depth_clamp", exts)
+	r.devInfo.DepthClamp = exts.Present("GL_ARB_depth_clamp")
 	r.devInfo.MaxTextureSize = int(maxTextureSize)
 	r.devInfo.AlphaToCoverage = r.glArbMultisample && r.samples > 0 && r.sampleBuffers > 0
 	r.devInfo.Name = gl.GoStr(gl.GetString(gl.RENDERER))
 	r.devInfo.Vendor = gl.GoStr(gl.GetString(gl.VENDOR))
 	r.devInfo.OcclusionQuery = r.glArbOcclusionQuery && occlusionQueryBits > 0
 	r.devInfo.OcclusionQueryBits = int(occlusionQueryBits)
-	r.devInfo.NPOT = extension("GL_ARB_texture_non_power_of_two", exts)
+	r.devInfo.NPOT = exts.Present("GL_ARB_texture_non_power_of_two")
 	r.devInfo.TexWrapBorderColor = true
 
 	// OpenGL Information.
 	glInfo := &gfx.GLInfo{
-		Extensions: extsStr,
+		Extensions: exts.Slice(),
 	}
 	glInfo.MajorVersion, glInfo.MinorVersion, _, _ = queryVersion()
 	r.devInfo.GL = glInfo
