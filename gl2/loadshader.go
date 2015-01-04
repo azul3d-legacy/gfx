@@ -57,22 +57,25 @@ func (r *rsrcManager) freeShaders() {
 }
 
 func shaderCompilerLog(s uint32) (log []byte, compiled bool) {
-	var (
-		ok, logSize int32
-	)
+	var ok int32
 	gl.GetShaderiv(s, gl.COMPILE_STATUS, &ok)
+	if ok == 1 {
+		return nil, true
+	}
 
 	// Shader compiler error
+	var logSize int32
 	gl.GetShaderiv(s, gl.INFO_LOG_LENGTH, &logSize)
+	if logSize == 0 {
+		return nil, ok == 1
+	}
 
-	if logSize > 0 {
-		log = make([]byte, logSize)
-		gl.GetShaderInfoLog(s, int32(logSize), nil, (*uint8)(unsafe.Pointer(&log[0])))
+	log = make([]uint8, logSize)
+	gl.GetShaderInfoLog(s, int32(logSize), nil, &log[0])
 
-		// Strip null-termination byte.
-		if log[len(log)-1] == 0 {
-			log = log[:len(log)-1]
-		}
+	// Strip null-termination byte.
+	if log[len(log)-1] == 0 {
+		log = log[:len(log)-1]
 	}
 	return log, ok == 1
 }
