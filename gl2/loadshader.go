@@ -5,7 +5,6 @@
 package gl2
 
 import (
-	"bytes"
 	"runtime"
 	"unsafe"
 
@@ -75,7 +74,7 @@ func shaderCompilerLog(s uint32) (log []byte, compiled bool) {
 	gl.GetShaderInfoLog(s, int32(logSize), nil, &log[0])
 
 	// Strip the null-termination byte.
-	log = bytes.TrimSuffix(log, []byte{0})
+	log = log[:len(log)-1]
 	return log, ok == 1
 }
 
@@ -169,8 +168,9 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			if logSize > 0 {
 				log = make([]byte, logSize)
 				gl.GetProgramInfoLog(native.program, int32(logSize), nil, &log[0])
+
 				// Strip the null-termination byte.
-				log = bytes.TrimSuffix(log, []byte{0})
+				log = log[:len(log)-1]
 			}
 
 			// Check for linker errors.
