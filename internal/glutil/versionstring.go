@@ -42,7 +42,7 @@ func ParseVersionString(ver string) (major, minor, release int, vendor string) {
 		}
 
 		// Store the vendor version information.
-		vendor = ver[len(versionString):]
+		vendor = strings.TrimSpace(ver[len(versionString):])
 	} else {
 		// No vendor information.
 		versionString = ver
