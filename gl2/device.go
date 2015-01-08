@@ -502,7 +502,7 @@ func newDevice(opts ...Option) (Device, error) {
 	glInfo := &gfx.GLInfo{
 		Extensions: exts.Slice(),
 	}
-	glInfo.MajorVersion, glInfo.MinorVersion, _, _ = r.common.Version()
+	glInfo.MajorVersion, glInfo.MinorVersion, glInfo.ReleaseVersion, glInfo.VendorVersion = r.common.Version()
 	r.devInfo.GL = glInfo
 
 	// GLSL information.
@@ -511,7 +511,7 @@ func newDevice(opts ...Option) (Device, error) {
 		MaxVertexInputs:   int(maxVertexInputs),
 		MaxFragmentInputs: int(maxFragmentInputs),
 	}
-	glslInfo.MajorVersion, glslInfo.MinorVersion, _, _ = r.common.ShadingLanguageVersion()
+	glslInfo.MajorVersion, glslInfo.MinorVersion, glslInfo.ReleaseVersion, _ = r.common.ShadingLanguageVersion()
 	r.devInfo.GLSL = glslInfo
 
 	if r.glArbFramebufferObject {
