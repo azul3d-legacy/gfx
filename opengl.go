@@ -4,26 +4,68 @@
 
 package gfx
 
+import "fmt"
+
 // GLInfo holds information about the OpenGL implementation.
 type GLInfo struct {
-	// Major and minor versions of the OpenGL version in use. For example:
+	// Major, minor, and release versions of the OpenGL version in use. For
+	// example:
 	//
-	//  3, 0 (for OpenGL 3.0)
+	//  // OpenGL v2.1.3
+	//  MajorVersion: 2
+	//  MinorVersion: 1
+	//  ReleaseVersion: 3
 	//
-	MajorVersion, MinorVersion int
+	MajorVersion, MinorVersion, ReleaseVersion int
+
+	// VendorVersion is a vendor/manufacturer specific version string. It can
+	// be anything at all (and sometimes nothing), but is typically the driver
+	// version in use. For example:
+	//
+	//  "Mesa 10.5.0-devel (git-b3721cd 2014-11-26 trusty-oibaf-ppa)"
+	//  ""
+	//
+	VendorVersion string
 
 	// A read-only slice of OpenGL extension strings.
 	Extensions []string
 }
 
+// String returns a OpenGL version string like so:
+//
+//  "OpenGL v2.1 - Mesa 10.5.0-devel (git-b3721cd 2014-11-26 trusty-oibaf-ppa)"
+//
+func (g *GLInfo) String() string {
+	return fmt.Sprintf("OpenGL %s - %s", g.Version(), g.VendorVersion)
+}
+
+// Version returns a version string like so:
+//
+//  "v1"
+//  "v2.1"
+//  "v2.1.1"
+//
+func (g *GLInfo) Version() string {
+	if g.MinorVersion == 0 && g.ReleaseVersion == 0 {
+		return fmt.Sprintf("v%d", g.MajorVersion)
+	}
+	if g.ReleaseVersion == 0 {
+		return fmt.Sprintf("v%d.%d", g.MajorVersion, g.MinorVersion)
+	}
+	return fmt.Sprintf("v%d.%d.%d")
+}
+
 // GLSLInfo holds information about the GLSL implementation.
 type GLSLInfo struct {
-	// Major and minor versions of the OpenGL Shading Language version that is
-	// present. For example:
+	// Major, minor, and release versions of the OpenGL Shading Language
+	// version present. For example:
 	//
-	//  1, 30 (for GLSL 1.30)
+	//  // GLSL v1.30.2
+	//  MajorVersion: 1
+	//  MinorVersion: 30
+	//  ReleaseVersion: 2
 	//
-	MajorVersion, MinorVersion int
+	MajorVersion, MinorVersion, ReleaseVersion int
 
 	// MaxVaryingFloats is the number of floating-point varying variables
 	// available inside GLSL programs.
@@ -42,6 +84,30 @@ type GLSLInfo struct {
 	//
 	// Generally at least 64.
 	MaxFragmentInputs int
+}
+
+// String returns a GLSL version string like so:
+//
+//  "GLSL v1"
+//
+func (g *GLSLInfo) String() string {
+	return fmt.Sprintf("GLSL %s", g.Version())
+}
+
+// Version returns a version string like so:
+//
+//  "v1"
+//  "v2.1"
+//  "v2.1.1"
+//
+func (g *GLSLInfo) Version() string {
+	if g.MinorVersion == 0 && g.ReleaseVersion == 0 {
+		return fmt.Sprintf("v%d", g.MajorVersion)
+	}
+	if g.ReleaseVersion == 0 {
+		return fmt.Sprintf("v%d.%d", g.MajorVersion, g.MinorVersion)
+	}
+	return fmt.Sprintf("v%d.%d.%d")
 }
 
 // GLSLSources represents the sources to a GLSL shader program.
