@@ -21,63 +21,63 @@ import "math"
 type EventMask uint32
 
 const (
-	// NoEvents is a event mask matching no events at all.
-	NoEvents EventMask = 0
-
 	// CloseEvents is a event mask matching window.Close events.
-	CloseEvents EventMask = 1 << 0
+	CloseEvents EventMask = 1 << iota
 
 	// DamagedEvents is a event mask matching window.Damaged events.
-	DamagedEvents EventMask = 1 << 1
+	DamagedEvents
 
 	// CursorMovedEvents is a event mask matching window.CursorMoved events.
-	CursorMovedEvents EventMask = 1 << 2
+	CursorMovedEvents
 
 	// CursorEnterEvents is a event mask matching window.CursorEnter events.
-	CursorEnterEvents EventMask = 1 << 3
+	CursorEnterEvents
 
 	// CursorExitEvents is a event mask matching window.CursorExit events.
-	CursorExitEvents EventMask = 1 << 4
+	CursorExitEvents
 
 	// MinimizedEvents is a event mask matching window.Minimized events.
-	MinimizedEvents EventMask = 1 << 5
+	MinimizedEvents
 
 	// RestoredEvents is a event mask matching window.Restored events.
-	RestoredEvents EventMask = 1 << 6
+	RestoredEvents
 
 	// GainedFocusEvents is a event mask matching window.GainedFocus events.
-	GainedFocusEvents EventMask = 1 << 7
+	GainedFocusEvents
 
 	// LostFocusEvents is a event mask matching window.LostFocus events.
-	LostFocusEvents EventMask = 1 << 8
+	LostFocusEvents
 
 	// MovedEvents is a event mask matching window.Moved events.
-	MovedEvents EventMask = 1 << 9
+	MovedEvents
 
 	// ResizedEvents is a event mask matching window.Resized events.
-	ResizedEvents EventMask = 1 << 10
+	ResizedEvents
 
 	// FramebufferResizedEvents is a event mask matching
 	// window.FramebufferResized events.
-	FramebufferResizedEvents EventMask = 1 << 11
+	FramebufferResizedEvents
 
 	// ItemsDroppedEvents is a event mask matching window.ItemsDropped events.
-	ItemsDroppedEvents EventMask = 1 << 12
+	ItemsDroppedEvents
 
 	// MouseButtonEvents is a event mask matching mouse.ButtonEvent's.
-	MouseButtonEvents EventMask = 1 << 13
+	MouseButtonEvents
 
 	// MouseScrolledEvents is a event mask matching mouse.Scrolled events.
-	MouseScrolledEvents EventMask = 1 << 14
+	MouseScrolledEvents
 
 	// KeyboardTypedEvents is a event mask matching keyboard.Typed events.
-	KeyboardTypedEvents EventMask = 1 << 15
+	KeyboardTypedEvents
 
 	// KeyboardButtonEvents is a event mask matching keyboard.ButtonEvent's.
-	KeyboardButtonEvents EventMask = 1 << 16
+	KeyboardButtonEvents
+
+	// NoEvents is a event mask matching no events at all.
+	NoEvents EventMask = 0
 
 	// AllEvents is a event mask matching all possible events.
-	AllEvents = EventMask(math.MaxUint32)
+	AllEvents EventMask = math.MaxUint32
 )
 
 const (
