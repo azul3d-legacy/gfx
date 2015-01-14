@@ -122,3 +122,16 @@ func TestTransformRotToWorld(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestTransformQuat(t *testing.T) {
+	q := lmath.Quat{0, 0, 0, 1}
+
+	a := NewTransform()
+	a.SetQuat(q)
+	if a.Quat() != q {
+		t.Fail()
+	}
+	if !a.IsQuat() {
+		t.Fail()
+	}
+}
