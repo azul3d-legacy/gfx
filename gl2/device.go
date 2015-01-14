@@ -51,6 +51,7 @@ func (r *rsrcManager) free() {
 // device implements the Device interface.
 type device struct {
 	*util.BaseCanvas
+	warner        *util.Warner
 	common        *glc.Context
 	clock         *clock.Clock
 	devInfo       gfx.DeviceInfo
@@ -80,12 +81,6 @@ type device struct {
 	// a finalizer for a mesh, texture, etc has ran and something needs to be
 	// free'd.
 	wantFree chan struct{}
-
-	// Structure used to manage the debug output stream.
-	debug struct {
-		sync.RWMutex
-		W io.Writer
-	}
 
 	// Structure used to manage pending occlusion queries.
 	pending struct {
@@ -155,9 +150,9 @@ func (r *device) Info() gfx.DeviceInfo {
 
 // SetDebugOutput implements the Device interface.
 func (r *device) SetDebugOutput(w io.Writer) {
-	r.debug.RLock()
-	r.debug.W = w
-	r.debug.RUnlock()
+	r.warner.RLock()
+	r.warner.W = w
+	r.warner.RUnlock()
 }
 
 // RestoreState implements the Device interface.
@@ -389,15 +384,6 @@ func (r *device) performScissor(rect image.Rectangle) {
 	}
 }
 
-func (r *device) logf(format string, args ...interface{}) {
-	// Log the error.
-	r.debug.RLock()
-	if r.debug.W != nil {
-		fmt.Fprintf(r.debug.W, format, args...)
-	}
-	r.debug.RUnlock()
-}
-
 func glStr(s string) *uint8 {
 	return gl.Str(s + "\x00")
 }
@@ -412,6 +398,7 @@ func newDevice(opts ...Option) (Device, error) {
 		BaseCanvas: &util.BaseCanvas{
 			VMSAA: true,
 		},
+		warner:         util.NewWarner(nil),
 		common:         glc.NewContext(),
 		clock:          clock.New(),
 		rsrcManager:    &rsrcManager{},

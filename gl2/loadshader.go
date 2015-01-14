@@ -92,7 +92,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 
 	doLoad, err := glutil.PreLoadShader(s, done)
 	if err != nil {
-		r.logf("%v\n", err)
+		r.warner.Warnf("%v\n", err)
 		return
 	}
 	if !doLoad {
@@ -123,8 +123,8 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		}
 		if len(log) > 0 {
 			// Send the compiler log to the debug writer.
-			r.logf("%s | Vertex shader errors:\n", s.Name)
-			r.logf(string(log))
+			r.warner.Warnf("%s | Vertex shader errors:\n", s.Name)
+			r.warner.Warnf(string(log))
 		}
 
 		// Compile fragment shader.
@@ -146,8 +146,8 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		}
 		if len(log) > 0 {
 			// Send the compiler log to the debug writer.
-			r.logf("%s | Fragment shader errors:\n", s.Name)
-			r.logf(string(log))
+			r.warner.Warnf("%s | Fragment shader errors:\n", s.Name)
+			r.warner.Warnf(string(log))
 		}
 
 		// Create the shader program if all went well with the vertex and
@@ -186,8 +186,8 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 			}
 			if len(log) > 0 {
 				// Send the linker log to the debug writer.
-				r.logf("%s | Linker errors:\n", s.Name)
-				r.logf(string(log))
+				r.warner.Warnf("%s | Linker errors:\n", s.Name)
+				r.warner.Warnf(string(log))
 			}
 		}
 

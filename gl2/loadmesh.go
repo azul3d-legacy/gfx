@@ -103,7 +103,7 @@ func (r *device) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.
 
 	// If it's not a slice, or it's length is zero, then it is invalid.
 	if v.Kind() != reflect.Slice || v.Len() == 0 {
-		r.logf("VertexAttrib (%q) not of type slice or length is zero\n", name)
+		r.warner.Warnf("VertexAttrib (%q) not of type slice or length is zero\n", name)
 		return
 	}
 
@@ -120,7 +120,7 @@ func (r *device) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.
 	}
 	if !ok {
 		// Invalid data type.
-		r.logf("VertexAttrib (%q) has invalid underlying data type\n", name)
+		r.warner.Warnf("VertexAttrib (%q) has invalid underlying data type\n", name)
 		return
 	}
 

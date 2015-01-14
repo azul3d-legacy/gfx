@@ -42,7 +42,7 @@ func (n *nativeObject) Destroy() {}
 func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
 	doDraw, err := util.PreDraw(r, rect, o, c)
 	if err != nil {
-		r.logf("%v\n", err)
+		r.warner.Warnf("%v\n", err)
 		return
 	}
 	if !doDraw {
@@ -165,7 +165,7 @@ func (r *device) updateUniform(native *nativeShader, name string, value interfac
 		}
 
 	default:
-		r.logf("Shader input %q uses an invalid shader input data type %q, ignoring.\n", name, reflect.TypeOf(value))
+		r.warner.Warnf("Shader input %q uses an invalid shader input data type %q, ignoring.\n", name, reflect.TypeOf(value))
 		// We don't know of the type at all, ignore it.
 	}
 }

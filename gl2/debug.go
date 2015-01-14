@@ -56,11 +56,11 @@ func glDebugCallback(
 
 	// Log the error using the device.
 	r := (*device)(userParam)
-	r.logf("OpenGL: %s\n", strings.TrimSpace(message))
-	r.logf("    Type: %s\n", debugType(gltype))
-	r.logf("    Severity: %s\n", debugSeverity(severity))
-	r.logf("    Source: %d\n", source)
-	r.logf("    ID: %d\n", id)
+	r.warner.Warnf("OpenGL: %s\n", strings.TrimSpace(message))
+	r.warner.Warnf("    Type: %s\n", debugType(gltype))
+	r.warner.Warnf("    Severity: %s\n", debugSeverity(severity))
+	r.warner.Warnf("    Source: %d\n", source)
+	r.warner.Warnf("    ID: %d\n", id)
 }
 
 func (r *device) debugInit(exts glutil.Extensions) {
@@ -75,6 +75,6 @@ func (r *device) debugInit(exts glutil.Extensions) {
 func (r *device) debugRender() {
 	// After each frame has been rendered we check for OpenGL errors.
 	if err := r.common.GetError(); err != nil {
-		r.logf("OpenGL Error: %v\n", err)
+		r.warner.Warnf("OpenGL Error: %v\n", err)
 	}
 }
