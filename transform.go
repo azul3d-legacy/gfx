@@ -228,7 +228,7 @@ func (t *Transform) Parent() Transformable {
 // whether quaternion or euler rotation will be used by this transform.
 func (t *Transform) SetQuat(q lmath.Quat) {
 	t.access.Lock()
-	if (*t.quat) != q {
+	if t.quat == nil || (*t.quat) != q {
 		t.built = nil
 		t.quat = &q
 	}
