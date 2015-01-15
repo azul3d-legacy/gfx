@@ -40,8 +40,8 @@ type rsrcManager struct {
 	renderbuffers []uint32
 }
 
-// free free's all of the pending resources.
-func (r *rsrcManager) free() {
+// freePending free's all of the pending resources.
+func (r *rsrcManager) freePending() {
 	r.Lock()
 
 	// Free the meshes.
