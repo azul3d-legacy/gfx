@@ -31,15 +31,49 @@ type nativeMesh struct {
 	r                           *rsrcManager
 }
 
+// Destroy implements the gfx.Destroyable interface.
+func (n *nativeMesh) Destroy() {
+	finalizeMesh(n)
+}
+
+// finalizeMesh is the finalizer called to free the native mesh object. It must
+// be free'd in the presence of the OpenGL context, and thus we queue it to be
+// free'd at the next available time (next frame).
 func finalizeMesh(n *nativeMesh) {
 	n.r.Lock()
+
+	// If the mesh vertices VBO-id is zero, it has already been free'd.
+	if n.vertices == 0 {
+		n.r.Unlock()
+		return
+	}
 	n.r.meshes = append(n.r.meshes, n)
 	n.r.Unlock()
 }
 
-// Destroy implements the gfx.Destroyable interface.
-func (n *nativeMesh) Destroy() {
-	finalizeMesh(n)
+// free literally frees the native mesh object right now. It may only be
+// called under the presence of the OpenGL context.
+func (n *nativeMesh) free() {
+	// Delete indices VBO.
+	gl.DeleteBuffers(1, &n.indices)
+
+	// Delete vertices VBO.
+	gl.DeleteBuffers(1, &n.vertices)
+
+	// Delete texture coords VBOs.
+	if len(n.texCoords) > 0 {
+		gl.DeleteBuffers(int32(len(n.texCoords)), &n.texCoords[0])
+	}
+
+	// Delete custom attribute VBOs.
+	for _, attrib := range n.attribs {
+		gl.DeleteBuffers(int32(len(attrib.vbos)), &attrib.vbos[0])
+	}
+
+	// Zero-out the nativeMesh structure, only keeping the rsrcManager around.
+	*n = nativeMesh{
+		r: n.r,
+	}
 }
 
 func (r *device) createVBO() (vboID uint32) {
@@ -165,35 +199,6 @@ func (r *device) updateCustomAttribVBO(usageHint int32, name string, attrib gfx.
 			n.vbos[0],
 		)
 	}
-}
-
-func (r *rsrcManager) freeMeshes() {
-	// Lock the list.
-	r.Lock()
-
-	// Free the meshes.
-	for _, native := range r.meshes {
-		// Delete single VBO's.
-		gl.DeleteBuffers(1, &native.indices)
-		gl.DeleteBuffers(1, &native.vertices)
-
-		// Delete texture coords buffers.
-		if len(native.texCoords) > 0 {
-			gl.DeleteBuffers(int32(len(native.texCoords)), &native.texCoords[0])
-		}
-
-		// Delete custom attribute buffers.
-		for _, attrib := range native.attribs {
-			gl.DeleteBuffers(int32(len(attrib.vbos)), &attrib.vbos[0])
-		}
-
-		// Flush OpenGL commands.
-		gl.Flush()
-	}
-
-	// Slice to zero, and unlock.
-	r.meshes = r.meshes[:0]
-	r.Unlock()
 }
 
 // LoadMesh implements the gfx.Renderer interface.
