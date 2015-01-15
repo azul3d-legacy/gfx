@@ -6,7 +6,6 @@ package gl2
 
 import (
 	"runtime"
-	"unsafe"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
@@ -108,7 +107,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 		native.vertex = gl.CreateShader(gl.VERTEX_SHADER)
 		lengths := int32(len(s.GLSL.Vertex))
 		sources := &s.GLSL.Vertex[0]
-		gl.ShaderSource(native.vertex, 1, (**uint8)(unsafe.Pointer(&sources)), &lengths)
+		gl.ShaderSource(native.vertex, 1, &sources, &lengths)
 		gl.CompileShader(native.vertex)
 
 		// Check if the shader compiled or not.
