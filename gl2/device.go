@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"log"
 	"runtime"
 	"sync"
 
@@ -44,12 +45,18 @@ func (r *rsrcManager) free() {
 	r.Lock()
 
 	// Free the meshes.
+	if tag.Gfxdebug && len(r.meshes) > 0 {
+		log.Printf("gfx: free %d meshes\n", len(r.meshes))
+	}
 	for _, native := range r.meshes {
 		native.free()
 	}
 	r.meshes = r.meshes[:0]
 
 	// Free the shaders.
+	if tag.Gfxdebug && len(r.shaders) > 0 {
+		log.Printf("gfx: free %d shaders\n", len(r.shaders))
+	}
 	for _, native := range r.shaders {
 		native.free()
 	}

@@ -6,12 +6,14 @@ package gl2
 
 import (
 	"image"
+	"log"
 	"runtime"
 	"sync"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/glc"
+	"azul3d.org/gfx.v2-dev/internal/tag"
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
@@ -20,6 +22,9 @@ func (r *rsrcManager) freeFBOs() {
 	r.Lock()
 
 	if len(r.fbos) > 0 {
+		if tag.Gfxdebug {
+			log.Printf("gfx: free %d FBOs\n", len(r.fbos))
+		}
 		// Free the FBOs.
 		gl.DeleteFramebuffers(int32(len(r.fbos)), &r.fbos[0])
 
@@ -38,6 +43,9 @@ func (r *rsrcManager) freeRenderbuffers() {
 
 	if len(r.renderbuffers) > 0 {
 		// Free the FBOs.
+		if tag.Gfxdebug {
+			log.Printf("gfx: free %d renderbuffers\n", len(r.renderbuffers))
+		}
 		gl.DeleteRenderbuffers(int32(len(r.renderbuffers)), &r.renderbuffers[0])
 
 		// Flush OpenGL commands.

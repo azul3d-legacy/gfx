@@ -7,12 +7,14 @@ package gl2
 import (
 	"image"
 	"image/draw"
+	"log"
 	"runtime"
 	"unsafe"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
 	"azul3d.org/gfx.v2-dev/internal/glutil"
+	"azul3d.org/gfx.v2-dev/internal/tag"
 	"azul3d.org/gfx.v2-dev/internal/util"
 )
 
@@ -198,6 +200,9 @@ func (r *rsrcManager) freeTextures() {
 	// Lock the list.
 	r.Lock()
 
+	if tag.Gfxdebug && len(r.textures) > 0 {
+		log.Printf("gfx: free %d textures\n", len(r.textures))
+	}
 	if len(r.textures) > 0 {
 		// Free the textures.
 		gl.DeleteTextures(int32(len(r.textures)), &r.textures[0])
