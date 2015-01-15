@@ -35,13 +35,13 @@ func PreLoadShader(s *gfx.Shader, done chan *gfx.Shader) (doLoad bool, err error
 	// behavior and can cause some drivers to crash. It is an error and as such
 	// no further loading of the shader should occur.
 	if len(strings.TrimSpace(string(s.GLSL.Vertex))) == 0 {
-		err = fmt.Errorf("%s | Vertex shader with no source code.\n", s.Name)
+		err = fmt.Errorf("%s | Vertex shader with no source code.", s.Name)
 		s.Error = append(s.Error, []byte(err.Error())...)
 		signal()
 		return false, err
 	}
 	if len(strings.TrimSpace(string(s.GLSL.Fragment))) == 0 {
-		err = fmt.Errorf("%s | Fragment shader with no source code.\n", s.Name)
+		err = fmt.Errorf("%s | Fragment shader with no source code.", s.Name)
 		s.Error = append(s.Error, []byte(err.Error())...)
 		signal()
 		return false, err
