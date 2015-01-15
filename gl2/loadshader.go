@@ -52,8 +52,10 @@ func (n *nativeShader) free() {
 	// Delete program.
 	gl.DeleteProgram(n.program)
 
-	// Zero the program out to protect against double-free's.
-	n.program = 0
+	// Zero-out the nativeShader structure, only keeping the rsrcManager around.
+	*n = nativeShader{
+		r: n.r,
+	}
 }
 
 func shaderCompilerLog(s uint32) (log []byte, compiled bool) {
