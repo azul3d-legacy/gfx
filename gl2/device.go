@@ -11,6 +11,7 @@ import (
 	"log"
 	"runtime"
 	"sync"
+	"time"
 
 	"azul3d.org/gfx.v2-dev"
 	"azul3d.org/gfx.v2-dev/clock"
@@ -119,6 +120,9 @@ type device struct {
 
 	// Channel to wait for a Render() call to finish.
 	renderComplete chan struct{}
+
+	// yieldExit signals to the yield goroutine that it should exit.
+	yieldExit chan struct{}
 }
 
 // Exec implements the Device interface.
@@ -184,6 +188,7 @@ func (r *device) RestoreState() {
 // Destroy implements the Device interface.
 func (r *device) Destroy() {
 	// TODO(slimsag): free pending resources.
+	r.yieldExit <- struct{}{}
 }
 
 // Implements gfx.Canvas interface.
@@ -294,12 +299,29 @@ func (r *device) hookedQueryWait(pre, post func()) {
 	<-r.renderComplete
 }
 
+func (r *device) yield() {
+	tick := time.NewTicker(200 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-tick.C:
+			r.renderExec <- func() bool {
+				r.rsrcManager.freePending()
+				r.queryYield()
+				return false
+			}
+		case <-r.yieldExit:
+			return
+		}
+	}
+}
+
 func (r *device) hookedRender(pre, post func()) {
 	// Ask the render channel to render things now.
 	r.renderExec <- func() bool {
 		// If any finalizers have ran and actually want us to free something,
 		// then we perform this operation now.
-		r.rsrcManager.free()
+		r.rsrcManager.freePending()
 
 		if pre != nil {
 			pre()
@@ -426,10 +448,12 @@ func newDevice(opts ...Option) (Device, error) {
 		renderExec:     make(chan func() bool, 1024),
 		renderComplete: make(chan struct{}, 8),
 		wantFree:       make(chan struct{}, 1),
+		yieldExit:      make(chan struct{}, 1),
 	}
 	r.graphicsState = &graphicsState{
 		GraphicsState: glc.NewGraphicsState(r.common),
 	}
+	go r.yield()
 
 	for _, opt := range opts {
 		opt(r)
