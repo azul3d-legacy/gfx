@@ -20,39 +20,40 @@ type nativeShader struct {
 	r                         *rsrcManager
 }
 
-func finalizeShader(n *nativeShader) {
-	n.r.Lock()
-	n.r.shaders = append(n.r.shaders, n)
-	n.r.Unlock()
-}
-
 // Implements gfx.Destroyable interface.
 func (n *nativeShader) Destroy() {
 	finalizeShader(n)
 }
 
-func (r *rsrcManager) freeShaders() {
-	// Lock the list.
-	r.Lock()
+// finalizeShader is the finalizer called to free the native shader object. It
+// must be free'd in the presence of the OpenGL context, and thus we queue it
+// to be free'd at the next available time (next frame).
+func finalizeShader(n *nativeShader) {
+	n.r.Lock()
 
-	// Free the shaders.
-	for _, native := range r.shaders {
-		// Delete shader objects (in practice we should be able to do this
-		// directly after linking, but it would just leave the driver to
-		// reference count anyway).
-		gl.DeleteShader(native.vertex)
-		gl.DeleteShader(native.fragment)
-
-		// Delete program.
-		gl.DeleteProgram(native.program)
-
-		// Flush OpenGL commands.
-		gl.Flush()
+	// If the shader program is zero, it has already been free'd.
+	if n.program == 0 {
+		n.r.Unlock()
+		return
 	}
+	n.r.shaders = append(n.r.shaders, n)
+	n.r.Unlock()
+}
 
-	// Slice to zero, and unlock.
-	r.shaders = r.shaders[:0]
-	r.Unlock()
+// free literally frees the native shader object right now. It may only be
+// called under the presence of the OpenGL context.
+func (n *nativeShader) free() {
+	// Delete shader objects (in practice we should be able to do this directly
+	// after linking, but it would just leave the driver to reference count
+	// them anyway).
+	gl.DeleteShader(n.vertex)
+	gl.DeleteShader(n.fragment)
+
+	// Delete program.
+	gl.DeleteProgram(n.program)
+
+	// Zero the program out to protect against double-free's.
+	n.program = 0
 }
 
 func shaderCompilerLog(s uint32) (log []byte, compiled bool) {

@@ -42,7 +42,15 @@ type rsrcManager struct {
 // free free's all of the pending resources.
 func (r *rsrcManager) free() {
 	r.freeMeshes()
-	r.freeShaders()
+
+	// Free the shaders.
+	r.Lock()
+	for _, native := range r.shaders {
+		native.free()
+	}
+	r.shaders = r.shaders[:0]
+	r.Unlock()
+
 	r.freeTextures()
 	r.freeFBOs()
 	r.freeRenderbuffers()
