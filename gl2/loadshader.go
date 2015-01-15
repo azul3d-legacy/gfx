@@ -89,6 +89,7 @@ func (r *device) LoadShader(s *gfx.Shader, done chan *gfx.Shader) {
 	}
 	r.shared.RUnlock()
 
+	// Perform pre-load checks on the shader.
 	doLoad, err := glutil.PreLoadShader(s, done)
 	if err != nil {
 		r.warner.Warnf("%v\n", err)
