@@ -37,7 +37,7 @@ type Camera struct {
 // SetOrtho sets this camera's Projection matrix to an orthographic one.
 //
 // The view parameter is the viewing rectangle for the orthographic
-// projection in window coordinates.
+// projection in pixel coordinates.
 //
 // The near and far parameters describe the minimum closest and maximum
 // furthest clipping points of the view frustum.
@@ -62,7 +62,7 @@ func (c *Camera) SetOrtho(view image.Rectangle, near, far float64) {
 // SetPersp sets this camera's Projection matrix to an perspective one.
 //
 // The view parameter is the viewing rectangle for the orthographic
-// projection in window coordinates.
+// projection in pixel coordinates.
 //
 // The fov parameter is the Y axis field of view (e.g. some games use 75) to
 // use.
@@ -100,7 +100,7 @@ func (c *Camera) Project(p3 lmath.Vec3) (p2 lmath.Vec2, ok bool) {
 	return
 }
 
-// View returns the viewing rectangle of the orthographic projection in window
+// View returns the viewing rectangle of the orthographic projection in pixel
 // coordinates.
 func (c *Camera) View() image.Rectangle {
 	return c.view
