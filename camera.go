@@ -30,6 +30,7 @@ type Camera struct {
 	// world coordinates into device coordinates.
 	Projection Mat4
 
+	view           image.Rectangle
 	fov, near, far float64
 }
 
@@ -52,6 +53,7 @@ func (c *Camera) SetOrtho(view image.Rectangle, near, far float64) {
 	m := lmath.Mat4Ortho(0, w, 0, h, near, far)
 	c.Projection = ConvertMat4(m)
 
+	c.view = view
 	c.fov = -1
 	c.near = near
 	c.far = far
@@ -76,6 +78,7 @@ func (c *Camera) SetPersp(view image.Rectangle, fov, near, far float64) {
 	m := lmath.Mat4Perspective(fov, aspectRatio, near, far)
 	c.Projection = ConvertMat4(m)
 
+	c.view = view
 	c.fov = fov
 	c.near = near
 	c.far = far
@@ -95,6 +98,12 @@ func (c *Camera) Project(p3 lmath.Vec3) (p2 lmath.Vec2, ok bool) {
 
 	p2, ok = vp.Project(p3)
 	return
+}
+
+// View returns the viewing rectangle of the orthographic projection in window
+// coordinates.
+func (c *Camera) View() image.Rectangle {
+	return c.view
 }
 
 // FOV returns the field of view of the camera. For an orthographic camera, this
@@ -125,6 +134,7 @@ func (c *Camera) Copy() *Camera {
 func (c *Camera) Reset() {
 	c.Object.Reset()
 	c.Projection = ConvertMat4(lmath.Mat4Identity)
+	c.view = image.Rectangle{}
 	c.fov = 0.0
 	c.near = 0.0
 	c.far = 0.0
@@ -144,6 +154,7 @@ var camPool = sync.Pool{
 		return &Camera{
 			NewObject(),
 			ConvertMat4(lmath.Mat4Identity),
+			image.Rectangle{},
 			0.0, 0.0, 0.0,
 		}
 	},
