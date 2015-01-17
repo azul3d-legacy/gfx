@@ -7,8 +7,8 @@ package util
 import (
 	"image"
 
-	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/clock"
+	"azul3d.org/gfx.v2-unstable"
+	"azul3d.org/gfx.v2-unstable/clock"
 )
 
 // Swapper is a swappable gfx.Device implementation.

@@ -9,9 +9,9 @@ import (
 	"log"
 	"sync"
 
-	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/keyboard.v2-dev"
-	"azul3d.org/mouse.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
+	"azul3d.org/keyboard.v2-unstable"
+	"azul3d.org/mouse.v2-unstable"
 )
 
 // Clipboard is the interface describing a system's clipboard. Grab a clipboard

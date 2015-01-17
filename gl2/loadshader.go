@@ -7,9 +7,9 @@ package gl2
 import (
 	"runtime"
 
-	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
-	"azul3d.org/gfx.v2-dev/internal/glutil"
+	"azul3d.org/gfx.v2-unstable"
+	"azul3d.org/gfx.v2-unstable/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-unstable/internal/glutil"
 )
 
 // nativeShader is stored inside the *Shader.Native interface and stores GLSL

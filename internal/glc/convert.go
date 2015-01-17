@@ -4,7 +4,7 @@
 
 package glc
 
-import "azul3d.org/gfx.v2-dev"
+import "azul3d.org/gfx.v2-unstable"
 
 func (c *Context) ConvertTexWrap(w gfx.TexWrap) int {
 	switch w {

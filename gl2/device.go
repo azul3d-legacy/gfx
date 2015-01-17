@@ -13,13 +13,13 @@ import (
 	"sync"
 	"time"
 
-	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/clock"
-	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
-	"azul3d.org/gfx.v2-dev/internal/glc"
-	"azul3d.org/gfx.v2-dev/internal/glutil"
-	"azul3d.org/gfx.v2-dev/internal/tag"
-	"azul3d.org/gfx.v2-dev/internal/util"
+	"azul3d.org/gfx.v2-unstable"
+	"azul3d.org/gfx.v2-unstable/clock"
+	"azul3d.org/gfx.v2-unstable/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-unstable/internal/glc"
+	"azul3d.org/gfx.v2-unstable/internal/glutil"
+	"azul3d.org/gfx.v2-unstable/internal/tag"
+	"azul3d.org/gfx.v2-unstable/internal/util"
 )
 
 type pendingQuery struct {

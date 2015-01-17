@@ -8,7 +8,7 @@ import (
 	"image"
 	"io"
 
-	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
 )
 
 // Device is a WebGL graphics device.

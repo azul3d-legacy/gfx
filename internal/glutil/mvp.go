@@ -5,7 +5,7 @@
 package glutil
 
 import (
-	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
 	"azul3d.org/lmath.v1"
 )
 

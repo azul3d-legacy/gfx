@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 
-	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
 )
 
 // Props represents window properties. Properties are safe for use concurrently

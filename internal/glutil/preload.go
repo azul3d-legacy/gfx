@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
 )
 
 // PreLoadShader implements the precusor to gfx.Canvas.LoadShader; it returns a

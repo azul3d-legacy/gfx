@@ -6,8 +6,8 @@
 package glc
 
 import (
-	"azul3d.org/gfx.v2-dev"
-	gl "azul3d.org/gfx.v2-dev/internal/gles2/2.0/gles2"
+	"azul3d.org/gfx.v2-unstable"
+	gl "azul3d.org/gfx.v2-unstable/internal/gles2/2.0/gles2"
 )
 
 type glFuncs struct {

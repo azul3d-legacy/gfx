@@ -6,8 +6,8 @@
 package window
 
 import (
-	"azul3d.org/keyboard.v2-dev"
-	"azul3d.org/mouse.v2-dev"
+	"azul3d.org/keyboard.v2-unstable"
+	"azul3d.org/mouse.v2-unstable"
 
 	"azul3d.org/native/glfw.v4"
 )

@@ -7,7 +7,7 @@ package glutil
 import (
 	"image"
 
-	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
 )
 
 // Ensure these values match the default OpenGL state values listed in the

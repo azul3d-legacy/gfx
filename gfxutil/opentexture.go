@@ -8,7 +8,7 @@ import (
 	"image"
 	"os"
 
-	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
 )
 
 // OpenTexture opens the named image file, decodes it, and returns a texture

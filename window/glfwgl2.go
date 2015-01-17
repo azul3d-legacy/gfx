@@ -6,7 +6,7 @@
 package window
 
 import (
-	"azul3d.org/gfx.v2-dev/gl2"
+	"azul3d.org/gfx.v2-unstable/gl2"
 	"azul3d.org/native/glfw.v4"
 )
 

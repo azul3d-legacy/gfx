@@ -8,7 +8,7 @@ import (
 	"image"
 	"sync"
 
-	"azul3d.org/gfx.v2-dev"
+	"azul3d.org/gfx.v2-unstable"
 )
 
 // BaseCanvas implements basic portions of a gfx.Canvas. Specifically the

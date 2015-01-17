@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"unsafe"
 
-	"azul3d.org/gfx.v2-dev"
-	"azul3d.org/gfx.v2-dev/internal/gl/2.0/gl"
+	"azul3d.org/gfx.v2-unstable"
+	"azul3d.org/gfx.v2-unstable/internal/gl/2.0/gl"
 )
 
 // TODO(slimsag): move to internal/glc ?
