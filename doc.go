@@ -21,4 +21,4 @@
 //
 // https://azul3d.org/examples.v1
 //
-package gfx // import "azul3d.org/gfx.v2-dev"
+package gfx // import "azul3d.org/gfx.v2-unstable"

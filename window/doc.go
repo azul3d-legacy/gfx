@@ -192,4 +192,4 @@
 //
 // https://azul3d.org/examples.v1
 //
-package window // import "azul3d.org/gfx.v2-dev/window"
+package window // import "azul3d.org/gfx.v2-unstable/window"

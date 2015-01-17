@@ -152,4 +152,4 @@
 //
 // https://azul3d.org/examples.v1
 //
-package gl2 // import "azul3d.org/gfx.v2-dev/gl2"
+package gl2 // import "azul3d.org/gfx.v2-unstable/gl2"

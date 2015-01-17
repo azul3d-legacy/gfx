@@ -110,4 +110,4 @@
 //
 // https://azul3d.org/examples.v1
 //
-package webgl // import "azul3d.org/gfx.v2-dev/webgl"
+package webgl // import "azul3d.org/gfx.v2-unstable/webgl"

@@ -3,4 +3,4 @@
 // license that can be found in the LICENSE file.
 
 // Package gfxutil implements basic gfx utilities.
-package gfxutil // import "azul3d.org/gfx.v2-dev/gfxutil"
+package gfxutil // import "azul3d.org/gfx.v2-unstable/gfxutil"
