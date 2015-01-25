@@ -9,7 +9,7 @@ import (
 	"azul3d.org/keyboard.v2-unstable"
 	"azul3d.org/mouse.v2-unstable"
 
-	"azul3d.org/native/glfw.v4"
+	glfw "azul3d.org/native/glfw.v4"
 )
 
 func convertMouseAction(a glfw.Action) mouse.State {
@@ -188,37 +188,37 @@ func convertKey(k glfw.Key) keyboard.Key {
 		return keyboard.F25
 
 	// Numpad keys.
-	case glfw.KeyKp0:
+	case glfw.KeyKP0:
 		return keyboard.NumZero
-	case glfw.KeyKp1:
+	case glfw.KeyKP1:
 		return keyboard.NumOne
-	case glfw.KeyKp2:
+	case glfw.KeyKP2:
 		return keyboard.NumTwo
-	case glfw.KeyKp3:
+	case glfw.KeyKP3:
 		return keyboard.NumThree
-	case glfw.KeyKp4:
+	case glfw.KeyKP4:
 		return keyboard.NumFour
-	case glfw.KeyKp5:
+	case glfw.KeyKP5:
 		return keyboard.NumFive
-	case glfw.KeyKp6:
+	case glfw.KeyKP6:
 		return keyboard.NumSix
-	case glfw.KeyKp7:
+	case glfw.KeyKP7:
 		return keyboard.NumSeven
-	case glfw.KeyKp8:
+	case glfw.KeyKP8:
 		return keyboard.NumEight
-	case glfw.KeyKp9:
+	case glfw.KeyKP9:
 		return keyboard.NumNine
-	case glfw.KeyKpDecimal:
+	case glfw.KeyKPDecimal:
 		return keyboard.NumDecimal
-	case glfw.KeyKpDivide:
+	case glfw.KeyKPDivide:
 		return keyboard.NumDivide
-	case glfw.KeyKpMultiply:
+	case glfw.KeyKPMultiply:
 		return keyboard.NumMultiply
-	case glfw.KeyKpSubtract:
+	case glfw.KeyKPSubtract:
 		return keyboard.NumSubtract
-	case glfw.KeyKpAdd:
+	case glfw.KeyKPAdd:
 		return keyboard.NumAdd
-	case glfw.KeyKpEnter:
+	case glfw.KeyKPEnter:
 		return keyboard.NumEnter
 	case glfw.KeyNumLock:
 		return keyboard.NumLock
@@ -316,7 +316,7 @@ func convertKey(k glfw.Key) keyboard.Key {
 		return keyboard.Invalid
 	case glfw.KeyWorld2:
 		return keyboard.Invalid
-	case glfw.KeyKpEqual:
+	case glfw.KeyKPEqual:
 		return keyboard.Invalid
 
 	default:
