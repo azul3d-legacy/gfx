@@ -45,9 +45,7 @@ func init() {
 	}
 }
 
-// DrawCamera draws the camera's viewing frustum to the canvas as a wire-frame.
-// The first camera (cam) is what the wire-frame is attached to, while cam2 is
-// the perspective from which to render said wire-frame.
+// debugUpdate updates the camera's viewing frustum wire-frame.
 func (c *Camera) debugUpdate() {
 	c.State = gfx.NewState()
 	c.Shader = shader
