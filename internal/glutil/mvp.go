@@ -6,7 +6,6 @@ package glutil
 
 import (
 	"azul3d.org/gfx.v2-unstable"
-	"azul3d.org/gfx.v2-unstable/camera"
 	"azul3d.org/lmath.v1"
 )
 
@@ -85,8 +84,7 @@ func (m *MVPCache) Update(o *gfx.Object, c gfx.Camera) {
 // the camera is nil.
 func (m *MVPCache) camMat(c gfx.Camera) lmath.Mat4 {
 	if c != nil {
-		// TODO(slimsag): incorrect type assumption!
-		return c.(*camera.Camera).Object.Transform.Mat4()
+		return c.Transform().Mat4()
 	}
 	return lmath.Mat4Identity
 }

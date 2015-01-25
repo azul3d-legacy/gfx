@@ -52,6 +52,11 @@ type Camera struct {
 	Debug bool
 }
 
+// Transform implements the gfx.Transformable interface.
+func (c *Camera) Transform() *gfx.Transform {
+	return c.Object.Transform
+}
+
 // Projection implements the gfx.Camera interface.
 func (c *Camera) Projection() gfx.Mat4 {
 	return c.P

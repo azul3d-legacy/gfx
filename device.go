@@ -13,6 +13,8 @@ import (
 // Camera represents a single camera object. See the camera subpackage for a
 // basic camera implementation.
 type Camera interface {
+	Transformable
+
 	// Update should be called before using the camera (e.g. at the start of
 	// the frame). It is used to make the camera aware of the rectangle it is
 	// drawing to on the screen.
