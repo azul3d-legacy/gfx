@@ -2,7 +2,20 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package camera
+// Package camera provides a basic 2D and 3D camera implementation.
+//
+// Standard perspective (3D) cameras can be created using New, and orthographic
+// (2D) cameras can be created using NewOrtho.
+//
+// When a camera's properties (or the view area / window size changes) you
+// should invoke Update on the camera.
+//
+// Visualizing the camera's wireframe can be done by setting Debug == true and
+// invoking Update.
+//
+// The type of camera can be switched at runtime by changing mycam.Ortho = true
+// as needed, and then calling Update.
+package camera // import "azul3d.org/gfx.v2-unstable/camera"
 
 import (
 	"image"
