@@ -6,6 +6,7 @@ package glutil
 
 import (
 	"azul3d.org/gfx.v2-unstable"
+	"azul3d.org/gfx.v2-unstable/camera"
 	"azul3d.org/lmath.v1"
 )
 
@@ -29,7 +30,7 @@ type MVPCache struct {
 
 // needUpdate tells if the cached matrices need to be updated to account for
 // the given object and camera.
-func (m *MVPCache) needUpdate(o *gfx.Object, c *gfx.Camera) bool {
+func (m *MVPCache) needUpdate(o *gfx.Object, c gfx.Camera) bool {
 	if o.Transform.Mat4() != m.lastTransform {
 		return true
 	}
@@ -45,7 +46,7 @@ func (m *MVPCache) needUpdate(o *gfx.Object, c *gfx.Camera) bool {
 // Update updates the cache (if needed) to account for changes to the object's
 // transform, or the camera's transform/projection changing. It should be
 // called before drawing the object each frame.
-func (m *MVPCache) Update(o *gfx.Object, c *gfx.Camera) {
+func (m *MVPCache) Update(o *gfx.Object, c gfx.Camera) {
 	if !m.needUpdate(o, c) {
 		return
 	}
@@ -82,18 +83,19 @@ func (m *MVPCache) Update(o *gfx.Object, c *gfx.Camera) {
 
 // camMat returns the camera's transformation matrix, or the identity matrix if
 // the camera is nil.
-func (m *MVPCache) camMat(c *gfx.Camera) lmath.Mat4 {
+func (m *MVPCache) camMat(c gfx.Camera) lmath.Mat4 {
 	if c != nil {
-		return c.Object.Transform.Mat4()
+		// TODO(slimsag): incorrect type assumption!
+		return c.(*camera.Camera).Object.Transform.Mat4()
 	}
 	return lmath.Mat4Identity
 }
 
 // camProj returns the camera's projection matrix, or the identity matrix if
 // the camera is nil.
-func (m *MVPCache) camProj(c *gfx.Camera) lmath.Mat4 {
+func (m *MVPCache) camProj(c gfx.Camera) lmath.Mat4 {
 	if c != nil {
-		return c.Projection.Mat4()
+		return c.Projection().Mat4()
 	}
 	return lmath.Mat4Identity
 }

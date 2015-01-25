@@ -39,7 +39,7 @@ func (n *nativeObject) SampleCount() int {
 // Implements the gfx.Destroyable interface.
 func (n *nativeObject) Destroy() {}
 
-func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera, pre, post func()) {
+func (r *device) hookedDraw(rect image.Rectangle, o *gfx.Object, c gfx.Camera, pre, post func()) {
 	doDraw, err := util.PreDraw(r, rect, o, c)
 	if err != nil {
 		r.warner.Warnf("%v\n", err)
@@ -188,7 +188,7 @@ func (r *device) endQuery(o *gfx.Object, n *nativeObject) {
 	}
 }
 
-func (r *device) useState(ns *nativeShader, obj *gfx.Object, c *gfx.Camera) {
+func (r *device) useState(ns *nativeShader, obj *gfx.Object, c gfx.Camera) {
 	// Use object state.
 	r.graphicsState.ColorWrite(obj.WriteRed, obj.WriteGreen, obj.WriteBlue, obj.WriteAlpha)
 	r.graphicsState.Dithering(obj.Dithering)

@@ -47,7 +47,7 @@ var (
 //
 // Ask the given device to load each shader, mesh, and texture that the object
 // has associated with it and waits for loading to complete before returning.
-func PreDraw(dev gfx.Device, rect image.Rectangle, o *gfx.Object, c *gfx.Camera) (draw bool, err error) {
+func PreDraw(dev gfx.Device, rect image.Rectangle, o *gfx.Object, c gfx.Camera) (draw bool, err error) {
 	// Draw calls with empty rectangles are effectively no-op.
 	if rect.Empty() {
 		return false, nil

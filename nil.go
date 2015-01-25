@@ -87,7 +87,7 @@ func (n *nilDevice) MSAA() (msaa bool) {
 func (n *nilDevice) Clear(r image.Rectangle, bg Color)           {}
 func (n *nilDevice) ClearDepth(r image.Rectangle, depth float64) {}
 func (n *nilDevice) ClearStencil(r image.Rectangle, stencil int) {}
-func (n *nilDevice) Draw(r image.Rectangle, o *Object, c *Camera) {
+func (n *nilDevice) Draw(r image.Rectangle, o *Object, c Camera) {
 	o.Bounds()
 	o.NativeObject = nilNativeObject{}
 }

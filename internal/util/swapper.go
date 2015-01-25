@@ -74,7 +74,7 @@ func (s *Swapper) ClearStencil(r image.Rectangle, stencil int) {
 }
 
 // Draw submits a draw operation to the current graphics device.
-func (s *Swapper) Draw(r image.Rectangle, o *gfx.Object, c *gfx.Camera) {
+func (s *Swapper) Draw(r image.Rectangle, o *gfx.Object, c gfx.Camera) {
 	s.d.Draw(r, o, c)
 }
 

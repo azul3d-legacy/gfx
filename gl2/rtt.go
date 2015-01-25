@@ -161,7 +161,7 @@ func (r *rttCanvas) ClearStencil(rect image.Rectangle, stencil int) {
 }
 
 // Implements gfx.Canvas interface.
-func (r *rttCanvas) Draw(rect image.Rectangle, o *gfx.Object, c *gfx.Camera) {
+func (r *rttCanvas) Draw(rect image.Rectangle, o *gfx.Object, c gfx.Camera) {
 	r.r.hookedDraw(rect, o, c, r.rttBegin, r.rttEnd)
 }
 

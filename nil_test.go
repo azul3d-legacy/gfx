@@ -19,9 +19,6 @@ func TestNilDevice(t *testing.T) {
 		objects = append(objects, NewObject())
 	}
 
-	// Create a camera
-	cam := NewCamera()
-
 	// Convert color.White to our floating-point color model.
 	white := ColorModel.Convert(color.White).(Color)
 
@@ -34,7 +31,7 @@ func TestNilDevice(t *testing.T) {
 
 		// Draw each object on the rectangle of the drawable.
 		for _, obj := range objects {
-			d.Draw(rect, obj, cam)
+			d.Draw(rect, obj, nil)
 		}
 
 		// Render the frame.
