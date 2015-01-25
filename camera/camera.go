@@ -8,8 +8,8 @@ import (
 	"image"
 	"sync"
 
-	"azul3d.org/lmath.v1"
 	"azul3d.org/gfx.v2-unstable"
+	"azul3d.org/lmath.v1"
 )
 
 var (

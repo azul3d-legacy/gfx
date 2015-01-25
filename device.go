@@ -10,6 +10,20 @@ import (
 	"azul3d.org/gfx.v2-unstable/clock"
 )
 
+// Camera represents a single camera object. See the camera subpackage for a
+// basic camera implementation.
+type Camera interface {
+	// Update should be called before using the camera (e.g. at the start of
+	// the frame). It is used to make the camera aware of the rectangle it is
+	// drawing to on the screen.
+	Update(b image.Rectangle)
+
+	// Projection should return the camera's projection matrix. The matrix is
+	// responsible for projecting world coordinates into normalized device
+	// coordinates (-1, -1) to (+1, +1).
+	Projection() Mat4
+}
+
 // Precision represents the precision in bits of the color, depth, and stencil
 // buffers as well as the number of samples per pixel.
 type Precision struct {
@@ -92,8 +106,8 @@ type Canvas interface {
 	// nil, or more effectively after Render has returned.
 	//
 	// If not nil, then the object is drawn according to how it is seen by the
-	// given camera object (taking into account the camera object's
-	// transformation and projection matrices).
+	// given projector (e.g. camera), taking into account the projector's
+	// projection and transformation matrices.
 	//
 	// If the GPU supports occlusion queries (see GPUInfo.OcclusionQuery) and
 	// o.OcclusionTest is set to true then at some point in the future (or when
@@ -116,7 +130,7 @@ type Canvas interface {
 	//  !o.Textures[n].Loaded && o.Textures[N].Source == nil
 	//
 	// If the rectangle is empty this function is no-op.
-	Draw(r image.Rectangle, o *Object, c *Camera)
+	Draw(r image.Rectangle, o *Object, c Camera)
 
 	// QueryWait blocks until all pending draw object's occlusion queries
 	// completely finish. Most clients should avoid this call as it can easilly
