@@ -135,3 +135,34 @@ func TestTransformQuat(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func BenchmarkTransformPos(b *testing.B) {
+	a := NewTransform()
+	positions := [2]lmath.Vec3{
+		lmath.Vec3{X: 1},
+		lmath.Vec3{X: 2},
+	}
+	for i := 0; i < b.N; i++ {
+		a.SetPos(positions[i%2])
+	}
+}
+
+func BenchmarkTransformBuild(b *testing.B) {
+	a := NewTransform()
+	positions := [2]lmath.Vec3{
+		lmath.Vec3{X: 1},
+		lmath.Vec3{X: 2},
+	}
+	for i := 0; i < b.N; i++ {
+		a.SetPos(positions[i%2])
+		a.Mat4()
+	}
+}
+
+func BenchmarkTransformCache(b *testing.B) {
+	a := NewTransform()
+	a.SetPos(lmath.Vec3{X: 1})
+	for i := 0; i < b.N; i++ {
+		a.Mat4()
+	}
+}
