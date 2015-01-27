@@ -158,24 +158,29 @@ func (t *Transform) build() {
 	scaleShearHpr := lmath.Mat3Compose(t.scale, t.shear, hpr, lmath.CoordSysZUpRight)
 
 	// Build this space's transformation matrix.
-	built := lmath.Mat4Identity.SetUpperMat3(scaleShearHpr)
-	built = built.SetTranslation(t.pos)
-	t.built = &built
+	t.built = &lmath.Mat4Identity
+	*t.built = t.built.SetUpperMat3(scaleShearHpr)
+	*t.built = t.built.SetTranslation(t.pos)
 
 	// Build the local-to-world transformation matrix.
-	ltw := built
-	if parent != nil {
-		ltw = ltw.Mul(parent.Convert(LocalToWorld))
+	if t.localToWorld == nil {
+		t.localToWorld = new(lmath.Mat4)
 	}
-	t.localToWorld = &ltw
+	*t.localToWorld = *t.built
+	if parent != nil {
+		*t.localToWorld = t.localToWorld.Mul(parent.Convert(LocalToWorld))
+	}
 
 	// Build the world-to-local transformation matrix.
-	wtl, _ := built.Inverse()
+	wtl, _ := t.built.Inverse()
 	if parent != nil {
 		parentToWorld := parent.Convert(WorldToLocal)
 		wtl = wtl.Mul(parentToWorld)
 	}
-	t.worldToLocal = &wtl
+	if t.worldToLocal == nil {
+		t.worldToLocal = new(lmath.Mat4)
+	}
+	*t.worldToLocal = wtl
 }
 
 // Transform implements the Transformable interface by simply returning t.
