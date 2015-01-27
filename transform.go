@@ -158,7 +158,10 @@ func (t *Transform) build() {
 	scaleShearHpr := lmath.Mat3Compose(t.scale, t.shear, hpr, lmath.CoordSysZUpRight)
 
 	// Build this space's transformation matrix.
-	t.built = &lmath.Mat4Identity
+	if t.built == nil {
+		t.built = new(lmath.Mat4)
+	}
+	*t.built = lmath.Mat4Identity
 	*t.built = t.built.SetUpperMat3(scaleShearHpr)
 	*t.built = t.built.SetTranslation(t.pos)
 
