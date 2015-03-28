@@ -6,10 +6,6 @@ package gfx
 
 import "sync"
 
-// NativeShader represents the native object of a shader. Typically only
-// devices will create these.
-type NativeShader Destroyable
-
 // Shader represents a single shader program.
 //
 // A shader and it's methods are not safe for access from multiple goroutines
@@ -18,7 +14,7 @@ type Shader struct {
 	// The native object of this shader. Once the shader is loaded (if no
 	// compiler error occured) then this field will be initialized by the
 	// device. Only device implementations should assign values to this field.
-	NativeShader
+	NativeShader Destroyable
 
 	// Weather or not this shader is currently loaded or not.
 	Loaded bool
