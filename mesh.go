@@ -147,10 +147,6 @@ func (a VertexAttrib) Copy() VertexAttrib {
 	return VertexAttrib{Data: cpy}
 }
 
-// NativeMesh represents the native object of a mesh, typically only devices
-// create these.
-type NativeMesh Destroyable
-
 // Mesh represents a single mesh made up of several components. A mesh may or
 // may not be made up of indexed vertices, etc, depending on whether or not
 // len(m.Indices) == 0 holds true.
@@ -166,7 +162,7 @@ type Mesh struct {
 	// The native object of this mesh. Once the mesh is loaded by a device this
 	// field will be initialized by the device. Only device implementations
 	// should assign values to this field.
-	NativeMesh
+	NativeMesh Destroyable
 
 	// Weather or not this mesh is currently loaded or not.
 	Loaded bool
