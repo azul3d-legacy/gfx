@@ -21,7 +21,7 @@ import (
 	"azul3d.org/gfx.v2-unstable/internal/util"
 	"azul3d.org/keyboard.v2-unstable"
 	"azul3d.org/mouse.v2-unstable"
-	"azul3d.org/native/glfw.v4"
+	"azul3d.org/native/glfw.v5"
 )
 
 // intBool returns 0 or 1 depending on b.
@@ -102,7 +102,6 @@ func (w *glfwWindow) Mouse() *mouse.Watcher {
 func (w *glfwWindow) SetClipboard(clipboard string) {
 	MainLoopChan <- func() {
 		w.Lock()
-		logError(w.window.SetClipboardString(clipboard))
 		w.window.SetClipboardString(clipboard)
 		w.Unlock()
 	}
@@ -155,7 +154,7 @@ func (w *glfwWindow) waitFor(f func()) {
 func (w *glfwWindow) updateTitle() {
 	fps := fmt.Sprintf("%dFPS", int(math.Ceil(w.device.Clock().FrameRate())))
 	title := strings.Replace(w.props.Title(), "{FPS}", fps, 1)
-	logError(w.window.SetTitle(title))
+	w.window.SetTitle(title)
 }
 
 // useProps sets the GLFW window to reflect the given window properties. It
@@ -217,7 +216,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 
 		w.last.SetSize(width, height)
 		withoutLock(func() {
-			logError(win.SetSize(width, height))
+			win.SetSize(width, height)
 		})
 	}
 
@@ -227,15 +226,12 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 	if (force || x != lastX || y != lastY) && !fullscreen {
 		w.last.SetPos(x, y)
 		if x == -1 && y == -1 {
-			vm, err := w.monitor.GetVideoMode()
-			logError(err)
-			if err == nil {
-				x = (vm.Width / 2) - (width / 2)
-				y = (vm.Height / 2) - (height / 2)
-			}
+			vm := w.monitor.GetVideoMode()
+			x = (vm.Width / 2) - (width / 2)
+			y = (vm.Height / 2) - (height / 2)
 		}
 		withoutLock(func() {
-			logError(win.SetPosition(x, y))
+			win.SetPos(x, y)
 		})
 	}
 
@@ -246,7 +242,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		w.last.SetCursorPos(cursorX, cursorY)
 		if cursorX != -1 && cursorY != -1 {
 			withoutLock(func() {
-				logError(win.SetCursorPosition(cursorX, cursorY))
+				win.SetCursorPos(cursorX, cursorY)
 			})
 		}
 	}
@@ -257,9 +253,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		w.last.SetVisible(visible)
 		withoutLock(func() {
 			if visible {
-				logError(win.Show())
+				win.Show()
 			} else {
-				logError(win.Hide())
+				win.Hide()
 			}
 		})
 	}
@@ -295,7 +291,7 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 				swapInterval = 1
 			}
 		}
-		logError(glfw.SwapInterval(swapInterval))
+		glfw.SwapInterval(swapInterval)
 	}
 
 	// The following cannot be changed via GLFW post window creation -- and
@@ -320,9 +316,9 @@ func (w *glfwWindow) useProps(p *Props, force bool) {
 		// Set input mode.
 		withoutLock(func() {
 			if grabbed {
-				logError(w.window.SetInputMode(glfw.Cursor, glfw.CursorDisabled))
+				w.window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 			} else {
-				logError(w.window.SetInputMode(glfw.Cursor, glfw.CursorNormal))
+				w.window.SetInputMode(glfw.CursorMode, glfw.CursorNormal)
 			}
 		})
 	}
@@ -384,7 +380,7 @@ func (w *glfwWindow) initCallbacks() {
 	})
 
 	// Moved event.
-	w.window.SetPositionCallback(func(gw *glfw.Window, x, y int) {
+	w.window.SetPosCallback(func(gw *glfw.Window, x, y int) {
 		// Store the position state.
 		w.RLock()
 		w.last.SetPos(x, y)
@@ -442,7 +438,7 @@ func (w *glfwWindow) initCallbacks() {
 	})
 
 	// CursorMoved event.
-	w.window.SetCursorPositionCallback(func(gw *glfw.Window, x, y float64) {
+	w.window.SetCursorPosCallback(func(gw *glfw.Window, x, y float64) {
 		// Store the cursor position state.
 		w.RLock()
 		grabbed := w.props.CursorGrabbed()
@@ -492,7 +488,7 @@ func (w *glfwWindow) initCallbacks() {
 	})
 
 	// keyboard.Typed
-	w.window.SetCharacterCallback(func(gw *glfw.Window, r rune) {
+	w.window.SetCharCallback(func(gw *glfw.Window, r rune) {
 		w.sendEvent(keyboard.Typed{S: string(r), T: time.Now()}, KeyboardTypedEvents)
 	})
 
@@ -566,11 +562,11 @@ func (w *glfwWindow) run() {
 		w.device.Destroy()
 
 		// Release the context.
-		logError(glfw.DetachCurrentContext())
+		glfw.DetachCurrentContext()
 
 		// Destroy the window on the main thread.
 		MainLoopChan <- func() {
-			logError(w.window.Destroy())
+			w.window.Destroy()
 		}
 	}
 
@@ -610,7 +606,7 @@ func (w *glfwWindow) run() {
 					// Execute the device's render function.
 					if renderedFrame := fn(); renderedFrame {
 						// Swap OpenGL buffers.
-						logError(w.window.SwapBuffers())
+						w.window.SwapBuffers()
 					}
 
 				case <-w.swapper.Swap:
@@ -650,7 +646,7 @@ func (w *glfwWindow) run() {
 			// Execute the device's render function.
 			if renderedFrame := fn(); renderedFrame {
 				// Swap OpenGL buffers.
-				logError(w.window.SwapBuffers())
+				w.window.SwapBuffers()
 			}
 		}
 	}
@@ -672,20 +668,14 @@ func (w *glfwWindow) build() error {
 
 	// Specify the primary monitor if we want fullscreen, store the monitor
 	// regardless for centering the window.
-	w.monitor, err = glfw.GetPrimaryMonitor()
-	if err != nil {
-		return err
-	}
+	w.monitor = glfw.GetPrimaryMonitor()
 	if p.Fullscreen() {
 		dstMonitor = w.monitor
 		w.beforeFullscreen = [2]int{dstWidth, dstHeight}
 
 		// TODO(slimsag): publish a way to get valid video modes instead of
 		// assuming the monitor's one.
-		vm, err := w.monitor.GetVideoMode()
-		if err != nil {
-			return err
-		}
+		vm := w.monitor.GetVideoMode()
 		dstWidth, dstHeight = vm.Width, vm.Height
 		w.props.SetSize(dstWidth, dstHeight)
 		w.last.SetSize(dstWidth, dstHeight)
@@ -719,10 +709,7 @@ func (w *glfwWindow) build() error {
 		glfw.ClientAPI:           glfwClientAPI,
 	}
 	for hint, value := range hints {
-		err = glfw.WindowHint(hint, value)
-		if err != nil {
-			return err
-		}
+		glfw.WindowHint(hint, value)
 	}
 
 	// Create the window.
@@ -735,10 +722,7 @@ func (w *glfwWindow) build() error {
 	}
 
 	// OpenGL context must be active.
-	err = w.window.MakeContextCurrent()
-	if err != nil {
-		return err
-	}
+	w.window.MakeContextCurrent()
 
 	// Create the device.
 	d, err := glfwNewDevice(share(asset.glfwDevice))
@@ -751,21 +735,16 @@ func (w *glfwWindow) build() error {
 	d.SetDebugOutput(os.Stderr)
 
 	// Test for adaptive vsync extensions.
-	w.extWGLEXTSwapControlTear, err = glfw.ExtensionSupported("WGL_EXT_swap_control_tear")
-	if err != nil {
-		return err
-	}
-	w.extGLXEXTSwapControlTear, err = glfw.ExtensionSupported("GLX_EXT_swap_control_tear")
-	if err != nil {
-		return err
-	}
+	w.extWGLEXTSwapControlTear = glfw.ExtensionSupported("WGL_EXT_swap_control_tear")
+	w.extGLXEXTSwapControlTear = glfw.ExtensionSupported("GLX_EXT_swap_control_tear")
 
 	// Setup callbacks and the window.
 	w.initCallbacks()
 	w.useProps(p, true)
 
 	// Done with OpenGL things on this window, for now.
-	return glfw.DetachCurrentContext()
+	glfw.DetachCurrentContext()
+	return nil
 }
 
 func doNew(p *Props) (Window, gfx.Device, error) {

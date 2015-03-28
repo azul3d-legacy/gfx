@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"time"
 
-	"azul3d.org/native/glfw.v4"
+	"azul3d.org/native/glfw.v5"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 		withoutContext chan func()
 
 		// Signals shutdown to the assetLoader goroutine.
-		exit chan error
+		exit chan struct{}
 	}
 
 	// Signals shutdown to the event poller goroutine.
@@ -67,11 +67,10 @@ func assetLoader() {
 			glfw.DetachCurrentContext()
 
 			// Destroy window and unlock the thread.
-			err := asset.Window.Destroy()
+			asset.Window.Destroy()
 			runtime.UnlockOSThread()
 
-			// Signal completion.
-			asset.exit <- err
+			// Exit asset loader goroutine.
 			return
 
 		case fn := <-exec:
@@ -98,13 +97,10 @@ func pollEvents() {
 		}
 
 		// Poll for events in the main loop, or exit.
-		pollFunc := func() {
-			logError(glfw.PollEvents())
-		}
 		select {
 		case <-pollerExit:
 			return
-		case MainLoopChan <- pollFunc:
+		case MainLoopChan <- glfw.PollEvents:
 		}
 	}
 }
@@ -124,17 +120,14 @@ func doInit() error {
 	}
 
 	// Create the hidden asset window.
-	err = glfw.WindowHint(glfw.Visible, 0)
-	if err != nil {
-		return err
-	}
+	glfw.WindowHint(glfw.Visible, 0)
 	asset.Window, err = glfw.CreateWindow(128, 128, "assets", nil, nil)
 	if err != nil {
 		return err
 	}
 
 	// Create the asset device.
-	asset.exit = make(chan error)
+	asset.exit = make(chan struct{})
 	asset.withoutContext = make(chan func())
 	asset.Window.MakeContextCurrent()
 	asset.glfwDevice, err = glfwNewDevice()
@@ -165,17 +158,13 @@ func doExit() error {
 	}
 
 	// Exit the assetLoader goroutine.
-	asset.exit <- nil
-	err := <-asset.exit
-	if err != nil {
-		return err
-	}
+	asset.exit <- struct{}{}
 
 	// Exit the event poller.
 	pollerExit <- struct{}{}
 
 	// Terminate GLFW now.
-	err = glfw.Terminate()
+	glfw.Terminate()
 	glfwInit = false
-	return err
+	return nil
 }

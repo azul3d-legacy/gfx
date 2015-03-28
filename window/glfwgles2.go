@@ -7,7 +7,7 @@ package window
 
 import (
 	"azul3d.org/gfx.v2-unstable/gles2"
-	"azul3d.org/native/glfw.v4"
+	"azul3d.org/native/glfw.v5"
 )
 
 const (
